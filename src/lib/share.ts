@@ -140,15 +140,34 @@ export async function exportShareCard(element: HTMLElement, options?: { fileName
   const dataUrl = await exportAsImageDataUrl(element)
 
   if (format === 'pdf') {
+    const printableHtml = `<!doctype html><html><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><style>body{margin:0;padding:0;background:#f5ece3;font-family:Inter,Segoe UI,Arial,sans-serif}main{padding:28px;display:flex;justify-content:center}img{display:block;max-width:1000px;width:100%;height:auto;border-radius:24px;box-shadow:0 14px 36px rgba(0,0,0,.16)}@media print{body{background:#fff}main{padding:0;justify-content:flex-start}img{box-shadow:none;border-radius:0}}</style></head><body><main><img src="${dataUrl}" alt="Northstar DISC share card" /></main></body></html>`
+
     const printWindow = window.open('', '_blank', 'noopener,noreferrer')
     if (!printWindow) {
-      return { ok: false, error: 'Unable to open print preview' }
+      const printFrame = document.createElement('iframe')
+      printFrame.style.position = 'fixed'
+      printFrame.style.right = '-10000px'
+      printFrame.style.top = '0'
+      printFrame.style.width = '0'
+      printFrame.style.height = '0'
+      printFrame.style.border = '0'
+      document.body.appendChild(printFrame)
+      printFrame.contentDocument?.open()
+      printFrame.contentDocument?.write(printableHtml)
+      printFrame.contentDocument?.close()
+      window.setTimeout(() => {
+        printFrame.contentWindow?.focus()
+        printFrame.contentWindow?.print()
+      }, 300)
+      window.setTimeout(() => document.body.removeChild(printFrame), 800)
+      return { ok: true, fileName: `${fileName}.pdf` }
     }
 
-    printWindow.document.write(`<!doctype html><html><head><style>body{margin:0;padding:0;background:#f5ece3;font-family:Inter,Segoe UI,Arial,sans-serif}main{padding:28px}img{display:block;width:100%;height:auto;border-radius:24px;box-shadow:0 14px 36px rgba(0,0,0,.16)}@media print{body{background:#fff}main{padding:0}}</style></head><body><main><img src="${dataUrl}" alt="Northstar DISC share card" /></main></body></html>`)
+    printWindow.document.open()
+    printWindow.document.write(printableHtml)
     printWindow.document.close()
     printWindow.focus()
-    window.setTimeout(() => printWindow.print(), 250)
+    window.setTimeout(() => printWindow.print(), 300)
     return { ok: true, fileName: `${fileName}.pdf` }
   }
 

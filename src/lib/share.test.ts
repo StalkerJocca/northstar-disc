@@ -68,6 +68,21 @@ describe('share helpers', () => {
     vi.restoreAllMocks()
   })
 
+  it('still opens a printable PDF view when popup windows are blocked', async () => {
+    const originalOpen = window.open
+    window.open = vi.fn(() => null)
+
+    const element = document.createElement('div')
+    element.innerText = 'Printable export content'
+
+    const result = await exportShareCard(element, { fileName: 'blocked-popup', format: 'pdf' })
+
+    expect(result.ok).toBe(true)
+    expect(result.fileName).toBe('blocked-popup.pdf')
+
+    window.open = originalOpen
+  })
+
   it('falls back to a canvas-based export when html2canvas cannot render the card', async () => {
     const html2canvasModule = await import('html2canvas')
     const html2canvasMock = vi.mocked(html2canvasModule.default)
