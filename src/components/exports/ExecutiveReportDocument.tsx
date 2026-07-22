@@ -20,19 +20,19 @@ const traitColors: Record<TraitKey, string> = {
 const insightPanels = [
   {
     title: 'Core Strengths & Key Motivators',
-    body: 'Strengths show up in decisiveness, momentum, clarity, and the ability to turn vision into tangible outcomes with confidence.',
+    body: 'This profile tends to move quickly from intent to action, creates momentum in ambiguous settings, and responds well when the opportunity is directional and timely.',
   },
   {
     title: 'Optimal Work & Leadership Environment',
-    body: 'The most energizing context balances ambitious goals, meaningful ownership, and structured autonomy with a clear line of accountability.',
+    body: 'The best environment combines strong goals, ownership, clear expectations, and enough space to act with conviction while still collaborating with the right people.',
   },
   {
     title: 'Behavioral Tendencies Under Pressure',
-    body: 'Pressure sharpens the profile: decision-making accelerates, communication becomes more direct, and outcomes remain a top priority.',
+    body: 'Under pressure, the profile becomes more decisive, more results-oriented, and more focused on urgency, alignment, and practical execution rather than extended debate.',
   },
   {
     title: 'Actionable Communication & Collaboration Tips',
-    body: 'Keep conversations concise, calm, and outcome-oriented while leaving room for others to contribute, especially when urgency rises.',
+    body: 'Use short, direct updates, frame conversation around outcomes, and pair confidence with a deliberate invitation for others to contribute and stay aligned.',
   },
 ]
 
@@ -233,7 +233,7 @@ export default function ExecutiveReportDocument({
           </div>
         </section>
 
-        <section style={{ display: 'grid', gridTemplateColumns: '1.15fr 0.85fr', gap: '14px' }}>
+        <section style={{ display: 'grid', gridTemplateColumns: '1.18fr 0.82fr', gap: '14px' }}>
           <div className="report-card" style={{ border: '1px solid #e8dfd6', borderRadius: '18px', background: '#fffdfb', padding: '15px' }}>
             <div style={{ fontSize: '11px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#8b7565', fontWeight: 700, fontFamily: 'Arial, sans-serif' }}>
               Trait Breakdown & KPI Chips
@@ -262,7 +262,7 @@ export default function ExecutiveReportDocument({
 
           <div className="report-card" style={{ border: '1px solid #e8dfd6', borderRadius: '18px', background: '#fffdfb', padding: '15px' }}>
             <div style={{ fontSize: '11px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#8b7565', fontWeight: 700, fontFamily: 'Arial, sans-serif' }}>
-              Data Visualizations
+              Profile Radar Chart
             </div>
             <div style={{ marginTop: '12px', borderRadius: '16px', background: 'radial-gradient(circle at top, #fffaf6 0%, #f8efe8 100%)', padding: '10px', border: '1px solid #efe1d0' }}>
               <svg viewBox="0 0 220 220" width="100%" height="220" aria-label="DISC radar chart" role="img">
@@ -286,12 +286,15 @@ export default function ExecutiveReportDocument({
                 })}
               </svg>
             </div>
+            <div style={{ marginTop: '10px', borderRadius: '12px', background: '#f7efe6', padding: '10px 12px', fontSize: '12px', color: '#5f4c3d', fontFamily: 'Arial, sans-serif' }}>
+              Interpretation: {primaryMeta.label} leads the profile with a supporting {secondaryMeta.label.toLowerCase()} contribution.
+            </div>
           </div>
         </section>
 
         <section style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px' }}>
           {insightPanels.map((panel) => (
-            <div key={panel.title} className="report-panel" style={{ border: '1px solid #e8dfd6', borderRadius: '16px', background: '#fffdfb', padding: '14px' }}>
+            <div key={panel.title} className="report-panel" style={{ border: '1px solid #e8dfd6', borderRadius: '16px', background: '#fffdfb', padding: '14px', minHeight: '126px' }}>
               <h3 style={{ margin: 0, fontSize: '15px', color: '#2f241d' }}>{panel.title}</h3>
               <div style={{ marginTop: '8px', fontSize: '13px', lineHeight: 1.7, color: '#5f4c3d', fontFamily: 'Arial, sans-serif' }}>{panel.body}</div>
             </div>

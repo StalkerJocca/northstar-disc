@@ -188,20 +188,7 @@ export async function exportShareCard(
 
       return { ok: true, fileName: `${fileName}.pdf` }
     } catch {
-      const fallbackFrame = document.createElement('iframe')
-      fallbackFrame.style.position = 'fixed'
-      fallbackFrame.style.right = '-10000px'
-      fallbackFrame.style.top = '0'
-      fallbackFrame.style.width = '0'
-      fallbackFrame.style.height = '0'
-      fallbackFrame.style.border = '0'
-      document.body.appendChild(fallbackFrame)
-      fallbackFrame.contentDocument?.write(`<html><body><img src="${await exportAsImageDataUrl(element)}" alt="Northstar DISC executive report" /></body></html>`)
-      fallbackFrame.contentDocument?.close()
-      fallbackFrame.contentWindow?.focus()
-      fallbackFrame.contentWindow?.print()
-      window.setTimeout(() => document.body.removeChild(fallbackFrame), 800)
-      return { ok: true, fileName: `${fileName}.pdf` }
+      return { ok: false, error: 'Unable to generate the executive PDF export.' }
     }
   }
 
