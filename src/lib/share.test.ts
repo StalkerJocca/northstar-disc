@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { jsPDF } from 'jspdf'
+import { PDFDocument } from 'pdf-lib'
 import { buildShareText, buildShareUrl, exportShareCard, getSignatureLeadershipStyle, trackShareEvent } from './share'
 
 vi.mock('html2canvas', () => ({
@@ -8,18 +8,20 @@ vi.mock('html2canvas', () => ({
   }),
 }))
 
-vi.mock('jspdf', () => ({
-  jsPDF: vi.fn().mockImplementation(() => ({
-    internal: {
-      pageSize: {
-        getWidth: () => 595,
-        getHeight: () => 842,
-      },
-    },
-    addImage: vi.fn(),
-    addPage: vi.fn(),
-    output: vi.fn(() => new Blob(['pdf'], { type: 'application/pdf' })),
-  })),
+vi.mock('pdf-lib', () => ({
+  PDFDocument: {
+    create: vi.fn().mockResolvedValue({
+      addPage: vi.fn().mockReturnValue({
+        getSize: () => ({ width: 595.28, height: 841.89 }),
+        drawImage: vi.fn(),
+      }),
+      embedPng: vi.fn().mockResolvedValue({
+        width: 1200,
+        height: 800,
+      }),
+      save: vi.fn().mockResolvedValue(new Uint8Array([37, 80, 68, 70, 45])),
+    }),
+  },
 }))
 
 describe('share helpers', () => {
@@ -87,25 +89,13 @@ describe('share helpers', () => {
 
   it('downloads a PDF directly instead of opening a blank page', async () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+    const renderCanvasForExport = await import('html2canvas')
+    const renderMock = vi.mocked(renderCanvasForExport.default)
+    renderMock.mockResolvedValueOnce({
+      toBlob: (callback: BlobCallback) => callback(new Blob(['png'], { type: 'image/png' })),
+      toDataURL: () => 'data:image/png;base64,abc123',
+    } as never)
 
-    class MockImage {
-      onload: (() => void) | null = null
-      onerror: (() => void) | null = null
-      width = 1200
-      height = 800
-      private _src = ''
-      set src(value: string) {
-        this._src = value
-        if (this.onload) {
-          this.onload()
-        }
-      }
-      get src() {
-        return this._src
-      }
-    }
-
-    vi.stubGlobal('Image', MockImage)
     vi.stubGlobal('URL', {
       ...URL,
       createObjectURL: vi.fn(() => 'blob:mock-url'),
@@ -122,19 +112,20 @@ describe('share helpers', () => {
     expect(result.ok).toBe(true)
     expect(result.fileName).toBe('download.pdf')
     expect(openSpy).not.toHaveBeenCalled()
-    expect(jsPDF).toHaveBeenCalled()
+    expect(PDFDocument.create).toHaveBeenCalled()
 
     appendSpy.mockRestore()
     removeSpy.mockRestore()
     openSpy.mockRestore()
   })
 
-  it('spans a PDF across multiple pages when the report is taller than a single page', async () => {
+  it('creates a PDF document for a long report export', async () => {
     const html2canvasModule = await import('html2canvas')
     const html2canvasMock = vi.mocked(html2canvasModule.default)
     html2canvasMock.mockResolvedValueOnce({
       width: 1200,
       height: 2600,
+      toBlob: (callback: BlobCallback) => callback(new Blob(['png'], { type: 'image/png' })),
       toDataURL: () => 'data:image/png;base64,abc123',
     } as never)
 
@@ -143,8 +134,7 @@ describe('share helpers', () => {
 
     await exportShareCard(element, { fileName: 'executive-report', format: 'pdf' })
 
-    const pdfInstance = vi.mocked(jsPDF).mock.results[0]?.value as { addPage: ReturnType<typeof vi.fn> }
-    expect(pdfInstance.addPage).toHaveBeenCalled()
+    expect(PDFDocument.create).toHaveBeenCalled()
   })
 
   it('falls back to a canvas-based export when html2canvas cannot render the card', async () => {

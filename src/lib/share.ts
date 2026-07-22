@@ -152,11 +152,11 @@ export async function exportShareCard(
   if (format === 'pdf') {
     try {
       const canvas = await renderCanvasForExport(element)
-      const dataUrl = canvas.toDataURL('image/png')
+      const imageBlob = await convertCanvasToPngBlob(canvas)
+      const imageBytes = await imageBlob.arrayBuffer()
       const pdfDoc = await PDFDocument.create()
       const page = pdfDoc.addPage([595.28, 841.89])
       const { width, height } = page.getSize()
-      const imageBytes = await fetch(dataUrl).then((response) => response.arrayBuffer())
       const embeddedImage = await pdfDoc.embedPng(imageBytes)
       const imageScale = Math.min((width - 40) / embeddedImage.width, (height - 40) / embeddedImage.height)
       page.drawImage(embeddedImage, {
@@ -167,8 +167,7 @@ export async function exportShareCard(
       })
 
       const pdfBytes = await pdfDoc.save()
-      const pdfPayload = Uint8Array.from(pdfBytes)
-      const blob = new Blob([pdfPayload], { type: 'application/pdf' })
+      const blob = new Blob([Uint8Array.from(pdfBytes)], { type: 'application/pdf' })
       const blobUrl = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = blobUrl
@@ -179,7 +178,8 @@ export async function exportShareCard(
       window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1500)
 
       return { ok: true, fileName: `${fileName}.pdf` }
-    } catch {
+    } catch (error) {
+      console.error('Unable to generate the executive PDF export.', error)
       return { ok: false, error: 'Unable to generate the executive PDF export.' }
     }
   }
@@ -222,6 +222,29 @@ async function exportAsImageDataUrl(element: HTMLElement) {
   } catch {
     return buildFallbackExportDataUrl(element)
   }
+}
+
+async function convertCanvasToPngBlob(canvas: HTMLCanvasElement) {
+  if (typeof canvas.toBlob === 'function') {
+    return await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error('Unable to convert the report into a PNG blob for PDF export.'))
+          return
+        }
+
+        resolve(blob)
+      }, 'image/png')
+    })
+  }
+
+  const dataUrl = canvas.toDataURL('image/png')
+  const response = await fetch(dataUrl)
+  if (!response.ok) {
+    throw new Error('Unable to convert the report into a PNG blob for PDF export.')
+  }
+
+  return response.blob()
 }
 
 function buildFallbackExportDataUrl(element: HTMLElement) {
