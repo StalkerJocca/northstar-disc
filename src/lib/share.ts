@@ -130,7 +130,18 @@ export function buildOgImageUrl(profileSignature: string, referralCode?: string)
   return url.toString()
 }
 
-export async function exportShareCard(element: HTMLElement, options?: { fileName?: string; format?: 'png' | 'pdf' }) {
+export async function exportShareCard(
+  element: HTMLElement,
+  options?: {
+    fileName?: string
+    format?: 'png' | 'pdf'
+    profile?: { primaryTrait?: TraitKey; secondaryTrait?: TraitKey } | null
+    primaryTrait?: TraitKey
+    secondaryTrait?: TraitKey
+    completionScore?: number
+    generatedAt?: string
+  },
+) {
   const format = options?.format ?? 'png'
   const fileName = options?.fileName ?? 'northstar-disc-share-card'
 
@@ -138,10 +149,10 @@ export async function exportShareCard(element: HTMLElement, options?: { fileName
     return { ok: false, error: 'Exports are only available in the browser' }
   }
 
-  const dataUrl = await exportAsImageDataUrl(element)
-
   if (format === 'pdf') {
     try {
+      const canvas = await renderCanvasForExport(element)
+      const dataUrl = canvas.toDataURL('image/png')
       const pdf = new jsPDF('p', 'pt', 'a4')
       const pageWidth = pdf.internal.pageSize.getWidth()
       const pageHeight = pdf.internal.pageSize.getHeight()
@@ -149,17 +160,21 @@ export async function exportShareCard(element: HTMLElement, options?: { fileName
       const maxWidth = pageWidth - margin * 2
       const maxHeight = pageHeight - margin * 2
 
-      const image = await loadImage(dataUrl)
-      const ratio = image.height / image.width
-      let width = maxWidth
-      let height = width * ratio
+      const canvasWidth = canvas.width || element.scrollWidth || element.clientWidth || 900
+      const canvasHeight = canvas.height || element.scrollHeight || element.clientHeight || 1400
+      const ratio = canvasHeight / Math.max(1, canvasWidth)
+      const renderedWidth = maxWidth
+      const renderedHeight = renderedWidth * ratio
+      const totalPages = Math.max(1, Math.ceil(renderedHeight / maxHeight))
 
-      if (height > maxHeight) {
-        height = maxHeight
-        width = height / ratio
+      for (let pageIndex = 0; pageIndex < totalPages; pageIndex += 1) {
+        if (pageIndex > 0) {
+          pdf.addPage()
+        }
+
+        const yOffset = pageIndex * maxHeight
+        pdf.addImage(dataUrl, 'PNG', margin, margin - yOffset, renderedWidth, renderedHeight)
       }
-
-      pdf.addImage(dataUrl, 'PNG', margin, margin, width, height)
 
       const blob = pdf.output('blob')
       const blobUrl = URL.createObjectURL(blob)
@@ -181,7 +196,7 @@ export async function exportShareCard(element: HTMLElement, options?: { fileName
       fallbackFrame.style.height = '0'
       fallbackFrame.style.border = '0'
       document.body.appendChild(fallbackFrame)
-      fallbackFrame.contentDocument?.write(`<html><body><img src="${dataUrl}" alt="Northstar DISC share card" /></body></html>`)
+      fallbackFrame.contentDocument?.write(`<html><body><img src="${await exportAsImageDataUrl(element)}" alt="Northstar DISC executive report" /></body></html>`)
       fallbackFrame.contentDocument?.close()
       fallbackFrame.contentWindow?.focus()
       fallbackFrame.contentWindow?.print()
@@ -190,6 +205,7 @@ export async function exportShareCard(element: HTMLElement, options?: { fileName
     }
   }
 
+  const dataUrl = await exportAsImageDataUrl(element)
   const link = document.createElement('a')
   link.href = dataUrl
   link.download = `${fileName}.png`
@@ -199,31 +215,34 @@ export async function exportShareCard(element: HTMLElement, options?: { fileName
   return { ok: true, fileName: `${fileName}.png` }
 }
 
+async function renderCanvasForExport(element: HTMLElement) {
+  return html2canvas(element, {
+    backgroundColor: '#fffaf4',
+    scale: 3,
+    logging: false,
+    useCORS: true,
+    allowTaint: true,
+    width: element.scrollWidth || element.clientWidth || 1200,
+    height: element.scrollHeight || element.clientHeight || 1600,
+    onclone(documentClone) {
+      const style = documentClone.createElement('style')
+      style.textContent = `
+        body { background: #fffaf4 !important; }
+        .executive-report, .executive-report * { box-shadow: none !important; }
+        .executive-report { transform: none !important; }
+      `
+      documentClone.head.appendChild(style)
+    },
+  })
+}
+
 async function exportAsImageDataUrl(element: HTMLElement) {
   try {
-    const canvas = await html2canvas(element, {
-      backgroundColor: '#fffaf4',
-      scale: 2,
-      logging: false,
-      useCORS: true,
-      allowTaint: true,
-      width: element.scrollWidth || element.clientWidth || 1200,
-      height: element.scrollHeight || element.clientHeight || 1600,
-    })
-
+    const canvas = await renderCanvasForExport(element)
     return canvas.toDataURL('image/png')
   } catch {
     return buildFallbackExportDataUrl(element)
   }
-}
-
-function loadImage(dataUrl: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new Image()
-    image.onload = () => resolve(image)
-    image.onerror = () => reject(new Error('Unable to load export image'))
-    image.src = dataUrl
-  })
 }
 
 function buildFallbackExportDataUrl(element: HTMLElement) {
