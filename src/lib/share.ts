@@ -1,3 +1,4 @@
+import html2canvas from 'html2canvas'
 import type { TraitKey } from '../types/disc'
 
 export type SharePayload = {
@@ -161,59 +162,15 @@ export async function exportShareCard(element: HTMLElement, options?: { fileName
 }
 
 async function exportAsImageDataUrl(element: HTMLElement) {
-  const svg = document.createElement('svg')
-  svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
-  svg.setAttribute('width', '1200')
-  svg.setAttribute('height', '1600')
-
-  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
-  rect.setAttribute('x', '0')
-  rect.setAttribute('y', '0')
-  rect.setAttribute('width', '1200')
-  rect.setAttribute('height', '1600')
-  rect.setAttribute('fill', '#fffaf4')
-  svg.appendChild(rect)
-
-  const text = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-  text.setAttribute('x', '80')
-  text.setAttribute('y', '140')
-  text.setAttribute('fill', '#4c3529')
-  text.setAttribute('font-size', '42')
-  text.setAttribute('font-family', 'Arial, sans-serif')
-  text.textContent = 'Northstar DISC'
-  svg.appendChild(text)
-
-  const body = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-  body.setAttribute('x', '80')
-  body.setAttribute('y', '220')
-  body.setAttribute('fill', '#6b4f3e')
-  body.setAttribute('font-size', '26')
-  body.setAttribute('font-family', 'Arial, sans-serif')
-  body.textContent = element.innerText.replace(/\s+/g, ' ').trim().slice(0, 280)
-  svg.appendChild(body)
-
-  const serializer = new XMLSerializer()
-  const source = serializer.serializeToString(svg)
-  const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const image = new Image()
-  image.src = url
-
-  await new Promise((resolve, reject) => {
-    image.onload = () => resolve(undefined)
-    image.onerror = () => reject(new Error('Unable to render export image'))
+  const canvas = await html2canvas(element, {
+    backgroundColor: '#fffaf4',
+    scale: 2,
+    logging: false,
+    useCORS: true,
+    allowTaint: true,
+    width: element.scrollWidth || element.clientWidth || 1200,
+    height: element.scrollHeight || element.clientHeight || 1600,
   })
 
-  URL.revokeObjectURL(url)
-
-  const canvas = document.createElement('canvas')
-  canvas.width = 1200
-  canvas.height = 1600
-  const ctx = canvas.getContext('2d')
-  if (!ctx) {
-    throw new Error('Unable to create export canvas')
-  }
-
-  ctx.drawImage(image, 0, 0, 1200, 1600)
   return canvas.toDataURL('image/png')
 }
