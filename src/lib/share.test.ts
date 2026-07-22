@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { jsPDF } from 'jspdf'
 import { buildShareText, buildShareUrl, exportShareCard, getSignatureLeadershipStyle, trackShareEvent } from './share'
 
 vi.mock('html2canvas', () => ({
@@ -7,9 +8,24 @@ vi.mock('html2canvas', () => ({
   }),
 }))
 
+vi.mock('jspdf', () => ({
+  jsPDF: vi.fn().mockImplementation(() => ({
+    internal: {
+      pageSize: {
+        getWidth: () => 595,
+        getHeight: () => 842,
+      },
+    },
+    addImage: vi.fn(),
+    output: vi.fn(() => new Blob(['pdf'], { type: 'application/pdf' })),
+  })),
+}))
+
 describe('share helpers', () => {
   afterEach(() => {
     window.localStorage.clear()
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
   })
 
   it('builds tailored share copy for a primary and secondary trait pair', () => {
@@ -68,19 +84,48 @@ describe('share helpers', () => {
     vi.restoreAllMocks()
   })
 
-  it('still opens a printable PDF view when popup windows are blocked', async () => {
-    const originalOpen = window.open
-    window.open = vi.fn(() => null)
+  it('downloads a PDF directly instead of opening a blank page', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+
+    class MockImage {
+      onload: (() => void) | null = null
+      onerror: (() => void) | null = null
+      width = 1200
+      height = 800
+      private _src = ''
+      set src(value: string) {
+        this._src = value
+        if (this.onload) {
+          this.onload()
+        }
+      }
+      get src() {
+        return this._src
+      }
+    }
+
+    vi.stubGlobal('Image', MockImage)
+    vi.stubGlobal('URL', {
+      ...URL,
+      createObjectURL: vi.fn(() => 'blob:mock-url'),
+      revokeObjectURL: vi.fn(),
+    })
+    const appendSpy = vi.spyOn(document.body, 'appendChild').mockImplementation((node) => node)
+    const removeSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((node) => node)
 
     const element = document.createElement('div')
-    element.innerText = 'Printable export content'
+    element.innerText = 'PDF download export'
 
-    const result = await exportShareCard(element, { fileName: 'blocked-popup', format: 'pdf' })
+    const result = await exportShareCard(element, { fileName: 'download', format: 'pdf' })
 
     expect(result.ok).toBe(true)
-    expect(result.fileName).toBe('blocked-popup.pdf')
+    expect(result.fileName).toBe('download.pdf')
+    expect(openSpy).not.toHaveBeenCalled()
+    expect(jsPDF).toHaveBeenCalled()
 
-    window.open = originalOpen
+    appendSpy.mockRestore()
+    removeSpy.mockRestore()
+    openSpy.mockRestore()
   })
 
   it('falls back to a canvas-based export when html2canvas cannot render the card', async () => {
@@ -92,28 +137,36 @@ describe('share helpers', () => {
     element.innerText = 'Fallback export content'
 
     const originalGetContext = HTMLCanvasElement.prototype.getContext
-    HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
-      fillStyle: '',
-      font: '',
-      fillRect: vi.fn(),
-      fillText: vi.fn(),
-      measureText: vi.fn(() => ({ width: 100 })),
-      beginPath: vi.fn(),
-      moveTo: vi.fn(),
-      lineTo: vi.fn(),
-      quadraticCurveTo: vi.fn(),
-      closePath: vi.fn(),
-      stroke: vi.fn(),
-      fill: vi.fn(),
-      lineWidth: 1,
-      strokeStyle: '',
-    } as unknown as CanvasRenderingContext2D)
+    Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+      configurable: true,
+      value: vi.fn().mockReturnValue({
+        fillStyle: '',
+        font: '',
+        fillRect: vi.fn(),
+        fillText: vi.fn(),
+        measureText: vi.fn(() => ({ width: 100 })),
+        beginPath: vi.fn(),
+        moveTo: vi.fn(),
+        lineTo: vi.fn(),
+        quadraticCurveTo: vi.fn(),
+        closePath: vi.fn(),
+        stroke: vi.fn(),
+        fill: vi.fn(),
+        lineWidth: 1,
+        strokeStyle: '',
+      } as unknown as CanvasRenderingContext2D),
+    })
 
     const result = await exportShareCard(element, { fileName: 'fallback', format: 'png' })
 
     expect(result.ok).toBe(true)
     expect(result.fileName).toBe('fallback.png')
 
-    HTMLCanvasElement.prototype.getContext = originalGetContext
+    if (originalGetContext) {
+      Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+        configurable: true,
+        value: originalGetContext,
+      })
+    }
   })
 })

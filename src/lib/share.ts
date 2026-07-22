@@ -1,4 +1,5 @@
 import html2canvas from 'html2canvas'
+import { jsPDF } from 'jspdf'
 import type { TraitKey } from '../types/disc'
 
 export type SharePayload = {
@@ -140,35 +141,53 @@ export async function exportShareCard(element: HTMLElement, options?: { fileName
   const dataUrl = await exportAsImageDataUrl(element)
 
   if (format === 'pdf') {
-    const printableHtml = `<!doctype html><html><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><style>body{margin:0;padding:0;background:#f5ece3;font-family:Inter,Segoe UI,Arial,sans-serif}main{padding:28px;display:flex;justify-content:center}img{display:block;max-width:1000px;width:100%;height:auto;border-radius:24px;box-shadow:0 14px 36px rgba(0,0,0,.16)}@media print{body{background:#fff}main{padding:0;justify-content:flex-start}img{box-shadow:none;border-radius:0}}</style></head><body><main><img src="${dataUrl}" alt="Northstar DISC share card" /></main></body></html>`
+    try {
+      const pdf = new jsPDF('p', 'pt', 'a4')
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      const margin = 36
+      const maxWidth = pageWidth - margin * 2
+      const maxHeight = pageHeight - margin * 2
 
-    const printWindow = window.open('', '_blank', 'noopener,noreferrer')
-    if (!printWindow) {
-      const printFrame = document.createElement('iframe')
-      printFrame.style.position = 'fixed'
-      printFrame.style.right = '-10000px'
-      printFrame.style.top = '0'
-      printFrame.style.width = '0'
-      printFrame.style.height = '0'
-      printFrame.style.border = '0'
-      document.body.appendChild(printFrame)
-      printFrame.contentDocument?.open()
-      printFrame.contentDocument?.write(printableHtml)
-      printFrame.contentDocument?.close()
-      window.setTimeout(() => {
-        printFrame.contentWindow?.focus()
-        printFrame.contentWindow?.print()
-      }, 300)
-      window.setTimeout(() => document.body.removeChild(printFrame), 800)
+      const image = await loadImage(dataUrl)
+      const ratio = image.height / image.width
+      let width = maxWidth
+      let height = width * ratio
+
+      if (height > maxHeight) {
+        height = maxHeight
+        width = height / ratio
+      }
+
+      pdf.addImage(dataUrl, 'PNG', margin, margin, width, height)
+
+      const blob = pdf.output('blob')
+      const blobUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = `${fileName}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1500)
+
+      return { ok: true, fileName: `${fileName}.pdf` }
+    } catch {
+      const fallbackFrame = document.createElement('iframe')
+      fallbackFrame.style.position = 'fixed'
+      fallbackFrame.style.right = '-10000px'
+      fallbackFrame.style.top = '0'
+      fallbackFrame.style.width = '0'
+      fallbackFrame.style.height = '0'
+      fallbackFrame.style.border = '0'
+      document.body.appendChild(fallbackFrame)
+      fallbackFrame.contentDocument?.write(`<html><body><img src="${dataUrl}" alt="Northstar DISC share card" /></body></html>`)
+      fallbackFrame.contentDocument?.close()
+      fallbackFrame.contentWindow?.focus()
+      fallbackFrame.contentWindow?.print()
+      window.setTimeout(() => document.body.removeChild(fallbackFrame), 800)
       return { ok: true, fileName: `${fileName}.pdf` }
     }
-
-    printWindow.document.open()
-    printWindow.document.write(printableHtml)
-    printWindow.document.close()
-    printWindow.focus()
-    window.setTimeout(() => printWindow.print(), 300)
-    return { ok: true, fileName: `${fileName}.pdf` }
   }
 
   const link = document.createElement('a')
@@ -196,6 +215,15 @@ async function exportAsImageDataUrl(element: HTMLElement) {
   } catch {
     return buildFallbackExportDataUrl(element)
   }
+}
+
+function loadImage(dataUrl: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    image.onload = () => resolve(image)
+    image.onerror = () => reject(new Error('Unable to load export image'))
+    image.src = dataUrl
+  })
 }
 
 function buildFallbackExportDataUrl(element: HTMLElement) {
