@@ -1,5 +1,5 @@
 import html2canvas from 'html2canvas'
-import { jsPDF } from 'jspdf'
+import { PDFDocument } from 'pdf-lib'
 import type { TraitKey } from '../types/disc'
 
 export type SharePayload = {
@@ -153,30 +153,22 @@ export async function exportShareCard(
     try {
       const canvas = await renderCanvasForExport(element)
       const dataUrl = canvas.toDataURL('image/png')
-      const pdf = new jsPDF('p', 'pt', 'a4')
-      const pageWidth = pdf.internal.pageSize.getWidth()
-      const pageHeight = pdf.internal.pageSize.getHeight()
-      const margin = 36
-      const maxWidth = pageWidth - margin * 2
-      const maxHeight = pageHeight - margin * 2
+      const pdfDoc = await PDFDocument.create()
+      const page = pdfDoc.addPage([595.28, 841.89])
+      const { width, height } = page.getSize()
+      const imageBytes = await fetch(dataUrl).then((response) => response.arrayBuffer())
+      const embeddedImage = await pdfDoc.embedPng(imageBytes)
+      const imageScale = Math.min((width - 40) / embeddedImage.width, (height - 40) / embeddedImage.height)
+      page.drawImage(embeddedImage, {
+        x: 20,
+        y: height - embeddedImage.height * imageScale - 20,
+        width: embeddedImage.width * imageScale,
+        height: embeddedImage.height * imageScale,
+      })
 
-      const canvasWidth = canvas.width || element.scrollWidth || element.clientWidth || 900
-      const canvasHeight = canvas.height || element.scrollHeight || element.clientHeight || 1400
-      const ratio = canvasHeight / Math.max(1, canvasWidth)
-      const renderedWidth = maxWidth
-      const renderedHeight = renderedWidth * ratio
-      const totalPages = Math.max(1, Math.ceil(renderedHeight / maxHeight))
-
-      for (let pageIndex = 0; pageIndex < totalPages; pageIndex += 1) {
-        if (pageIndex > 0) {
-          pdf.addPage()
-        }
-
-        const yOffset = pageIndex * maxHeight
-        pdf.addImage(dataUrl, 'PNG', margin, margin - yOffset, renderedWidth, renderedHeight)
-      }
-
-      const blob = pdf.output('blob')
+      const pdfBytes = await pdfDoc.save()
+      const pdfPayload = Uint8Array.from(pdfBytes)
+      const blob = new Blob([pdfPayload], { type: 'application/pdf' })
       const blobUrl = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = blobUrl

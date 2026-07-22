@@ -108,6 +108,18 @@ export default function ExecutiveReportDocument({
         .report-footer span {
           page-break-after: avoid;
         }
+
+        .report-layout-grid {
+          display: grid;
+          grid-template-columns: 1.12fr 0.88fr;
+          gap: 14px;
+        }
+
+        .report-compare-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 14px;
+        }
       `}</style>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -233,7 +245,7 @@ export default function ExecutiveReportDocument({
           </div>
         </section>
 
-        <section style={{ display: 'grid', gridTemplateColumns: '1.18fr 0.82fr', gap: '14px' }}>
+        <section className="report-layout-grid">
           <div className="report-card" style={{ border: '1px solid #e8dfd6', borderRadius: '18px', background: '#fffdfb', padding: '15px' }}>
             <div style={{ fontSize: '11px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#8b7565', fontWeight: 700, fontFamily: 'Arial, sans-serif' }}>
               Trait Breakdown & KPI Chips
@@ -292,7 +304,7 @@ export default function ExecutiveReportDocument({
           </div>
         </section>
 
-        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px' }}>
+        <section className="report-compare-grid">
           {insightPanels.map((panel) => (
             <div key={panel.title} className="report-panel" style={{ border: '1px solid #e8dfd6', borderRadius: '16px', background: '#fffdfb', padding: '14px', minHeight: '126px' }}>
               <h3 style={{ margin: 0, fontSize: '15px', color: '#2f241d' }}>{panel.title}</h3>
@@ -301,7 +313,7 @@ export default function ExecutiveReportDocument({
           ))}
         </section>
 
-        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px' }}>
+        <section className="report-compare-grid">
           <div className="report-note" style={{ border: '1px solid #e8dfd6', borderRadius: '16px', background: '#f7efe6', padding: '14px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', color: '#2f241d' }}>Core Strengths</h3>
             <ul style={{ margin: '10px 0 0 0', paddingLeft: '18px', color: '#5f4c3d', lineHeight: 1.7, fontFamily: 'Arial, sans-serif' }}>
