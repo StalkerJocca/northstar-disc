@@ -81,50 +81,10 @@ export default function ExecutiveReportDocument({
       }}
       className="executive-report"
     >
-      <style>{`
-        @page {
-          size: A4;
-          margin: 15mm 12mm;
-        }
-
-        .executive-report * {
-          box-sizing: border-box;
-        }
-
-        .report-card,
-        .report-panel,
-        .report-note,
-        .report-header,
-        .report-footer {
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-
-        .report-card h2,
-        .report-card h3,
-        .report-panel h3,
-        .report-note h3,
-        .report-header h1,
-        .report-footer span {
-          page-break-after: avoid;
-        }
-
-        .report-layout-grid {
-          display: grid;
-          grid-template-columns: 1.12fr 0.88fr;
-          gap: 14px;
-        }
-
-        .report-compare-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 14px;
-        }
-      `}</style>
-
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         <section
           className="report-header"
+          data-export-section="header"
           style={{
             display: 'grid',
             gridTemplateColumns: '1.35fr 0.95fr',
@@ -133,39 +93,43 @@ export default function ExecutiveReportDocument({
             borderRadius: '18px',
             background: 'linear-gradient(135deg, #faf1e7 0%, #f1ddca 100%)',
             padding: '18px',
+            boxShadow: '0 14px 36px rgba(88, 62, 45, 0.08)',
+            breakInside: 'avoid',
           }}
         >
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '56px 1fr', gap: '12px', alignItems: 'center' }}>
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: '44px',
-                  height: '44px',
-                  borderRadius: '12px',
-                  background: '#8b5e3c',
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, #8b5e3c 0%, #b98254 100%)',
                   color: '#fffaf5',
-                  fontSize: '14px',
+                  fontSize: '16px',
                   fontWeight: 700,
                   letterSpacing: '0.18em',
                   fontFamily: 'Arial, sans-serif',
+                  boxShadow: '0 10px 22px rgba(139, 94, 60, 0.26)',
                 }}
               >
                 ND
               </div>
               <div>
                 <div style={{ fontSize: '11px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#8b7565', fontWeight: 700, fontFamily: 'Arial, sans-serif' }}>Northstar DISC</div>
-                <div style={{ fontSize: '16px', color: '#5f4c3d', marginTop: '4px', fontFamily: 'Arial, sans-serif' }}>{candidateName}</div>
+                <div style={{ fontSize: '19px', color: '#4c3a2e', marginTop: '4px', fontWeight: 700, fontFamily: 'Arial, sans-serif' }}>{candidateName}</div>
+                <div style={{ fontSize: '12px', color: '#7a6455', marginTop: '4px', fontFamily: 'Arial, sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Board-Level Executive Summary</div>
               </div>
             </div>
 
             <h1
               style={{
-                margin: '14px 0 0',
-                fontSize: '24px',
-                lineHeight: 1.25,
+                margin: '16px 0 0',
+                fontSize: '28px',
+                lineHeight: 1.2,
                 color: '#2f241d',
                 fontWeight: 700,
               }}
@@ -173,7 +137,7 @@ export default function ExecutiveReportDocument({
               Executive Behavioral Report
             </h1>
 
-            <div style={{ marginTop: '10px', fontSize: '14px', lineHeight: 1.6, color: '#5f4c3d', fontFamily: 'Arial, sans-serif' }}>
+            <div style={{ marginTop: '12px', fontSize: '14px', lineHeight: 1.7, color: '#5f4c3d', fontFamily: 'Arial, sans-serif' }}>
               {profile?.narrative ?? primaryMeta.summary}
             </div>
 
@@ -222,10 +186,10 @@ export default function ExecutiveReportDocument({
 
           <div
             style={{
-              background: '#fffdf8',
+              background: 'linear-gradient(180deg, #fffdf9 0%, #f8efe7 100%)',
               border: '1px solid #e8dfd6',
               borderRadius: '16px',
-              padding: '14px',
+              padding: '16px',
               boxShadow: '0 10px 24px rgba(84,56,45,0.08)',
               alignSelf: 'stretch',
               display: 'flex',
@@ -233,20 +197,23 @@ export default function ExecutiveReportDocument({
               justifyContent: 'center',
             }}
           >
-            <div style={{ fontSize: '11px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#8b7565', fontWeight: 700, fontFamily: 'Arial, sans-serif' }}>
-              Executive Summary Badge
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '999px', background: '#8b5e3c' }} />
+              <div style={{ fontSize: '11px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#8b7565', fontWeight: 700, fontFamily: 'Arial, sans-serif' }}>
+                Executive Summary Badge
+              </div>
             </div>
-            <div style={{ marginTop: '8px', fontSize: '16px', lineHeight: 1.4, fontWeight: 700, color: '#2f241d' }}>
+            <div style={{ marginTop: '10px', fontSize: '18px', lineHeight: 1.4, fontWeight: 700, color: '#2f241d' }}>
               Primary: {primaryMeta.label} | Secondary: {secondaryMeta.label}
             </div>
-            <div style={{ marginTop: '6px', fontSize: '13px', lineHeight: 1.6, color: '#5f4c3d', fontFamily: 'Arial, sans-serif' }}>
+            <div style={{ marginTop: '8px', fontSize: '13px', lineHeight: 1.6, color: '#5f4c3d', fontFamily: 'Arial, sans-serif' }}>
               A high-clarity behavioral profile designed for coaching, hiring, and team planning conversations.
             </div>
           </div>
         </section>
 
-        <section className="report-layout-grid">
-          <div className="report-card" style={{ border: '1px solid #e8dfd6', borderRadius: '18px', background: '#fffdfb', padding: '15px' }}>
+        <section data-export-section="profile-overview" style={{ display: 'grid', gridTemplateColumns: '1.12fr 0.88fr', gap: '14px', breakInside: 'avoid' }}>
+          <div style={{ border: '1px solid #e8dfd6', borderRadius: '18px', background: '#fffdfb', padding: '15px' }}>
             <div style={{ fontSize: '11px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#8b7565', fontWeight: 700, fontFamily: 'Arial, sans-serif' }}>
               Trait Breakdown & KPI Chips
             </div>
@@ -304,24 +271,24 @@ export default function ExecutiveReportDocument({
           </div>
         </section>
 
-        <section className="report-compare-grid">
-          {insightPanels.map((panel) => (
-            <div key={panel.title} className="report-panel" style={{ border: '1px solid #e8dfd6', borderRadius: '16px', background: '#fffdfb', padding: '14px', minHeight: '126px' }}>
+        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px' }}>
+          {insightPanels.map((panel, index) => (
+            <div key={panel.title} data-export-section={`insight-${index}`} style={{ border: '1px solid #e8dfd6', borderRadius: '16px', background: '#fffdfb', padding: '14px', minHeight: '126px' }}>
               <h3 style={{ margin: 0, fontSize: '15px', color: '#2f241d' }}>{panel.title}</h3>
               <div style={{ marginTop: '8px', fontSize: '13px', lineHeight: 1.7, color: '#5f4c3d', fontFamily: 'Arial, sans-serif' }}>{panel.body}</div>
             </div>
           ))}
         </section>
 
-        <section className="report-compare-grid">
-          <div className="report-note" style={{ border: '1px solid #e8dfd6', borderRadius: '16px', background: '#f7efe6', padding: '14px' }}>
+        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px' }}>
+          <div data-export-section="core-strengths" style={{ border: '1px solid #e8dfd6', borderRadius: '16px', background: '#f7efe6', padding: '14px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', color: '#2f241d' }}>Core Strengths</h3>
             <ul style={{ margin: '10px 0 0 0', paddingLeft: '18px', color: '#5f4c3d', lineHeight: 1.7, fontFamily: 'Arial, sans-serif' }}>
               {(profile?.highlights ?? primaryMeta.strengths).map((item) => <li key={item}>{item}</li>)}
             </ul>
           </div>
 
-          <div className="report-note" style={{ border: '1px solid #e8dfd6', borderRadius: '16px', background: '#f7efe6', padding: '14px' }}>
+          <div data-export-section="development-focus" className="report-note" style={{ border: '1px solid #e8dfd6', borderRadius: '16px', background: '#f7efe6', padding: '14px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', color: '#2f241d' }}>Development Focus</h3>
             <ul style={{ margin: '10px 0 0 0', paddingLeft: '18px', color: '#5f4c3d', lineHeight: 1.7, fontFamily: 'Arial, sans-serif' }}>
               {(profile?.growthPoints ?? primaryMeta.stretch).map((item) => <li key={item}>{item}</li>)}
@@ -330,7 +297,7 @@ export default function ExecutiveReportDocument({
         </section>
 
         <footer
-          className="report-footer"
+          data-export-section="footer"
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr auto',

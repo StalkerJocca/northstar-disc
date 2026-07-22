@@ -1,6 +1,7 @@
 import html2canvas from 'html2canvas'
-import { PDFDocument } from 'pdf-lib'
-import type { TraitKey } from '../types/disc'
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+import type { DiscScoreResponse, TraitKey } from '../types/disc'
+import { traitMeta } from './discProfile'
 
 export type SharePayload = {
   primaryTrait: TraitKey
@@ -72,6 +73,385 @@ export type ShareEvent = {
   timestamp: string
 }
 
+async function buildPdfReportPdfBytes(
+  element: HTMLElement,
+  options?: {
+    profile?: DiscScoreResponse['profile'] | null
+    primaryTrait?: TraitKey
+    secondaryTrait?: TraitKey
+    completionScore?: number
+    generatedAt?: string
+  },
+) {
+  const pdfDoc = await PDFDocument.create()
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+  const pageWidth = 595.28
+  const pageHeight = 841.89
+  const margin = 40
+  const primaryTrait = options?.primaryTrait ?? options?.profile?.primaryTrait ?? 'D'
+  const secondaryTrait = options?.secondaryTrait ?? options?.profile?.secondaryTrait ?? 'C'
+  const primaryMeta = traitMeta[primaryTrait]
+  const secondaryMeta = traitMeta[secondaryTrait]
+  const signatureStyle = getSignatureLeadershipStyle(primaryTrait, secondaryTrait)
+  const summary = options?.profile?.narrative ?? collectSectionSummary(element)
+  const sections = collectPdfReportSections(element)
+
+  addPdfCoverPage(pdfDoc, font, boldFont, pageWidth, pageHeight, margin, {
+    title: 'Executive Behavioral Report',
+    subtitle: 'Northstar DISC board packet export',
+    generatedAt: options?.generatedAt ?? '',
+    completionScore: options?.completionScore ?? 0,
+    profile: options?.profile,
+    primaryMeta,
+    secondaryMeta,
+    summary,
+    signatureStyle,
+  })
+
+  addPdfDetailPages(pdfDoc, font, boldFont, pageWidth, pageHeight, margin, sections)
+  return pdfDoc.save()
+}
+
+function collectSectionSummary(element: HTMLElement) {
+  const firstHeading = element.querySelector<HTMLElement>('h1, h2, h3, h4')
+  if (firstHeading?.textContent?.trim()) {
+    return cleanText(firstHeading.textContent)
+  }
+
+  return cleanText(element.innerText).slice(0, 420)
+}
+
+type PdfReportSection = {
+  id: string
+  title: string
+  text: string
+  bullets: string[]
+  accent: string
+  badge?: string
+}
+
+function collectPdfReportSections(element: HTMLElement): PdfReportSection[] {
+  const sections = Array.from(element.querySelectorAll<HTMLElement>('[data-export-section]')).map((section) => {
+    const id = section.getAttribute('data-export-section') ?? 'section'
+    const title = section.querySelector<HTMLElement>('h1, h2, h3, h4')?.textContent?.trim() ?? getSectionTitle(id)
+    const bullets = Array.from(section.querySelectorAll('li')).map((item) => cleanText(item.textContent))
+    const innerText = cleanText(section.innerText.replace(title, ''))
+    return {
+      id,
+      title,
+      text: bullets.length ? innerText.replace(bullets.join(' '), '').trim() : innerText,
+      bullets,
+      accent: getSectionAccent(id),
+      badge: getSectionBadgeLabel(id),
+    }
+  })
+
+  if (sections.length > 0) {
+    return sections
+  }
+
+  return [{
+    id: 'report',
+    title: 'Executive Report',
+    text: cleanText(element.innerText),
+    bullets: [],
+    accent: '#8b5e3c',
+  }]
+}
+
+function addPdfCoverPage(
+  pdfDoc: Awaited<ReturnType<typeof PDFDocument.create>>,
+  font: any,
+  boldFont: any,
+  pageWidth: number,
+  pageHeight: number,
+  margin: number,
+  data: {
+    title: string
+    subtitle: string
+    generatedAt: string
+    completionScore: number
+    profile?: DiscScoreResponse['profile'] | null
+    primaryMeta: { label: string }
+    secondaryMeta: { label: string }
+    summary: string
+    signatureStyle: SignatureStyle
+  },
+) {
+  const page = pdfDoc.addPage([pageWidth, pageHeight])
+  const background = rgb(0.995, 0.99, 0.98)
+  const headerPanel = rgb(0.948, 0.922, 0.892)
+  const cardSurface = rgb(0.99, 0.98, 0.95)
+  const accent = rgb(0.72, 0.51, 0.32)
+  const textDark = rgb(0.18, 0.11, 0.07)
+  const textWarm = rgb(0.36, 0.28, 0.21)
+
+  page.drawRectangle({ x: margin, y: margin, width: pageWidth - margin * 2, height: pageHeight - margin * 2, color: background })
+
+  const headerTop = pageHeight - margin
+  const headerHeight = 150
+  page.drawRectangle({ x: margin + 10, y: headerTop - headerHeight, width: pageWidth - margin * 2 - 20, height: headerHeight, color: headerPanel })
+  page.drawRectangle({ x: margin + 24, y: headerTop - 52, width: 140, height: 6, color: accent })
+  page.drawRectangle({ x: margin + 24, y: headerTop - 66, width: 92, height: 4, color: rgb(0.48, 0.34, 0.22) })
+
+  page.drawText('Northstar DISC', { x: margin + 26, y: headerTop - 44, size: 26, font: boldFont, color: textDark })
+  page.drawText(data.title, { x: margin + 26, y: headerTop - 74, size: 20, font: boldFont, color: textDark })
+  page.drawText(data.subtitle, { x: margin + 26, y: headerTop - 96, size: 11, font: font, color: textWarm })
+  page.drawText(`Completion: ${data.completionScore}%`, { x: margin + 26, y: headerTop - 118, size: 10, font: font, color: textWarm })
+  page.drawText(`Generated: ${data.generatedAt}`, { x: margin + 220, y: headerTop - 118, size: 10, font: font, color: textWarm })
+  page.drawText(`Primary: ${data.primaryMeta.label}`, { x: margin + 26, y: headerTop - 136, size: 10, font: font, color: textWarm })
+  page.drawText(`Secondary: ${data.secondaryMeta.label}`, { x: margin + 220, y: headerTop - 136, size: 10, font: font, color: textWarm })
+
+  const leftColumnX = margin + 24
+  const leftColumnWidth = pageWidth - margin * 2 - 280
+  const rightColumnX = pageWidth - margin - 240
+  const summaryTop = headerTop - headerHeight - 22
+  const summaryHeight = 220
+  const summaryWidth = leftColumnWidth
+
+  page.drawRectangle({ x: leftColumnX - 14, y: summaryTop - summaryHeight, width: summaryWidth + 28, height: summaryHeight, color: cardSurface })
+  page.drawRectangle({ x: leftColumnX - 14, y: summaryTop - summaryHeight, width: summaryWidth + 28, height: 6, color: accent })
+  page.drawText('Executive summary', { x: leftColumnX, y: summaryTop - 24, size: 14, font: boldFont, color: textDark })
+
+  const summaryLines = splitPdfText(data.summary, summaryWidth - 20, font, 11)
+  let cursorY = summaryTop - 44
+  summaryLines.forEach((line) => {
+    page.drawText(line, { x: leftColumnX, y: cursorY, size: 10, font: font, color: textWarm })
+    cursorY -= 14
+  })
+
+  const chipY = summaryTop - summaryHeight - 26
+  drawMetricChip(page, leftColumnX, chipY, 'Primary trait', data.primaryMeta.label, font, boldFont)
+  drawMetricChip(page, leftColumnX + 162, chipY, 'Secondary trait', data.secondaryMeta.label, font, boldFont)
+  drawMetricChip(page, leftColumnX + 324, chipY, 'Completion', `${data.completionScore}%`, font, boldFont)
+  page.drawRectangle({ x: leftColumnX - 14, y: chipY - 44, width: summaryWidth + 28, height: 4, color: accent })
+
+  const signatureTop = chipY - 64
+  drawSignatureBadge(page, leftColumnX, signatureTop, 232, `${data.primaryMeta.label} • ${data.secondaryMeta.label}`, data.summary, font, boldFont)
+
+  const profileBadgeTop = summaryTop - 24
+  drawProfileBadge(page, rightColumnX, profileBadgeTop, 232, data.primaryMeta.label, data.secondaryMeta.label, data.signatureStyle.badge, font, boldFont)
+
+  const chartTop = profileBadgeTop - 142
+  page.drawLine({ start: { x: rightColumnX - 18, y: summaryTop + 6 }, end: { x: rightColumnX - 18, y: chartTop - 248 }, thickness: 0.5, color: rgb(0.85, 0.80, 0.72) })
+
+  const chartHeight = 240
+  page.drawRectangle({ x: rightColumnX, y: chartTop - chartHeight, width: 240, height: chartHeight, color: cardSurface })
+  page.drawRectangle({ x: rightColumnX + 12, y: chartTop - 24, width: 86, height: 4, color: accent })
+  page.drawText('Leadership fingerprint', { x: rightColumnX + 14, y: chartTop - 44, size: 12, font: boldFont, color: textDark })
+  page.drawText('Radar and score profile', { x: rightColumnX + 14, y: chartTop - 60, size: 9, font: font, color: textWarm })
+
+  const traitScores = data.profile?.scores ?? []
+  drawTraitPerformanceChart(page, rightColumnX + 26, chartTop - 86, 180, traitScores, font, boldFont)
+}
+
+function drawProfileBadge(page: any, x: number, y: number, width: number, primaryLabel: string, secondaryLabel: string, badge: string, font: any, boldFont: any) {
+  const height = 102
+  page.drawRectangle({ x, y: y - height, width, height, color: rgb(0.98, 0.95, 0.90) })
+  page.drawRectangle({ x: x + 10, y: y - height + 12, width: width - 20, height: 20, color: rgb(0.73, 0.53, 0.34) })
+  page.drawText('Primary & secondary', { x: x + 14, y: y - 28, size: 8, font: font, color: rgb(0.45, 0.33, 0.23) })
+  page.drawText(`${primaryLabel} — ${secondaryLabel}`, { x: x + 14, y: y - 46, size: 12, font: boldFont, color: rgb(0.18, 0.11, 0.07) })
+  page.drawText(badge, { x: x + 14, y: y - 64, size: 10, font: font, color: rgb(0.38, 0.27, 0.19) })
+  page.drawText('Executive profile badge', { x: x + 14, y: y - 80, size: 8, font: font, color: rgb(0.44, 0.34, 0.24) })
+}
+
+function drawSignatureBadge(page: any, x: number, y: number, width: number, title: string, description: string, font: any, boldFont: any) {
+  const height = 88
+  page.drawRectangle({ x, y: y - height, width, height, color: rgb(0.96, 0.92, 0.84) })
+  page.drawRectangle({ x: x + 8, y: y - height + 8, width: width - 16, height: height - 16, color: rgb(0.99, 0.97, 0.93) })
+  page.drawText('Executive Signature', { x: x + 14, y: y - 24, size: 9, font: font, color: rgb(0.45, 0.32, 0.22) })
+  page.drawText(title, { x: x + 14, y: y - 40, size: 12, font: boldFont, color: rgb(0.18, 0.11, 0.07) })
+  const descLines = splitPdfText(description, width - 32, font, 9)
+  let descY = y - 56
+  descLines.forEach((line) => {
+    page.drawText(line, { x: x + 14, y: descY, size: 9, font: font, color: rgb(0.38, 0.27, 0.19) })
+    descY -= 12
+  })
+}
+
+function drawMetricChip(page: any, x: number, y: number, label: string, value: string, font: any, boldFont: any) {
+  const width = 148
+  page.drawRectangle({ x, y: y - 32, width, height: 32, color: rgb(0.97, 0.95, 0.91) })
+  page.drawText(label.toUpperCase(), { x: x + 10, y: y - 12, size: 8, font: font, color: rgb(0.45, 0.32, 0.22) })
+  page.drawText(value, { x: x + 10, y: y - 22, size: 12, font: boldFont, color: rgb(0.18, 0.11, 0.07) })
+}
+
+function drawTraitPerformanceChart(page: any, x: number, y: number, width: number, scores: Array<{ trait: TraitKey; score: number; percentage: number }>, font: any, boldFont: any) {
+  const radarSize = width
+  const radius = radarSize / 2
+  const centerX = x + radius
+  const centerY = y - 20 - radius
+
+  for (let ring = 1; ring <= 3; ring += 1) {
+    page.drawEllipse({ x: centerX, y: centerY, xScale: (radius * ring) / 3, yScale: (radius * ring) / 3, color: rgb(0.91, 0.86, 0.79), opacity: 0.35 })
+  }
+
+  const axes = [
+    { dx: 0, dy: radius },
+    { dx: radius, dy: 0 },
+    { dx: 0, dy: -radius },
+    { dx: -radius, dy: 0 },
+  ]
+  axes.forEach((axis) => {
+    page.drawLine({ start: { x: centerX, y: centerY }, end: { x: centerX + axis.dx, y: centerY + axis.dy }, thickness: 0.8, color: rgb(0.78, 0.70, 0.62) })
+  })
+
+  if (scores.length) {
+    const polygonPath = buildRadarPath(scores, centerX, centerY, radius)
+    page.drawSvgPath(polygonPath, { x: 0, y: 0, color: rgb(0.78, 0.49, 0.41), opacity: 0.35, borderColor: rgb(0.58, 0.33, 0.23), borderWidth: 1.2 })
+
+    scores.forEach((item, index) => {
+      const angle = (Math.PI * 2 * index) / scores.length - Math.PI / 2
+      const pointRadius = radius * (item.percentage / 100)
+      const px = centerX + Math.cos(angle) * pointRadius
+      const py = centerY + Math.sin(angle) * pointRadius
+
+      page.drawCircle({ x: px, y: py, size: 8, color: getTraitColor(item.trait) })
+      page.drawText(item.trait, { x: centerX + Math.cos(angle) * (radius + 18) - 10, y: centerY + Math.sin(angle) * (radius + 18) - 5, size: 8, font: font, color: rgb(0.27, 0.18, 0.12) })
+    })
+  } else {
+    page.drawText('Profile data unavailable for chart rendering.', { x: x + 8, y: y - 24, size: 8, font: font, color: rgb(0.45, 0.32, 0.22) })
+  }
+
+  const barLeft = x
+  let barY = y - radarSize - 18
+  const barMaxWidth = width
+  const barSpacing = 22
+  scores.forEach((item) => {
+    const barWidth = Math.max(24, (barMaxWidth * item.percentage) / 100)
+    page.drawRectangle({ x: barLeft, y: barY, width: barMaxWidth, height: 10, color: rgb(0.90, 0.84, 0.76) })
+    page.drawRectangle({ x: barLeft, y: barY, width: barWidth, height: 10, color: getTraitColor(item.trait) })
+    page.drawText(item.trait, { x: barLeft, y: barY + 14, size: 8, font: font, color: rgb(0.35, 0.25, 0.18) })
+    page.drawText(`${item.percentage}%`, { x: barLeft + barMaxWidth - 28, y: barY + 14, size: 8, font: boldFont, color: rgb(0.27, 0.18, 0.12) })
+    barY -= barSpacing
+  })
+}
+
+function buildRadarPath(scores: Array<{ trait: TraitKey; score: number; percentage: number }>, cx: number, cy: number, radius: number) {
+  const points = scores.map((item, index) => {
+    const angle = (Math.PI * 2 * index) / scores.length - Math.PI / 2
+    const distance = (item.percentage / 100) * radius
+    const x = cx + Math.cos(angle) * distance
+    const y = cy + Math.sin(angle) * distance
+    return `${index === 0 ? 'M' : 'L'} ${x},${y}`
+  })
+  return `${points.join(' ')} Z`
+}
+
+function getTraitColor(trait: TraitKey) {
+  switch (trait) {
+    case 'D':
+      return rgb(0.78, 0.49, 0.41)
+    case 'I':
+      return rgb(0.84, 0.70, 0.34)
+    case 'S':
+      return rgb(0.41, 0.55, 0.42)
+    case 'C':
+      return rgb(0.36, 0.43, 0.49)
+    default:
+      return rgb(0.4, 0.4, 0.4)
+  }
+}
+
+function addPdfDetailPages(
+  pdfDoc: Awaited<ReturnType<typeof PDFDocument.create>>,
+  font: any,
+  boldFont: any,
+  pageWidth: number,
+  pageHeight: number,
+  margin: number,
+  sections: PdfReportSection[],
+) {
+  let page = pdfDoc.addPage([pageWidth, pageHeight])
+  let cursorY = pageHeight - margin
+  const contentWidth = pageWidth - margin * 2
+  const cardPadding = 18
+  const cardSpacing = 24
+
+  sections.forEach((section) => {
+    const titleLines = splitPdfText(section.title, contentWidth - cardPadding * 2, boldFont, 16)
+    const bodyLines = splitPdfText(section.text, contentWidth - cardPadding * 2, font, 11)
+    const bulletLines = section.bullets.flatMap((bullet) => splitPdfText(`• ${bullet}`, contentWidth - cardPadding * 3, font, 10))
+    const sectionHeight = titleLines.length * 20 + bodyLines.length * 16 + bulletLines.length * 16 + 88
+
+    if (cursorY - sectionHeight < margin + cardSpacing) {
+      page = pdfDoc.addPage([pageWidth, pageHeight])
+      cursorY = pageHeight - margin
+    }
+
+    const accentColor = parseHexColor(section.accent)
+    const cardBottom = cursorY - sectionHeight
+
+    page.drawRectangle({ x: margin - 4, y: cardBottom - 4, width: contentWidth + 8, height: sectionHeight + 8, color: rgb(0.95, 0.93, 0.90) })
+    page.drawRectangle({ x: margin, y: cardBottom, width: contentWidth, height: sectionHeight, color: rgb(0.99, 0.98, 0.95) })
+    page.drawRectangle({ x: margin + cardPadding, y: cardBottom + sectionHeight - 22, width: 120, height: 6, color: accentColor })
+
+    if (section.badge) {
+      page.drawRectangle({ x: margin + contentWidth - 124, y: cardBottom + sectionHeight - 28, width: 116, height: 18, color: accentColor })
+      page.drawText(section.badge.toUpperCase(), { x: margin + contentWidth - 118, y: cardBottom + sectionHeight - 24, size: 8, font: boldFont, color: rgb(1, 1, 1) })
+    }
+
+    let localY = cardBottom + sectionHeight - 40
+    titleLines.forEach((line) => {
+      page.drawText(line, { x: margin + cardPadding, y: localY, size: 16, font: boldFont, color: rgb(0.18, 0.12, 0.06) })
+      localY -= 20
+    })
+
+    localY -= 8
+    bodyLines.forEach((line) => {
+      page.drawText(line, { x: margin + cardPadding, y: localY, size: 10, font: font, color: rgb(0.35, 0.25, 0.18) })
+      localY -= 16
+    })
+
+    if (bulletLines.length) {
+      localY -= 10
+      bulletLines.forEach((line) => {
+        page.drawText(line, { x: margin + cardPadding + 8, y: localY, size: 10, font: font, color: rgb(0.35, 0.25, 0.18) })
+        localY -= 16
+      })
+    }
+
+    cursorY = cardBottom - cardSpacing
+  })
+}
+
+function splitPdfText(text: string, maxWidth: number, font: any, size: number) {
+  const words = text.split(' ')
+  const lines: string[] = []
+  let line = ''
+
+  for (const word of words) {
+    const candidate = line ? `${line} ${word}` : word
+    if (font.widthOfTextAtSize(candidate, size) <= maxWidth) {
+      line = candidate
+    } else {
+      if (line) {
+        lines.push(line)
+      }
+      line = word
+    }
+  }
+
+  if (line) {
+    lines.push(line)
+  }
+
+  return lines
+}
+
+function parseHexColor(hex: string) {
+  const normalized = hex.replace('#', '')
+  if (normalized.length !== 6) {
+    return rgb(0, 0, 0)
+  }
+
+  const r = parseInt(normalized.slice(0, 2), 16) / 255
+  const g = parseInt(normalized.slice(2, 4), 16) / 255
+  const b = parseInt(normalized.slice(4, 6), 16) / 255
+  return rgb(r, g, b)
+}
+
 export type ShareAnalytics = {
   total: number
   latest?: ShareEvent
@@ -135,7 +515,7 @@ export async function exportShareCard(
   options?: {
     fileName?: string
     format?: 'png' | 'pdf'
-    profile?: { primaryTrait?: TraitKey; secondaryTrait?: TraitKey } | null
+    profile?: DiscScoreResponse['profile'] | null
     primaryTrait?: TraitKey
     secondaryTrait?: TraitKey
     completionScore?: number
@@ -151,22 +531,7 @@ export async function exportShareCard(
 
   if (format === 'pdf') {
     try {
-      const canvas = await renderCanvasForExport(element)
-      const imageBlob = await convertCanvasToPngBlob(canvas)
-      const imageBytes = await imageBlob.arrayBuffer()
-      const pdfDoc = await PDFDocument.create()
-      const page = pdfDoc.addPage([595.28, 841.89])
-      const { width, height } = page.getSize()
-      const embeddedImage = await pdfDoc.embedPng(imageBytes)
-      const imageScale = Math.min((width - 40) / embeddedImage.width, (height - 40) / embeddedImage.height)
-      page.drawImage(embeddedImage, {
-        x: 20,
-        y: height - embeddedImage.height * imageScale - 20,
-        width: embeddedImage.width * imageScale,
-        height: embeddedImage.height * imageScale,
-      })
-
-      const pdfBytes = await pdfDoc.save()
+      const pdfBytes = await buildPdfReportPdfBytes(element, options)
       const blob = new Blob([Uint8Array.from(pdfBytes)], { type: 'application/pdf' })
       const blobUrl = URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -194,40 +559,297 @@ export async function exportShareCard(
   return { ok: true, fileName: `${fileName}.png` }
 }
 
-async function renderCanvasForExport(element: HTMLElement) {
-  return html2canvas(element, {
-    backgroundColor: '#fffaf4',
-    scale: 3,
-    logging: false,
-    useCORS: true,
-    allowTaint: true,
-    width: element.scrollWidth || element.clientWidth || 1200,
-    height: element.scrollHeight || element.clientHeight || 1600,
-    onclone(documentClone) {
-      documentClone.head.innerHTML = ''
-      documentClone.body.innerHTML = ''
-      documentClone.body.appendChild(element.cloneNode(true))
+export function buildExportLayoutSections(element: HTMLElement) {
+  const sections = Array.from(element.querySelectorAll<HTMLElement>('[data-export-section]'))
+    .map((section) => {
+      const id = section.getAttribute('data-export-section') ?? 'section'
+      const heading = section.querySelector<HTMLElement>('h1, h2, h3, h4')?.textContent?.trim() ?? ''
+      const title = heading || getSectionTitle(id)
+      const body = cleanText(section.innerText)
+      const accent = getSectionAccent(id)
+      return {
+        id,
+        title,
+        body: body.slice(0, 520),
+        accent,
+        height: getSectionHeight(id, Math.max(260, Math.min(420, 210 + Math.ceil((body.length / 140) * 18)))),
+      }
+    })
 
-      const style = documentClone.createElement('style')
-      style.textContent = `
-        * { box-sizing: border-box; }
-        body {
-          margin: 0;
-          padding: 0;
-          background: #fffaf4 !important;
-          font-family: Arial, sans-serif;
-        }
-        .executive-report,
-        .executive-report * {
-          box-shadow: none !important;
-        }
-        .executive-report {
-          transform: none !important;
-          width: 100%;
-        }
-      `
-      documentClone.head.appendChild(style)
-    },
+  if (sections.length > 0) {
+    return sections
+  }
+
+  const fallbackBody = cleanText(element.innerText)
+  return [{
+    id: 'report',
+    title: 'Executive Report',
+    body: fallbackBody.slice(0, 900),
+    accent: '#8b5e3c',
+    height: 420,
+  }]
+}
+
+function cleanText(text?: string | null) {
+  return (text ?? '').replace(/\s+/g, ' ').trim()
+}
+
+function getSectionTitle(id: string) {
+  switch (id) {
+    case 'header':
+      return 'Executive Overview'
+    case 'profile-overview':
+      return 'Profile Overview'
+    case 'footer':
+      return 'Closing Notes'
+    default:
+      return id.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+  }
+}
+
+function getSectionAccent(id: string) {
+  switch (id) {
+    case 'header':
+      return '#8b5e3c'
+    case 'profile-overview':
+      return '#5d6f7d'
+    case 'footer':
+      return '#688b6a'
+    case 'core-strengths':
+      return '#8b5e3c'
+    case 'development-focus':
+      return '#c78e69'
+    default:
+      return '#c78e69'
+  }
+}
+
+function getSectionBadgeLabel(id: string) {
+  switch (id) {
+    case 'header':
+      return 'Board Summary'
+    case 'profile-overview':
+      return 'Profile Insight'
+    case 'footer':
+      return 'Closing Note'
+    case 'core-strengths':
+      return 'Strength Focus'
+    case 'development-focus':
+      return 'Growth Area'
+    default:
+      if (id.startsWith('insight')) {
+        return 'Insight'
+      }
+      return 'Feature'
+  }
+}
+
+function getSectionHeight(id: string, defaultHeight: number) {
+  switch (id) {
+    case 'header':
+      return Math.max(defaultHeight, 520)
+    case 'profile-overview':
+      return Math.max(defaultHeight, 520)
+    case 'footer':
+      return Math.max(defaultHeight, 180)
+    default:
+      return defaultHeight
+  }
+}
+
+
+async function renderCanvasForExport(element: HTMLElement, options?: {
+  profile?: DiscScoreResponse['profile'] | null
+  primaryTrait?: TraitKey
+  secondaryTrait?: TraitKey
+  completionScore?: number
+  generatedAt?: string
+}): Promise<HTMLCanvasElement> {
+  try {
+    const canvas = await html2canvas(element, {
+      backgroundColor: '#fffaf4',
+      scale: 2,
+      logging: false,
+      useCORS: true,
+      allowTaint: true,
+      foreignObjectRendering: true,
+      width: element.scrollWidth || element.clientWidth || 1200,
+      height: element.scrollHeight || element.clientHeight || 1800,
+      removeContainer: true,
+    })
+
+    if (canvas instanceof HTMLCanvasElement) {
+      return canvas
+    }
+  } catch (error) {
+    console.warn('html2canvas export fallback activated:', error)
+  }
+
+  return buildFallbackExportCanvas(element, options)
+}
+
+function buildFallbackExportCanvas(element: HTMLElement, options?: {
+  profile?: DiscScoreResponse['profile'] | null
+  primaryTrait?: TraitKey
+  secondaryTrait?: TraitKey
+  completionScore?: number
+  generatedAt?: string
+}) {
+  const canvas = document.createElement('canvas')
+  canvas.width = 1400
+  canvas.height = 1060
+  const ctx = canvas.getContext('2d')
+
+  if (!ctx) {
+    throw new Error('Unable to create export canvas')
+  }
+
+  const width = canvas.width
+  const height = canvas.height
+  const padding = 64
+  const profile = options?.profile
+  const primaryTrait = options?.primaryTrait ?? profile?.primaryTrait ?? 'D'
+  const secondaryTrait = options?.secondaryTrait ?? profile?.secondaryTrait ?? 'C'
+  const completionScore = options?.completionScore ?? 0
+  const generatedAt = options?.generatedAt ?? 'Not provided'
+  const summary = profile?.narrative ?? cleanText(element.innerText).slice(0, 900)
+  const scoreLines = (profile?.scores ?? []).slice(0, 4)
+  const highlightLines = (profile?.highlights ?? []).slice(0, 3)
+  const growthLines = (profile?.growthPoints ?? []).slice(0, 3)
+  const layoutSections = buildExportLayoutSections(element)
+  const traitPalette: Record<TraitKey, string> = {
+    D: '#c78e69',
+    I: '#d8b24a',
+    S: '#688b6a',
+    C: '#5d6f7d',
+  }
+
+  const baseBackground = ctx.createLinearGradient(0, 0, width, height)
+  baseBackground.addColorStop(0, '#fffaf5')
+  baseBackground.addColorStop(1, '#f2e1cf')
+  ctx.fillStyle = baseBackground
+  ctx.fillRect(0, 0, width, height)
+
+  ctx.fillStyle = '#fffdf9'
+  roundRect(ctx, padding, padding, width - padding * 2, height - padding * 2, 28)
+  ctx.fill()
+  ctx.strokeStyle = '#e8dfd6'
+  ctx.lineWidth = 2
+  ctx.stroke()
+
+  ctx.fillStyle = '#8b5e3c'
+  ctx.font = '700 34px Arial'
+  ctx.fillText('Northstar DISC', padding + 44, padding + 96)
+  ctx.fillStyle = '#4c3a2e'
+  ctx.font = '700 24px Arial'
+  ctx.fillText('Executive Report Export', padding + 44, padding + 136)
+
+  ctx.fillStyle = '#6b584d'
+  ctx.font = '16px Arial'
+  wrapText(ctx, summary, padding + 44, padding + 174, width - padding * 2 - 88, 24)
+
+  drawMetricBadge(ctx, padding + 44, padding + 242, '#f7efe6', '#2f241d', 'Primary', primaryTrait)
+  drawMetricBadge(ctx, padding + 300, padding + 242, '#f7efe6', '#2f241d', 'Secondary', secondaryTrait)
+  drawMetricBadge(ctx, padding + 556, padding + 242, '#f7efe6', '#2f241d', 'Completion', `${completionScore}%`)
+  drawMetricBadge(ctx, padding + 812, padding + 242, '#f7efe6', '#2f241d', 'Generated', generatedAt)
+
+  const cardWidth = (width - padding * 2 - 36) / 2
+  const leftX = padding + 28
+  const rightX = padding + 28 + cardWidth + 20
+
+  const coverCardY = padding + 320
+  const pageBreakY = 520
+  const secondPageY = pageBreakY + 20
+  const insightsY = secondPageY + 240
+  const highlightsY = insightsY + 220
+
+  drawInfoCard(ctx, leftX, coverCardY, cardWidth, 180, '#fffdfb', '#8b5e3c', 'Signature Snapshot', `${primaryTrait}${secondaryTrait} leadership with a calm, decisive profile designed for coaching, hiring, and team alignment.`)
+
+  drawTraitCard(ctx, leftX, secondPageY, cardWidth, 220, '#fffdfb', '#5d6f7d', 'Trait Performance', scoreLines, traitPalette)
+  drawInfoCard(ctx, rightX, secondPageY, cardWidth, 220, '#fffdfb', '#688b6a', 'Board-Level Insights', [
+    highlightLines[0] ? `Strength: ${highlightLines[0]}` : '',
+    growthLines[0] ? `Development: ${growthLines[0]}` : '',
+    highlightLines[1] ? `Strength: ${highlightLines[1]}` : '',
+  ].filter(Boolean).join(' • '))
+  drawInfoCard(ctx, leftX, insightsY, cardWidth, 200, '#fffdfb', '#c78e69', 'Report Highlights', layoutSections.slice(0, 2).map((section) => `${section.title}: ${section.body}`).join(' • '))
+
+  ctx.fillStyle = '#f7efe6'
+  roundRect(ctx, leftX, highlightsY + 220, width - padding * 2 - 56, 96, 20)
+  ctx.fill()
+  ctx.strokeStyle = '#eee5dc'
+  ctx.lineWidth = 1
+  ctx.stroke()
+  ctx.fillStyle = '#2f241d'
+  ctx.font = '700 20px Arial'
+  ctx.fillText('Board packet ready', leftX + 18, highlightsY + 264)
+  ctx.fillStyle = '#6b584d'
+  ctx.font = '15px Arial'
+  ctx.fillText('Premium layout, stronger balance, and executive narrative clarity.', leftX + 18, highlightsY + 288)
+
+  return canvas
+}
+
+function drawInfoCard(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, fill: string, accent: string, title: string, body: string) {
+  ctx.fillStyle = fill
+  roundRect(ctx, x, y, width, height, 18)
+  ctx.fill()
+  ctx.strokeStyle = '#eee5dc'
+  ctx.lineWidth = 1
+  ctx.stroke()
+
+  ctx.fillStyle = accent
+  ctx.fillRect(x + 16, y + 18, 124, 4)
+
+  ctx.fillStyle = '#2f241d'
+  ctx.font = '700 19px Arial'
+  ctx.fillText(title, x + 18, y + 52)
+  ctx.fillStyle = '#6b584d'
+  ctx.font = '15px Arial'
+  wrapText(ctx, body, x + 18, y + 78, width - 36, 24)
+}
+
+function drawMetricBadge(ctx: CanvasRenderingContext2D, x: number, y: number, fill: string, textColor: string, label: string, value: string) {
+  ctx.fillStyle = fill
+  roundRect(ctx, x, y, 192, 44, 999)
+  ctx.fill()
+  ctx.fillStyle = textColor
+  ctx.font = '700 11px Arial'
+  ctx.fillText(label.toUpperCase(), x + 18, y + 18)
+  ctx.font = '600 14px Arial'
+  ctx.fillText(value, x + 18, y + 34)
+}
+
+function drawTraitCard(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, fill: string, accent: string, title: string, scores: Array<{ trait: TraitKey; percentage: number }>, palette: Record<TraitKey, string>) {
+  ctx.fillStyle = fill
+  roundRect(ctx, x, y, width, height, 18)
+  ctx.fill()
+  ctx.strokeStyle = '#eee5dc'
+  ctx.lineWidth = 1
+  ctx.stroke()
+
+  ctx.fillStyle = accent
+  ctx.fillRect(x + 16, y + 18, 124, 4)
+
+  ctx.fillStyle = '#2f241d'
+  ctx.font = '700 19px Arial'
+  ctx.fillText(title, x + 18, y + 52)
+
+  const rowStart = y + 80
+  const rowHeight = 36
+  scores.forEach((item, index) => {
+    const rowY = rowStart + index * (rowHeight + 10)
+    const barWidth = Math.max(28, ((width - 78) * item.percentage) / 100)
+
+    ctx.fillStyle = '#f3e6d8'
+    roundRect(ctx, x + 18, rowY, width - 52, rowHeight, 10)
+    ctx.fill()
+    ctx.fillStyle = palette[item.trait]
+    roundRect(ctx, x + 18, rowY, barWidth, rowHeight, 10)
+    ctx.fill()
+
+    ctx.fillStyle = '#2f241d'
+    ctx.font = '600 14px Arial'
+    ctx.fillText(`${item.trait} ${item.percentage}%`, x + 24, rowY + 22)
   })
 }
 
@@ -240,37 +862,56 @@ async function exportAsImageDataUrl(element: HTMLElement) {
   }
 }
 
-async function convertCanvasToPngBlob(canvas: HTMLCanvasElement) {
-  if (typeof canvas.toBlob === 'function') {
-    return await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          reject(new Error('Unable to convert the report into a PNG blob for PDF export.'))
-          return
-        }
-
-        resolve(blob)
-      }, 'image/png')
-    })
-  }
-
-  const dataUrl = canvas.toDataURL('image/png')
-  const response = await fetch(dataUrl)
-  if (!response.ok) {
-    throw new Error('Unable to convert the report into a PNG blob for PDF export.')
-  }
-
-  return response.blob()
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
+  ctx.beginPath()
+  ctx.moveTo(x + radius, y)
+  ctx.lineTo(x + width - radius, y)
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius)
+  ctx.lineTo(x + width, y + height - radius)
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height)
+  ctx.lineTo(x + radius, y + height)
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius)
+  ctx.lineTo(x, y + radius)
+  ctx.quadraticCurveTo(x, y, x + radius, y)
+  ctx.closePath()
 }
 
+function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
+  const words = text.split(' ')
+  let line = ''
+  let currentY = y
+
+  for (const word of words) {
+    const testLine = line ? `${line} ${word}` : word
+    const metrics = ctx.measureText(testLine)
+
+    if (metrics.width > maxWidth && line) {
+      ctx.fillText(line, x, currentY)
+      line = word
+      currentY += lineHeight
+    } else {
+      line = testLine
+    }
+  }
+
+  if (line) {
+    ctx.fillText(line, x, currentY)
+  }
+}
+
+
 function buildFallbackExportDataUrl(element: HTMLElement) {
+  if (typeof document === 'undefined' || typeof HTMLCanvasElement === 'undefined') {
+    return 'data:image/png;base64,00'
+  }
+
   const canvas = document.createElement('canvas')
   canvas.width = 1200
   canvas.height = 1600
-  const ctx = canvas.getContext('2d')
+  const ctx = canvas.getContext?.('2d')
 
   if (!ctx) {
-    throw new Error('Unable to create export canvas')
+    return 'data:image/png;base64,00'
   }
 
   const width = canvas.width
@@ -328,38 +969,3 @@ function buildFallbackExportDataUrl(element: HTMLElement) {
   return canvas.toDataURL('image/png')
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
-  ctx.beginPath()
-  ctx.moveTo(x + radius, y)
-  ctx.lineTo(x + width - radius, y)
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius)
-  ctx.lineTo(x + width, y + height - radius)
-  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height)
-  ctx.lineTo(x + radius, y + height)
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius)
-  ctx.lineTo(x, y + radius)
-  ctx.quadraticCurveTo(x, y, x + radius, y)
-  ctx.closePath()
-}
-
-function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
-  const words = text.split(' ')
-  let line = ''
-  let currentY = y
-
-  for (const word of words) {
-    const testLine = line ? `${line} ${word}` : word
-    const metrics = ctx.measureText(testLine)
-    if (metrics.width > maxWidth && line) {
-      ctx.fillText(line, x, currentY)
-      line = word
-      currentY += lineHeight
-    } else {
-      line = testLine
-    }
-  }
-
-  if (line) {
-    ctx.fillText(line, x, currentY)
-  }
-}
