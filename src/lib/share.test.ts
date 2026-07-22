@@ -55,6 +55,7 @@ describe('share helpers', () => {
     })
 
     const element = document.createElement('div')
+    element.innerText = 'Northstar DISC summary for export'
     const result = await exportShareCard(element, { fileName: 'preview', format: 'png' })
 
     expect(result.ok).toBe(true)
@@ -65,5 +66,39 @@ describe('share helpers', () => {
     appendSpy.mockRestore()
     removeSpy.mockRestore()
     vi.restoreAllMocks()
+  })
+
+  it('falls back to a canvas-based export when html2canvas cannot render the card', async () => {
+    const html2canvasModule = await import('html2canvas')
+    const html2canvasMock = vi.mocked(html2canvasModule.default)
+    html2canvasMock.mockRejectedValueOnce(new Error('unsupported color'))
+
+    const element = document.createElement('div')
+    element.innerText = 'Fallback export content'
+
+    const originalGetContext = HTMLCanvasElement.prototype.getContext
+    HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
+      fillStyle: '',
+      font: '',
+      fillRect: vi.fn(),
+      fillText: vi.fn(),
+      measureText: vi.fn(() => ({ width: 100 })),
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      quadraticCurveTo: vi.fn(),
+      closePath: vi.fn(),
+      stroke: vi.fn(),
+      fill: vi.fn(),
+      lineWidth: 1,
+      strokeStyle: '',
+    } as unknown as CanvasRenderingContext2D)
+
+    const result = await exportShareCard(element, { fileName: 'fallback', format: 'png' })
+
+    expect(result.ok).toBe(true)
+    expect(result.fileName).toBe('fallback.png')
+
+    HTMLCanvasElement.prototype.getContext = originalGetContext
   })
 })

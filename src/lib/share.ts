@@ -162,15 +162,114 @@ export async function exportShareCard(element: HTMLElement, options?: { fileName
 }
 
 async function exportAsImageDataUrl(element: HTMLElement) {
-  const canvas = await html2canvas(element, {
-    backgroundColor: '#fffaf4',
-    scale: 2,
-    logging: false,
-    useCORS: true,
-    allowTaint: true,
-    width: element.scrollWidth || element.clientWidth || 1200,
-    height: element.scrollHeight || element.clientHeight || 1600,
-  })
+  try {
+    const canvas = await html2canvas(element, {
+      backgroundColor: '#fffaf4',
+      scale: 2,
+      logging: false,
+      useCORS: true,
+      allowTaint: true,
+      width: element.scrollWidth || element.clientWidth || 1200,
+      height: element.scrollHeight || element.clientHeight || 1600,
+    })
+
+    return canvas.toDataURL('image/png')
+  } catch {
+    return buildFallbackExportDataUrl(element)
+  }
+}
+
+function buildFallbackExportDataUrl(element: HTMLElement) {
+  const canvas = document.createElement('canvas')
+  canvas.width = 1200
+  canvas.height = 1600
+  const ctx = canvas.getContext('2d')
+
+  if (!ctx) {
+    throw new Error('Unable to create export canvas')
+  }
+
+  const width = canvas.width
+  const height = canvas.height
+  const padding = 72
+  const radius = 32
+
+  ctx.fillStyle = '#fffaf4'
+  ctx.fillRect(0, 0, width, height)
+
+  ctx.strokeStyle = '#e7ddd0'
+  ctx.lineWidth = 3
+  roundRect(ctx, padding, padding, width - padding * 2, height - padding * 2, radius)
+  ctx.fillStyle = '#fffdf9'
+  ctx.fill()
+  ctx.stroke()
+
+  ctx.fillStyle = '#c78e69'
+  roundRect(ctx, padding + 30, padding + 32, width - padding * 2 - 60, 220, 24)
+  ctx.fill()
+
+  ctx.fillStyle = '#2f241d'
+  ctx.font = '700 42px Arial'
+  ctx.fillText('Northstar DISC', padding + 52, padding + 96)
+  ctx.font = '600 24px Arial'
+  ctx.fillStyle = '#8b735d'
+  ctx.fillText('Leadership Signature', padding + 52, padding + 136)
+
+  ctx.fillStyle = '#4d3b30'
+  ctx.font = '700 30px Arial'
+  ctx.fillText('Your Share Card', padding + 52, padding + 320)
+
+  ctx.fillStyle = '#6e5a4f'
+  ctx.font = '22px Arial'
+  const summary = element.innerText.replace(/\s+/g, ' ').trim().slice(0, 420)
+  wrapText(ctx, summary, padding + 52, padding + 370, width - padding * 2 - 104, 32)
+
+  ctx.fillStyle = '#f2e0cf'
+  roundRect(ctx, padding + 40, height - 240, width - padding * 2 - 80, 140, 24)
+  ctx.fill()
+
+  ctx.fillStyle = '#4d3b30'
+  ctx.font = '600 24px Arial'
+  ctx.fillText('Ready to share', padding + 70, height - 166)
+  ctx.font = '20px Arial'
+  ctx.fillStyle = '#6e5a4f'
+  ctx.fillText('PNG, PDF, and LinkedIn-friendly export', padding + 70, height - 126)
 
   return canvas.toDataURL('image/png')
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
+  ctx.beginPath()
+  ctx.moveTo(x + radius, y)
+  ctx.lineTo(x + width - radius, y)
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius)
+  ctx.lineTo(x + width, y + height - radius)
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height)
+  ctx.lineTo(x + radius, y + height)
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius)
+  ctx.lineTo(x, y + radius)
+  ctx.quadraticCurveTo(x, y, x + radius, y)
+  ctx.closePath()
+}
+
+function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
+  const words = text.split(' ')
+  let line = ''
+  let currentY = y
+
+  for (const word of words) {
+    const testLine = line ? `${line} ${word}` : word
+    const metrics = ctx.measureText(testLine)
+    if (metrics.width > maxWidth && line) {
+      ctx.fillText(line, x, currentY)
+      line = word
+      currentY += lineHeight
+    } else {
+      line = testLine
+    }
+  }
+
+  if (line) {
+    ctx.fillText(line, x, currentY)
+  }
 }
