@@ -204,11 +204,27 @@ async function renderCanvasForExport(element: HTMLElement) {
     width: element.scrollWidth || element.clientWidth || 1200,
     height: element.scrollHeight || element.clientHeight || 1600,
     onclone(documentClone) {
+      documentClone.head.innerHTML = ''
+      documentClone.body.innerHTML = ''
+      documentClone.body.appendChild(element.cloneNode(true))
+
       const style = documentClone.createElement('style')
       style.textContent = `
-        body { background: #fffaf4 !important; }
-        .executive-report, .executive-report * { box-shadow: none !important; }
-        .executive-report { transform: none !important; }
+        * { box-sizing: border-box; }
+        body {
+          margin: 0;
+          padding: 0;
+          background: #fffaf4 !important;
+          font-family: Arial, sans-serif;
+        }
+        .executive-report,
+        .executive-report * {
+          box-shadow: none !important;
+        }
+        .executive-report {
+          transform: none !important;
+          width: 100%;
+        }
       `
       documentClone.head.appendChild(style)
     },
