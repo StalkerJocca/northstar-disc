@@ -17,6 +17,7 @@ vi.mock('jspdf', () => ({
       },
     },
     addImage: vi.fn(),
+    addPage: vi.fn(),
     output: vi.fn(() => new Blob(['pdf'], { type: 'application/pdf' })),
   })),
 }))
@@ -126,6 +127,24 @@ describe('share helpers', () => {
     appendSpy.mockRestore()
     removeSpy.mockRestore()
     openSpy.mockRestore()
+  })
+
+  it('spans a PDF across multiple pages when the report is taller than a single page', async () => {
+    const html2canvasModule = await import('html2canvas')
+    const html2canvasMock = vi.mocked(html2canvasModule.default)
+    html2canvasMock.mockResolvedValueOnce({
+      width: 1200,
+      height: 2600,
+      toDataURL: () => 'data:image/png;base64,abc123',
+    } as never)
+
+    const element = document.createElement('div')
+    element.innerText = 'Long executive report content'
+
+    await exportShareCard(element, { fileName: 'executive-report', format: 'pdf' })
+
+    const pdfInstance = vi.mocked(jsPDF).mock.results[0]?.value as { addPage: ReturnType<typeof vi.fn> }
+    expect(pdfInstance.addPage).toHaveBeenCalled()
   })
 
   it('falls back to a canvas-based export when html2canvas cannot render the card', async () => {

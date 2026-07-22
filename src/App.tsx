@@ -4,11 +4,13 @@ import DiscProfileDashboard from './components/DiscProfileDashboard'
 import ProgressBadge from './components/ProgressBadge'
 import ShareableResultsCard from './components/ShareableResultsCard'
 import SocialShareButtons from './components/SocialShareButtons'
+import ExecutiveReportDocument from './components/exports/ExecutiveReportDocument'
+import { useExportReport } from './hooks/useExportReport'
 import { submitDiscScore } from './lib/discApi'
-import { buildOgImageUrl, buildShareText, buildShareUrl, exportShareCard, trackShareEvent, getSignatureLeadershipStyle } from './lib/share'
+import { buildOgImageUrl, buildShareText, buildShareUrl, trackShareEvent, getSignatureLeadershipStyle } from './lib/share'
 import { appBrand, exportCopy, milestoneCopy, nextStepGuidance, onboardingCopy } from './lib/content'
 import { traitMeta } from './lib/discProfile'
-import type { DiscScoreResponse } from './types/disc'
+import type { DiscScoreResponse, TraitKey } from './types/disc'
 
 const questions = [
   // --- BLOCO 1: RITMO & TOMADA DE DECISÃO (1-10) ---
@@ -542,8 +544,16 @@ function App() {
   const [apiError, setApiError] = useState<string | null>(persistedProgress?.apiError ?? null)
   const [isScoring, setIsScoring] = useState(persistedProgress?.isScoring ?? false)
   const shareCardRef = useRef<HTMLDivElement | null>(null)
+  const reportExportRef = useRef<HTMLDivElement | null>(null)
   const [celebrate, setCelebrate] = useState(false)
   const prefersReducedMotion = useReducedMotion()
+  const { isExporting, exportError: exportReportError, exportReport, generatedAt } = useExportReport({
+    profile,
+    primaryTrait: (profile?.primaryTrait ?? 'D') as TraitKey,
+    secondaryTrait: (profile?.secondaryTrait ?? 'C') as TraitKey,
+    completionScore: Math.min(100, Math.round((answers.length / questions.length) * 100)),
+    fileName: 'northstar-disc-report',
+  })
 
   const currentQuestion = questions[step]
 
@@ -676,12 +686,14 @@ function App() {
   }
 
   const handleDownloadCard = async (format: 'png' | 'pdf' = 'png') => {
-    if (!shareCardRef.current) {
+    if (!reportExportRef.current) {
       return
     }
 
-    await exportShareCard(shareCardRef.current, { fileName: `northstar-disc-${format}`, format })
-    trackShareEvent({ platform: format === 'pdf' ? 'linkedin' : 'twitter', referralCode, profileSignature: profile ? 'Northstar DISC' : undefined })
+    const result = await exportReport(format, reportExportRef.current)
+    if (result.ok) {
+      trackShareEvent({ platform: format === 'pdf' ? 'linkedin' : 'twitter', referralCode, profileSignature: profile ? 'Northstar DISC' : undefined })
+    }
   }
 
   const resultsHeading = profile ? `You feel most aligned with ${traitMeta[primaryTrait as keyof typeof traitMeta].label}` : 'Your gentle profile'
@@ -979,6 +991,16 @@ function App() {
                     secondaryTrait={(profile?.secondaryTrait ?? 'C') as 'D' | 'I' | 'S' | 'C'}
                   />
                 </div>
+
+                <div ref={reportExportRef} className="fixed left-[-9999px] top-0 z-[-1] w-[900px] bg-transparent" aria-hidden="true">
+                  <ExecutiveReportDocument
+                    profile={profile}
+                    primaryTrait={(profile?.primaryTrait ?? 'D') as TraitKey}
+                    secondaryTrait={(profile?.secondaryTrait ?? 'C') as TraitKey}
+                    completionScore={completionScore}
+                    generatedAt={generatedAt}
+                  />
+                </div>
               </div>
 
               <motion.div
@@ -1046,18 +1068,20 @@ function App() {
                         onClick={() => handleDownloadCard('png')}
                         whileHover={{ y: -2, scale: 1.01 }}
                         whileTap={{ scale: 0.97 }}
-                        className="rounded-full border border-stone-300 bg-white px-5 py-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2"
+                        disabled={isExporting}
+                        className="rounded-full border border-stone-300 bg-white px-5 py-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
                       >
-                        Download PNG
+                        {isExporting ? 'Preparing export…' : 'Download PNG'}
                       </motion.button>
                       <motion.button
                         type="button"
                         onClick={() => handleDownloadCard('pdf')}
                         whileHover={{ y: -2, scale: 1.01 }}
                         whileTap={{ scale: 0.97 }}
-                        className="rounded-full border border-stone-300 bg-white px-5 py-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2"
+                        disabled={isExporting}
+                        className="rounded-full border border-stone-300 bg-white px-5 py-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
                       >
-                        Download PDF
+                        {isExporting ? 'Preparing export…' : 'Download PDF'}
                       </motion.button>
                     </div>
                     <motion.p
@@ -1066,7 +1090,7 @@ function App() {
                       transition={{ duration: 0.2 }}
                       aria-live="polite"
                     >
-                      {shareStatusText}
+                      {exportReportError ? exportReportError : shareStatusText}
                     </motion.p>
                   </div>
                 </div>
