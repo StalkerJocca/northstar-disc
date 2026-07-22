@@ -145,10 +145,10 @@ export async function exportShareCard(element: HTMLElement, options?: { fileName
       return { ok: false, error: 'Unable to open print preview' }
     }
 
-    printWindow.document.write(`<!doctype html><html><head><style>body{margin:0;padding:24px;background:#fff;font-family:Arial,sans-serif}img{width:100%;height:auto;border-radius:24px;box-shadow:0 12px 40px rgba(0,0,0,.15)}</style></head><body><img src="${dataUrl}" alt="Northstar DISC share card" /></body></html>`)
+    printWindow.document.write(`<!doctype html><html><head><style>body{margin:0;padding:0;background:#f5ece3;font-family:Inter,Segoe UI,Arial,sans-serif}main{padding:28px}img{display:block;width:100%;height:auto;border-radius:24px;box-shadow:0 14px 36px rgba(0,0,0,.16)}@media print{body{background:#fff}main{padding:0}}</style></head><body><main><img src="${dataUrl}" alt="Northstar DISC share card" /></main></body></html>`)
     printWindow.document.close()
     printWindow.focus()
-    printWindow.print()
+    window.setTimeout(() => printWindow.print(), 250)
     return { ok: true, fileName: `${fileName}.pdf` }
   }
 
@@ -193,6 +193,7 @@ function buildFallbackExportDataUrl(element: HTMLElement) {
   const height = canvas.height
   const padding = 72
   const radius = 32
+  const summary = element.innerText.replace(/\s+/g, ' ').trim().slice(0, 620)
 
   ctx.fillStyle = '#fffaf4'
   ctx.fillRect(0, 0, width, height)
@@ -205,35 +206,40 @@ function buildFallbackExportDataUrl(element: HTMLElement) {
   ctx.stroke()
 
   ctx.fillStyle = '#c78e69'
-  roundRect(ctx, padding + 30, padding + 32, width - padding * 2 - 60, 220, 24)
+  roundRect(ctx, padding + 28, padding + 28, width - padding * 2 - 56, 220, 24)
   ctx.fill()
 
   ctx.fillStyle = '#2f241d'
-  ctx.font = '700 42px Arial'
+  ctx.font = '700 44px Arial'
   ctx.fillText('Northstar DISC', padding + 52, padding + 96)
   ctx.font = '600 24px Arial'
   ctx.fillStyle = '#8b735d'
-  ctx.fillText('Leadership Signature', padding + 52, padding + 136)
+  ctx.fillText('Leadership Signature • Share Ready', padding + 52, padding + 136)
 
   ctx.fillStyle = '#4d3b30'
   ctx.font = '700 30px Arial'
-  ctx.fillText('Your Share Card', padding + 52, padding + 320)
+  ctx.fillText('Executive Profile Snapshot', padding + 52, padding + 314)
 
+  ctx.fillStyle = '#f7efe6'
+  roundRect(ctx, padding + 44, padding + 350, width - padding * 2 - 88, 220, 22)
+  ctx.fill()
+  ctx.fillStyle = '#4d3b30'
+  ctx.font = '700 24px Arial'
+  ctx.fillText('Core Narrative', padding + 72, padding + 392)
   ctx.fillStyle = '#6e5a4f'
   ctx.font = '22px Arial'
-  const summary = element.innerText.replace(/\s+/g, ' ').trim().slice(0, 420)
-  wrapText(ctx, summary, padding + 52, padding + 370, width - padding * 2 - 104, 32)
+  wrapText(ctx, summary, padding + 72, padding + 430, width - padding * 2 - 144, 30)
 
   ctx.fillStyle = '#f2e0cf'
-  roundRect(ctx, padding + 40, height - 240, width - padding * 2 - 80, 140, 24)
+  roundRect(ctx, padding + 44, height - 240, width - padding * 2 - 88, 130, 22)
   ctx.fill()
 
   ctx.fillStyle = '#4d3b30'
   ctx.font = '600 24px Arial'
-  ctx.fillText('Ready to share', padding + 70, height - 166)
+  ctx.fillText('Why it stands out', padding + 72, height - 190)
   ctx.font = '20px Arial'
   ctx.fillStyle = '#6e5a4f'
-  ctx.fillText('PNG, PDF, and LinkedIn-friendly export', padding + 70, height - 126)
+  ctx.fillText('Premium layout • Stronger storytelling • Ready for LinkedIn and PDF', padding + 72, height - 150)
 
   return canvas.toDataURL('image/png')
 }
