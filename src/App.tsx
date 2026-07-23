@@ -1065,16 +1065,6 @@ function App() {
                       </motion.button>
                       <motion.button
                         type="button"
-                        onClick={() => handleDownloadCard('png')}
-                        whileHover={{ y: -2, scale: 1.01 }}
-                        whileTap={{ scale: 0.97 }}
-                        disabled={isExporting}
-                        className="rounded-full border border-stone-300 bg-white px-5 py-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
-                      >
-                        {isExporting ? 'Preparing export…' : 'Download PNG'}
-                      </motion.button>
-                      <motion.button
-                        type="button"
                         onClick={() => handleDownloadCard('pdf')}
                         whileHover={{ y: -2, scale: 1.01 }}
                         whileTap={{ scale: 0.97 }}
@@ -1124,21 +1114,27 @@ function App() {
                 initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: prefersReducedMotion ? 0.01 : 0.28, ease: 'easeOut', delay: prefersReducedMotion ? 0 : 0.08 }}
-                className="rounded-[2rem] border border-stone-200/80 bg-white/80 p-5 shadow-[0_20px_60px_-25px_rgba(84,56,45,0.35)] sm:p-6"
+                className="rounded-[2rem] border border-stone-200/80 bg-gradient-to-br from-white via-[#f8f3ec] to-[#f3e7da] p-6 shadow-[0_28px_80px_-36px_rgba(84,56,45,0.36)] sm:p-7"
               >
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm uppercase tracking-[0.3em] text-stone-500">Support this work</p>
-                    <h3 className="mt-2 text-xl font-semibold text-stone-800">If this helped you, a small coffee keeps the experience going.</h3>
-                    <p className="mt-2 text-sm leading-7 text-stone-600">Your support helps fund more thoughtful reflections, calm design, and thoughtful product updates.</p>
+                    <h3 className="mt-2 text-2xl font-semibold text-stone-900">Keep this premium experience moving forward.</h3>
+                    <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-600">
+                      A small contribution helps me keep building thoughtful tools, refined exports, and better leadership experiences. Your support directly powers future features, better polish, and a stronger LinkedIn-ready presentation.
+                    </p>
+                    <p className="mt-4 text-sm leading-7 text-stone-700">
+                      Follow <strong>João Costa | LinkedIn</strong> for updates and early access to new improvements: <a href="https://www.linkedin.com/in/joaocosta1695/" target="_blank" rel="noreferrer" className="font-semibold text-stone-900 underline">linkedin.com/in/joaocosta1695</a>.
+                    </p>
+                    <p className="mt-3 text-sm text-stone-500">Payment support options will be available soon — thank you for helping this project grow.</p>
                   </div>
                   <a
                     href="https://www.buymeacoffee.com"
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-full border border-stone-300 bg-stone-50 px-5 py-3 text-sm font-medium text-stone-700 transition hover:bg-white"
+                    className="inline-flex items-center justify-center rounded-full bg-stone-900 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-stone-200/60 transition hover:bg-stone-800"
                   >
-                    Support this work
+                    Buy me a coffee
                   </a>
                 </div>
               </motion.div>

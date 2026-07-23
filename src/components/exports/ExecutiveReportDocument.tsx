@@ -210,14 +210,21 @@ export default function ExecutiveReportDocument({
               A high-clarity behavioral profile designed for coaching, hiring, and team planning conversations.
             </div>
           </div>
-        </section>
 
-        <section data-export-section="profile-overview" style={{ display: 'grid', gridTemplateColumns: '1.12fr 0.88fr', gap: '14px', breakInside: 'avoid' }}>
-          <div style={{ border: '1px solid #e8dfd6', borderRadius: '18px', background: '#fffdfb', padding: '15px' }}>
+          <div
+            style={{
+              background: 'linear-gradient(180deg, #fffdf9 0%, #f8efe7 100%)',
+              border: '1px solid #e8dfd6',
+              borderRadius: '16px',
+              padding: '16px',
+              boxShadow: '0 10px 24px rgba(84,56,45,0.08)',
+              marginTop: '18px',
+            }}
+          >
             <div style={{ fontSize: '11px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#8b7565', fontWeight: 700, fontFamily: 'Arial, sans-serif' }}>
-              Trait Breakdown & KPI Chips
+              Profile Overview
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px', marginTop: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px', marginTop: '14px' }}>
               {scores.map((item) => {
                 const meta = traitMeta[item.trait as TraitKey]
                 return (
@@ -237,13 +244,7 @@ export default function ExecutiveReportDocument({
                 )
               })}
             </div>
-          </div>
-
-          <div className="report-card" style={{ border: '1px solid #e8dfd6', borderRadius: '18px', background: '#fffdfb', padding: '15px' }}>
-            <div style={{ fontSize: '11px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#8b7565', fontWeight: 700, fontFamily: 'Arial, sans-serif' }}>
-              Profile Radar Chart
-            </div>
-            <div style={{ marginTop: '12px', borderRadius: '16px', background: 'radial-gradient(circle at top, #fffaf6 0%, #f8efe8 100%)', padding: '10px', border: '1px solid #efe1d0' }}>
+            <div style={{ marginTop: '14px', borderRadius: '16px', background: 'radial-gradient(circle at top, #fffaf6 0%, #f8efe8 100%)', padding: '10px', border: '1px solid #efe1d0' }}>
               <svg viewBox="0 0 220 220" width="100%" height="220" aria-label="DISC radar chart" role="img">
                 <polygon points="108,28 187,57 187,135 108,192 30,135 30,57" fill="none" stroke="#ead9c6" strokeWidth="1" />
                 <polygon points="108,46 163,68 163,125 108,167 53,125 53,68" fill="none" stroke="#ead9c6" strokeWidth="1" />
@@ -300,19 +301,31 @@ export default function ExecutiveReportDocument({
           data-export-section="footer"
           style={{
             display: 'grid',
-            gridTemplateColumns: '1fr auto',
-            gap: '10px',
-            alignItems: 'center',
-            padding: '10px 4px 0',
-            color: '#806d5d',
+            gridTemplateColumns: '1fr',
+            gap: '8px',
+            alignItems: 'flex-start',
+            padding: '16px 14px 0',
+            color: '#6a5445',
             fontFamily: 'Arial, sans-serif',
             fontSize: '11px',
             borderTop: '1px solid #eadfd1',
-            marginTop: '6px',
+            marginTop: '18px',
           }}
         >
-          <span>Northstar DISC — Executive Report</span>
-          <span>{reportCopy.tagline}</span>
+          <div style={{ fontSize: '12px', fontWeight: 700, color: '#4c3a2e' }}>Closing Notes</div>
+          <div style={{ lineHeight: 1.6 }}>
+            Thank you for using this Executive Behavioral Report tool.
+            <br></br>
+            If you found this useful, please consider supporting the work so I can continue building more thoughtful tools and polished reflections.
+            <br></br>
+          </div>
+          <div style={{ lineHeight: 1.6 }}>
+            <strong>Follow me on LinkedIn: </strong> <a href="https://www.linkedin.com/in/joaocosta1695/" style={{ color: '#8b5e3c', textDecoration: 'none' }}> João Costa | LinkedIn </a>
+          </div>
+          <div style={{ lineHeight: 1.6 }}>
+            <strong>Buy me a coffee</strong> or share feedback to help keep this project moving forward.
+          </div>
+          <span style={{ color: '#9b8570' }}>{reportCopy.tagline}</span>
         </footer>
       </div>
     </div>

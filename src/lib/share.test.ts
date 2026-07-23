@@ -16,6 +16,10 @@ vi.mock('pdf-lib', () => ({
         drawImage: vi.fn(),
         drawText: vi.fn(),
         drawRectangle: vi.fn(),
+        drawEllipse: vi.fn(),
+        drawLine: vi.fn(),
+        drawSvgPath: vi.fn(),
+        drawCircle: vi.fn(),
       }),
       embedPng: vi.fn().mockResolvedValue({
         width: 1200,
@@ -27,6 +31,11 @@ vi.mock('pdf-lib', () => ({
       save: vi.fn().mockResolvedValue(new Uint8Array([37, 80, 68, 70, 45])),
     }),
   },
+  StandardFonts: {
+    Helvetica: 'Helvetica',
+    HelveticaBold: 'Helvetica-Bold',
+  },
+  rgb: vi.fn(() => ({ r: 0, g: 0, b: 0 })),
 }))
 
 describe('share helpers', () => {
@@ -247,6 +256,12 @@ describe('share helpers', () => {
     const pageMock = {
       getSize: () => ({ width: 595.28, height: 841.89 }),
       drawImage: vi.fn(),
+      drawText: vi.fn(),
+      drawRectangle: vi.fn(),
+      drawEllipse: vi.fn(),
+      drawLine: vi.fn(),
+      drawSvgPath: vi.fn(),
+      drawCircle: vi.fn(),
     }
 
     const addPageSpy = vi.fn().mockReturnValue(pageMock)
@@ -254,6 +269,7 @@ describe('share helpers', () => {
     vi.mocked(PDFDocument.create).mockResolvedValueOnce({
       addPage: addPageSpy,
       embedPng: vi.fn().mockResolvedValue({ width: 1200, height: 2200 }),
+      embedFont: vi.fn().mockResolvedValue({ widthOfTextAtSize: vi.fn(() => 100) }),
       save: vi.fn().mockResolvedValue(new Uint8Array([37, 80, 68, 70, 45])),
     } as never)
 
@@ -290,7 +306,7 @@ describe('share helpers', () => {
 
     await exportShareCard(element, { fileName: 'multi-page-report', format: 'pdf' })
 
-    expect(addPageSpy).toHaveBeenCalledTimes(1)
+    expect(addPageSpy).toHaveBeenCalledTimes(2)
 
     if (originalGetContext) {
       Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
