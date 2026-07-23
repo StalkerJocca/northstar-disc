@@ -265,7 +265,7 @@ function addPdfCoverPage(
     cursorY -= 14
   })
   const profileBadgeTop = summaryTop - 24
-  drawProfileBadge(page, rightColumnX, profileBadgeTop, 232, data.primaryMeta.label, data.secondaryMeta.label, data.signatureStyle.badge, font, boldFont)
+  drawProfileBadge(page, rightColumnX, profileBadgeTop, 232, data.signatureStyle.badge, font)
 
   // Signature badge: position below the profile badge
   const signatureTop = profileBadgeTop - 128
@@ -295,13 +295,13 @@ function addPdfCoverPage(
 
 // Executive summary
 
-function drawProfileBadge(page: any, x: number, y: number, width: number, primaryLabel: string, secondaryLabel: string, badge: string, font: any, boldFont: any) {
+function drawProfileBadge(page: any, x: number, y: number, width: number, badge: string, font: any) {
   const height = 200
   page.drawRectangle({ x, y: y - height + 24, width, height, color: rgb(0.98, 0.95, 0.90) })
   // LINE AT THE TOP OF THE BADGE
-  page.drawRectangle({ x: x, y: y + 18, width: width, height: 6, color: rgb(0.73, 0.53, 0.34) })
+  page.drawRectangle({ x, y: y + 18, width, height: 6, color: rgb(0.73, 0.53, 0.34) })
   // BADGE CONTENT
-  page.drawText(badge, { x: x + 14, y: y - 85, size: 10, font: font, color: rgb(0.38, 0.27, 0.19) })
+  page.drawText(badge, { x: x + 14, y: y - 85, size: 10, font, color: rgb(0.38, 0.27, 0.19) })
 }
 
 function drawSignatureBadge(page: any, x: number, y: number, width: number, title: string, description: string, font: any, boldFont: any) {
@@ -572,177 +572,12 @@ function drawTwoColumnCard(page: any, section: PdfReportSection, x: number, card
   }
 }
 
-function measureHeaderDetailHeight(section: PdfReportSection, width: number, padding: number, font: any, boldFont: any) {
-  const titleLines = splitPdfText(section.title, width - padding * 2, boldFont, 16)
-  const summaryText = extractHeaderSummary(section.text)
-  const bodyLines = splitPdfText(summaryText || section.text, width - padding * 2, font, 10)
-  const bulletLines = section.bullets.flatMap((bullet) => splitPdfText(`• ${bullet}`, width - padding * 3, font, 10))
-  const chipRows = section.chips ? Math.ceil(section.chips.length / 3) : 0
-  return titleLines.length * 20 + bodyLines.length * 14 + bulletLines.length * 16 + chipRows * 36 + 120
-}
-
-function drawHeaderDetailCard(page: any, section: PdfReportSection, x: number, cardBottom: number, width: number, height: number, padding: number, font: any, boldFont: any) {
-  const accentColor = parseHexColor(section.accent)
-
-  page.drawRectangle({ x: x - 4, y: cardBottom - 4, width: width + 8, height: height + 8, color: rgb(0.95, 0.93, 0.90) })
-  page.drawRectangle({ x, y: cardBottom, width, height, color: rgb(0.99, 0.98, 0.95) })
-  page.drawRectangle({ x: x + padding, y: cardBottom + height - 22, width: 132, height: 6, color: accentColor })
-
-  const titleLines = splitPdfText(section.title, width - padding * 2, boldFont, 16)
-  let localY = cardBottom + height - 40
-  titleLines.forEach((line) => {
-    page.drawText(line, { x: x + padding, y: localY, size: 16, font: boldFont, color: rgb(0.18, 0.12, 0.06) })
-    localY -= 20
-  })
-
-  if (section.chips?.length) {
-    localY -= 16
-    drawDetailChips(page, section.chips, x + padding, localY, width - padding * 2, font)
-    localY -= Math.ceil(section.chips.length / 3) * 36 + 8
-  } else {
-    localY -= 12
-  }
-
-  const summaryText = extractHeaderSummary(section.text)
-  if (summaryText) {
-    const bodyLines = splitPdfText(summaryText, width - padding * 2, font, 10)
-    bodyLines.forEach((line) => {
-      page.drawText(line, { x: x + padding, y: localY, size: 10, font: font, color: rgb(0.35, 0.25, 0.18) })
-      localY -= 14
-    })
-    localY -= 14
-  }
-
-  if (section.bullets.length) {
-    localY -= 6
-    const bulletLines = section.bullets.flatMap((bullet) => splitPdfText(`• ${bullet}`, width - padding * 3, font, 10))
-    bulletLines.forEach((line) => {
-      page.drawText(line, { x: x + padding + 8, y: localY, size: 10, font: font, color: rgb(0.35, 0.25, 0.18) })
-      localY -= 16
-    })
-  }
-}
-
-function extractHeaderSummary(text?: string | null) {
-  if (!text) return ''
-  const idx = text.search(/Completion date:|Completion score:|Document version:/i)
-  const snippet = idx === -1 ? text : text.slice(0, idx)
-  return cleanText(snippet).slice(0, 420)
-
-}
-
-function extractProfileInterpretation(text?: string | null) {
-  if (!text) return ''
-  const interpretationMatch = (text ?? '').match(/Interpretation:\s*(.+)/i)
-  if (interpretationMatch) {
-    return cleanText(interpretationMatch[1]).slice(0, 520)
-  }
-
-  const lines = (text ?? '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean)
-  const filtered = lines.filter((line) => !/(Completion date:|Completion score:|Document version:|Raw score:|Profile Radar Chart)/i.test(line))
-  const joined = filtered.join(' ')
-  return cleanText(joined).slice(0, 520)
-}
-
-function measureProfileOverviewHeight(section: PdfReportSection, width: number, padding: number, font: any, boldFont: any) {
-  const titleLines = splitPdfText(section.title, width - padding * 2, boldFont, 16)
-  const traitRows = section.traits ? Math.ceil(section.traits.length / 2) : 0
-  const interpretation = extractProfileInterpretation(section.text)
-  const bodyLines = splitPdfText(interpretation || section.text, width - padding * 2, font, 10)
-  const bulletLines = section.bullets.flatMap((bullet) => splitPdfText(`• ${bullet}`, width - padding * 3, font, 10))
-  return titleLines.length * 20 + traitRows * 40 + bodyLines.length * 14 + bulletLines.length * 16 + 120
-}
-
-function drawProfileOverviewDetailCard(page: any, section: PdfReportSection, x: number, cardBottom: number, width: number, height: number, padding: number, font: any, boldFont: any) {
-  const accentColor = parseHexColor(section.accent)
-
-  page.drawRectangle({ x: x - 4, y: cardBottom - 4, width: width + 8, height: height + 8, color: rgb(0.95, 0.93, 0.90) })
-  page.drawRectangle({ x, y: cardBottom, width, height, color: rgb(0.99, 0.98, 0.95) })
-  page.drawRectangle({ x: x + padding, y: cardBottom + height - 22, width: 120, height: 6, color: accentColor })
-
-  const titleLines = splitPdfText(section.title, width - padding * 2, boldFont, 16)
-  let localY = cardBottom + height - 40
-  titleLines.forEach((line) => {
-    page.drawText(line, { x: x + padding, y: localY, size: 16, font: boldFont, color: rgb(0.18, 0.12, 0.06) })
-    localY -= 20
-  })
-
-  if (section.traits?.length) {
-    localY -= 10
-    drawProfileTraitChips(page, section.traits, x + padding, localY, width - padding * 2, font, boldFont)
-    localY -= Math.ceil(section.traits.length / 2) * 32 + 12
-  }
-
-  const interpretation = extractProfileInterpretation(section.text)
-  const profileBody = interpretation || section.text
-  if (profileBody) {
-    page.drawText('Profile interpretation', { x: x + padding, y: localY, size: 10, font: boldFont, color: rgb(0.28, 0.18, 0.12) })
-    localY -= 18
-
-    const bodyLines = splitPdfText(profileBody, width - padding * 2, font, 10)
-    bodyLines.forEach((line) => {
-      page.drawText(line, { x: x + padding, y: localY, size: 10, font: font, color: rgb(0.35, 0.25, 0.18) })
-      localY -= 14
-    })
-    localY -= 10
-  }
-
-  if (section.bullets.length) {
-    localY -= 6
-    const bulletLines = section.bullets.flatMap((bullet) => splitPdfText(`• ${bullet}`, width - padding * 3, font, 10))
-    bulletLines.forEach((line) => {
-      page.drawText(line, { x: x + padding + 8, y: localY, size: 10, font: font, color: rgb(0.35, 0.25, 0.18) })
-      localY -= 16
-    })
-  }
-}
-
-function drawDetailChips(page: any, chips: PdfReportChip[], x: number, y: number, maxWidth: number, font: any) {
-  const chipHeight = 28
-  let chipX = x
-  let currentY = y
-
-  chips.forEach((chip) => {
-    const labelText = `${chip.label}: ${chip.value}`
-    const chipWidth = Math.min(maxWidth, font.widthOfTextAtSize(labelText, 9) + 28)
-    if (chipX + chipWidth > x + maxWidth) {
-      chipX = x
-      currentY -= chipHeight + 8
-    }
-
-    page.drawRectangle({ x: chipX, y: currentY - chipHeight, width: chipWidth, height: chipHeight, color: rgb(0.97, 0.95, 0.91) })
-    page.drawText(labelText, { x: chipX + 10, y: currentY - 20, size: 9, font: font, color: rgb(0.33, 0.23, 0.14) })
-    chipX += chipWidth + 10
-  })
-}
-
 function drawTraitChip(page: any, x: number, y: number, label: string, value: string, font: any, boldFont: any) {
   const chipWidth = 232
   page.drawRectangle({ x, y: y - 28, width: chipWidth, height: 28, color: rgb(0.96, 0.93, 0.88) })
   page.drawText(label.toUpperCase(), { x: x + 10, y: y - 10, size: 8, font: font, color: rgb(0.44, 0.33, 0.24) })
   page.drawText(value, { x: x + 10, y: y - 20, size: 11, font: boldFont, color: rgb(0.18, 0.11, 0.07) })
 }
-
-function drawProfileTraitChips(page: any, traits: PdfTraitSummary[], x: number, y: number, maxWidth: number, font: any, boldFont: any) {
-  const chipWidth = Math.min((maxWidth - 10) / 2, 140)
-  let chipX = x
-  let currentY = y
-
-  traits.forEach((trait, index) => {
-    if (index > 0 && index % 2 === 0) {
-      chipX = x
-      currentY -= 32 + 8
-    }
-
-    page.drawRectangle({ x: chipX, y: currentY - 32, width: chipWidth, height: 32, color: rgb(0.96, 0.93, 0.88) })
-    page.drawText(`${trait.label.toUpperCase()} ${trait.percentage}%`, { x: chipX + 10, y: currentY - 16, size: 10, font: boldFont, color: rgb(0.22, 0.16, 0.10) })
-    if (typeof trait.score === 'number') {
-      page.drawText(`Raw ${trait.score}`, { x: chipX + 10, y: currentY - 28, size: 8, font: font, color: rgb(0.40, 0.31, 0.24) })
-    }
-    chipX += chipWidth + 10
-  })
-}
-
 
 function splitPdfText(text: string, maxWidth: number, font: any, size: number) {
   const words = text.split(' ')
