@@ -90,34 +90,34 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-[2rem] border border-stone-200 bg-[radial-gradient(circle_at_top,_rgba(248,232,216,0.9),_rgba(255,255,255,0.8))] p-6 shadow-sm">
+          <div className="relative overflow-hidden rounded-[2rem] border border-stone-200 bg-[radial-gradient(circle_at_top,_rgba(248,232,216,0.9),_rgba(255,255,255,0.8))] p-6 shadow-sm sm:p-8">
             <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-stone-100 via-transparent to-transparent" />
-            <div className="relative rounded-[1.75rem] border border-stone-200 bg-white/95 p-6 shadow-[0_18px_50px_-24px_rgba(84,56,45,0.25)]">
+            <div className="relative mx-auto max-w-4xl rounded-[1.75rem] border border-stone-200 bg-white/95 p-6 shadow-[0_18px_50px_-24px_rgba(84,56,45,0.25)] sm:p-8">
               <p className="text-xs uppercase tracking-[0.3em] text-stone-500">{t('landing.previewBadge')}</p>
               <h2 className="mt-3 text-2xl font-semibold text-stone-900">{t('landing.previewTitle')}</h2>
-              <p className="mt-3 text-sm leading-7 text-stone-600">{t('landing.previewBody')}</p>
+              <p className="mt-3 max-w-2xl text-sm leading-8 text-stone-600">{t('landing.previewBody')}</p>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-[1fr_0.9fr]">
-                <div className="relative overflow-hidden rounded-[1.5rem] bg-stone-50 p-4 pt-6 shadow-sm">
+              <div className="mt-8 grid gap-6">
+                <div className="relative overflow-hidden rounded-[1.5rem] bg-stone-50 p-5 pt-7 shadow-sm sm:p-6">
                   <div className="absolute inset-x-4 top-4 h-1.5 rounded-full bg-gradient-to-r from-stone-300 via-stone-200 to-stone-300" />
-                  <div className="relative mx-auto h-36 w-36 rounded-full border border-stone-200 bg-white shadow-inner">
+                  <div className="relative mx-auto h-40 w-40 rounded-full border border-stone-200 bg-white shadow-inner sm:h-44 sm:w-44">
                     <div className="absolute inset-6 rounded-full border border-stone-300/80 bg-gradient-to-br from-stone-100 to-stone-200" />
-                    <div className="absolute inset-0 m-auto h-20 w-20 rounded-full bg-stone-100" />
+                    <div className="absolute inset-0 m-auto h-22 w-22 rounded-full bg-stone-100" />
                   </div>
-                  <div className="mt-6 space-y-2 text-sm leading-6 text-stone-700">
+                  <div className="mt-7 space-y-3 text-sm leading-7 text-stone-700">
                     {previewTraits.map((trait) => (
-                      <div key={trait} className="flex items-center justify-between rounded-full bg-white px-3 py-2 shadow-sm">
+                      <div key={trait} className="flex items-center justify-between rounded-full bg-white px-4 py-2 shadow-sm">
                         <span>{t(`traits.${trait}`)}</span>
                         <span className="text-xs font-semibold uppercase text-stone-500">{trait}</span>
                       </div>
                     ))}
                   </div>
                 </div>
-                <div className="space-y-4 rounded-[1.5rem] border border-stone-200 bg-white/90 p-4">
-                  <div className="rounded-3xl bg-stone-100 px-3 py-2 text-xs uppercase tracking-[0.26em] text-stone-500">
+                <div className="space-y-5 rounded-[1.5rem] border border-stone-200 bg-white/90 p-6 sm:p-7">
+                  <div className="rounded-3xl bg-stone-100 px-4 py-3 text-xs uppercase tracking-[0.26em] text-stone-500">
                     {t('landing.previewAction')}
                   </div>
-                  <div className="space-y-3 text-sm leading-7 text-stone-600">
+                  <div className="mx-auto max-w-2xl space-y-4 text-sm leading-8 text-stone-600">
                     <p>{t('landing.previewFeature1')}</p>
                     <p>{t('landing.previewFeature2')}</p>
                   </div>
