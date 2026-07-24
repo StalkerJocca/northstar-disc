@@ -82,26 +82,19 @@ export default function ExecutiveReportDocument({
           }}
         >
           <div>
-            <div style={{ display: 'grid', gridTemplateColumns: '56px 1fr', gap: '12px', alignItems: 'center' }}>
-              <div
+            <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: '16px', alignItems: 'center' }}>
+              <img
+                src="/NorthStar.png"
+                alt="Northstar DISC Logo"
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '16px',
-                  background: 'linear-gradient(135deg, #8b5e3c 0%, #b98254 100%)',
-                  color: '#fffaf5',
-                  fontSize: '16px',
-                  fontWeight: 700,
-                  letterSpacing: '0.18em',
-                  fontFamily: 'Arial, sans-serif',
-                  boxShadow: '0 10px 22px rgba(139, 94, 60, 0.26)',
+                  width: '110px',
+                  height: '110px',
+                  objectFit: 'contain',
+                  borderRadius: '20px',
+                  background: '#fff',
+                  boxShadow: '0 14px 28px rgba(139, 94, 60, 0.16)',
                 }}
-              >
-                ND
-              </div>
+              />
               <div>
                 <div style={{ fontSize: '11px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#8b7565', fontWeight: 700, fontFamily: 'Arial, sans-serif' }}>{t('report.brandName')}</div>
                 <div style={{ fontSize: '19px', color: '#4c3a2e', marginTop: '4px', fontWeight: 700, fontFamily: 'Arial, sans-serif' }}>{candidateNameText}</div>
@@ -259,6 +252,8 @@ export default function ExecutiveReportDocument({
         <section style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px' }}>
           {insightPanels.map((panel, index) => (
             <div key={`${panel.title}-${index}`} data-export-section={`insight-${index}`} style={{ border: '1px solid #e8dfd6', borderRadius: '16px', background: '#fffdfb', padding: '14px', minHeight: '126px' }}>
+              <h3 style={{ margin: 0, fontSize: '14px', color: '#2f241d', fontWeight: 700 }}>{panel.title}</h3>
+              <p style={{ margin: '10px 0 0', fontSize: '13px', lineHeight: 1.7, color: '#5f4c3d', fontFamily: 'Arial, sans-serif' }}>{panel.body}</p>
             </div>
           ))}
         </section>

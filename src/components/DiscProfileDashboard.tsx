@@ -61,6 +61,13 @@ export default function DiscProfileDashboard({ profile, completionScore, primary
     },
   ]
 
+  const detailedProfile = [
+    { label: t('dashboard.work'), value: traitMeta[primaryTrait].work },
+    { label: t('dashboard.team'), value: traitMeta[primaryTrait].team },
+    { label: t('dashboard.leadership'), value: traitMeta[primaryTrait].leadership },
+    { label: t('dashboard.life'), value: traitMeta[primaryTrait].life },
+  ]
+
   const narrative = `${t(`traitMeta.${primaryTrait}.summary`)} ${t('dashboard.secondaryNarrative', { secondary: t(`traits.${secondaryTrait}`).toLowerCase() })}`
 
   return (
@@ -91,6 +98,15 @@ export default function DiscProfileDashboard({ profile, completionScore, primary
                 <span className="mr-2 inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: traitColors[item.trait] }} />
                 <span className="font-medium">{item.label}</span>
                 <span className="ml-2 text-stone-500">{item.value}%</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {detailedProfile.map((item) => (
+              <div key={item.label} className="rounded-[1.5rem] border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
+                <p className="text-xs uppercase tracking-[0.24em] text-stone-500">{item.label}</p>
+                <p className="mt-2 leading-7">{item.value}</p>
               </div>
             ))}
           </div>

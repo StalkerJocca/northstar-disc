@@ -35,3 +35,44 @@ export const exportCopy = {
   title: 'Results card ready',
   body: 'Share a polished reflection that feels executive, clear, and ready for your next conversation.',
 }
+
+export const landingVariants = [
+  {
+    title: 'Leaders',
+    body: 'Activate a fast, aligned leadership style that helps you make decisions with clarity while keeping people engaged.',
+  },
+  {
+    title: 'Teams',
+    body: 'Create a shared language around working preferences so your team can collaborate with less friction and more trust.',
+  },
+  {
+    title: 'Coaches',
+    body: 'Use the DISC reflection as a practical tool to help clients uncover strengths, growth areas, and next-step clarity.',
+  },
+  {
+    title: 'HR',
+    body: 'Support recruiting, development, and culture work with a simple, polished profile that makes behavioural insight easy to share.',
+  },
+]
+
+export const testimonials = [
+  {
+    quote: 'This reflection made our leadership conversations more practical and grounded. We finally had a shared language to discuss energy and collaboration.',
+    author: 'Mariana, Executive Coach',
+  },
+  {
+    quote: 'The DISC result gave our team a fast, clear way to work through expectations and communication style. It was a game changer for our next planning session.',
+    author: 'Lucas, HR Business Partner',
+  },
+]
+
+export const caseStudies = [
+  {
+    headline: 'Leaders move faster with confidence',
+    body: 'A leadership team used the profile to align on priorities and reduce meeting drift, turning a one-hour sync into a decisive action session.',
+  },
+  {
+    headline: 'Coaches get faster insights',
+    body: 'Coaches used the result as a structured reflection tool, helping clients turn personality insight into one practical next step.',
+  },
+]

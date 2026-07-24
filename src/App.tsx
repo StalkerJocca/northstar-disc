@@ -2,6 +2,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import DiscProfileDashboard from './components/DiscProfileDashboard'
+import LandingPage from './components/LandingPage'
 import ProgressBadge from './components/ProgressBadge'
 import ShareableResultsCard from './components/ShareableResultsCard'
 import SocialShareButtons from './components/SocialShareButtons'
@@ -9,6 +10,7 @@ import ExecutiveReportDocument from './components/exports/ExecutiveReportDocumen
 import { useExportReport } from './hooks/useExportReport'
 import { submitDiscScore } from './lib/discApi'
 import { buildOgImageUrl, buildShareUrl, buildShareText, trackShareEvent, getSignatureLeadershipStyle } from './lib/share'
+import { landingVariants, testimonials, caseStudies } from './lib/content'
 import type { DiscScoreResponse, TraitKey } from './types/disc'
 
 const languages = [
@@ -336,12 +338,12 @@ function App() {
       <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
         <header className="mb-4 flex items-center justify-between rounded-full border border-stone-200/70 bg-white/70 px-4 py-3 shadow-sm backdrop-blur">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-stone-300 bg-[linear-gradient(135deg,_#f5ede4,_#e9d9c9)] text-sm font-semibold tracking-[0.25em] text-stone-700">
-              ND
+            <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-stone-200 bg-white/95 p-1 shadow-sm">
+              <img src="/LOGO.png" alt="NorthStar mark" className="h-10 w-auto object-contain" />
             </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.3em] text-stone-500">{t('app.name')}</p>
-              <h1 className="text-lg font-semibold text-stone-800">{t('app.tagline')}</h1>
+            <div className="flex flex-col leading-tight">
+              <span className="text-[11px] uppercase tracking-[0.3em] text-stone-500">NorthStar DISC</span>
+              <span className="text-lg font-semibold text-stone-800">{t('app.tagline')}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -357,48 +359,7 @@ function App() {
 
         <AnimatePresence mode="sync">
           {!started && !showResults ? (
-            <motion.section
-              key="launch"
-              initial={{ opacity: 0, y: 24, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.98 }}
-              transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-1 flex-col justify-center"
-            >
-              <motion.div
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
-                animate={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
-                transition={{ duration: prefersReducedMotion ? 0.01 : 0.24 }}
-                className="mb-5 rounded-[2rem] border border-stone-200/80 bg-white/80 p-6 shadow-[0_20px_60px_-25px_rgba(84,56,45,0.35)] backdrop-blur sm:p-8"
-              >
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-stone-300 bg-[linear-gradient(135deg,_#f8efe8,_#e8d6c4)] text-sm font-semibold tracking-[0.25em] text-stone-700">
-                    ND
-                  </div>
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.3em] text-stone-500">{t('app.name')}</p>
-                    <h2 className="text-3xl font-semibold leading-tight text-stone-800 sm:text-4xl">{t('app.tagline')}</h2>
-                  </div>
-                </div>
-                <p className="mt-4 max-w-2xl text-base leading-8 text-stone-600">{t('app.description')}</p>
-                <div className="mt-6 rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
-                  <p className="font-medium text-stone-800">{t('launch.why')}</p>
-                  <p className="mt-2">{t('launch.summary')}</p>
-                </div>
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <motion.button
-                    type="button"
-                    onClick={startReflection}
-                    whileHover={{ y: -2, scale: 1.01 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="rounded-full bg-stone-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-stone-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2"
-                  >
-                    {t('launch.cta')}
-                  </motion.button>
-
-                </div>
-              </motion.div>
-            </motion.section>
+            <LandingPage onStart={startReflection} />
           ) : started && !showResults ? (
             <motion.section
               key="quiz"
@@ -500,7 +461,7 @@ function App() {
                       transition={{ duration: 0.25 }}
                       className="absolute inset-x-0 top-8 mx-auto w-[min(88%,_18rem)] rounded-full border border-stone-200/80 bg-white/85 px-4 py-2 text-center text-sm font-semibold text-stone-700 shadow-[0_10px_30px_-12px_rgba(84,56,45,0.45)] backdrop-blur"
                     >
-                      {t('results.completeHeading')}
+                      {t('quiz.results.completeHeading')}
                     </motion.div>
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -508,7 +469,7 @@ function App() {
                       transition={{ duration: 1.6, ease: 'easeOut' }}
                       className="absolute inset-x-0 top-20 mx-auto w-fit rounded-full border border-stone-200/70 bg-white/70 px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-stone-600 shadow-sm"
                     >
-                      {t('results.insightsReady')}
+                      {t('quiz.results.insightsReady')}
                     </motion.div>
                     {confettiPieces.map((piece) => (
                       <motion.span
@@ -696,27 +657,57 @@ function App() {
                 </div>
               </motion.div>
 
+              <motion.div
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: prefersReducedMotion ? 0.01 : 0.28, ease: 'easeOut', delay: prefersReducedMotion ? 0 : 0.08 }}
+                className="rounded-[2rem] border border-stone-200/80 bg-white/80 p-5 shadow-[0_20px_60px_-25px_rgba(84,56,45,0.35)] sm:p-6"
+              >
+                <div className="grid gap-4 md:grid-cols-2">
+                  {landingVariants.map((variant) => (
+                    <div key={variant.title} className="rounded-[1.5rem] border border-stone-200 bg-stone-50 p-4">
+                      <p className="text-xs uppercase tracking-[0.24em] text-stone-500">{variant.title}</p>
+                      <p className="mt-3 text-sm leading-7 text-stone-700">{variant.body}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                  {testimonials.map((item) => (
+                    <div key={item.author} className="rounded-[1.5rem] border border-stone-200 bg-white p-5 shadow-sm">
+                      <p className="text-sm italic leading-7 text-stone-700">“{item.quote}”</p>
+                      <p className="mt-4 text-sm font-semibold text-stone-900">{item.author}</p>
+                    </div>
+                  ))}
+                  {caseStudies.map((item) => (
+                    <div key={item.headline} className="rounded-[1.5rem] border border-stone-200 bg-stone-50 p-5 shadow-sm">
+                      <p className="text-sm uppercase tracking-[0.24em] text-stone-500">{item.headline}</p>
+                      <p className="mt-3 text-sm leading-7 text-stone-700">{item.body}</p>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
 
                 <motion.div
                 initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: prefersReducedMotion ? 0.01 : 0.28, ease: 'easeOut', delay: prefersReducedMotion ? 0 : 0.08 }}
-                className="rounded-[2rem] border border-stone-200/80 bg-gradient-to-br from-white via-[#f8f3ec] to-[#f3e7da] p-6 shadow-[0_28px_80px_-36px_rgba(84,56,45,0.36)] sm:p-7"
+                className="rounded-[2rem] border border-stone-200/80 bg-[linear-gradient(135deg,_#fcf6ed,_#f6e7d4)] p-6 shadow-[0_28px_80px_-36px_rgba(84,56,45,0.32)] sm:p-7"
               >
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm uppercase tracking-[0.3em] text-stone-500">{t('support.title')}</p>
                     <h3 className="mt-2 text-2xl font-semibold text-stone-900">{t('support.heading')}</h3>
                     <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-600">{t('support.body')}</p>
-                    <p className="mt-4 text-sm leading-7 text-stone-700">{t('support.series', { name: t('header.followLinkedIn') })} <a href="https://www.linkedin.com/in/joaocosta1695/" target="_blank" rel="noreferrer" className="font-semibold text-stone-900 underline">{t('support.linkText')}</a>.</p>
+                    <p className="mt-4 text-sm leading-7 text-stone-700">{t('support.series', { name: t('header.followLinkedIn') })} <a href="https://www.linkedin.com/in/joaocosta1695/" target="_blank" rel="noopener noreferrer" className="font-semibold text-stone-900 underline">{t('support.linkText')}</a>.</p>
                     <p className="mt-3 text-sm text-stone-500">{t('support.note')}</p>
                   </div>
                   <a
-                    href="https://www.buymeacoffee.com"
+                    href="https://donate.stripe.com/fZu00i3aGcR6bZ3gUr0co00"
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center justify-center rounded-full bg-stone-900 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-stone-200/60 transition hover:bg-stone-800"
                   >
+                    <span className="mr-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-stone-100 text-sm text-stone-900">☕</span>
                     {t('support.button')}
                   </a>
                 </div>

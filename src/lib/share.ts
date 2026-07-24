@@ -1,6 +1,8 @@
 import html2canvas from 'html2canvas'
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import type { DiscScoreResponse, TraitKey } from '../types/disc'
+import type { TFunction } from 'i18next'
+import i18n from '../i18n'
 import { traitMeta } from './discProfile'
 
 export type SharePayload = {
@@ -9,6 +11,7 @@ export type SharePayload = {
   url?: string
   referralCode?: string
   copyTemplate?: string
+  platform?: 'linkedin' | 'twitter' | 'email'
 }
 
 export type SignatureStyle = {
@@ -48,17 +51,28 @@ export function getSignatureLeadershipStyle(primaryTrait: TraitKey, secondaryTra
   return signatureStyles[primaryTrait]?.[secondaryTrait] ?? signatureStyles[primaryTrait]?.[primaryTrait] ?? signatureStyles.D.D
 }
 
-export function buildShareText({ primaryTrait, secondaryTrait, url = 'https://disc-wellness.app', referralCode, copyTemplate }: SharePayload) {
+export function buildShareText({
+  primaryTrait,
+  secondaryTrait,
+  url = 'https://disc-wellness.app',
+  referralCode,
+  copyTemplate,
+  platform = 'linkedin',
+}: SharePayload) {
   const signature = getSignatureLeadershipStyle(primaryTrait, secondaryTrait)
-  const shareUrl = buildShareUrl('linkedin', url, referralCode)
+  const destinationUrl = platform === 'email' ? url : buildShareUrl(platform, url, referralCode)
   if (copyTemplate) {
     return copyTemplate
   }
 
-  return `I just completed the Northstar DISC Assessment and discovered my behavioral style is “${signature.badge}” (${primaryTrait}${secondaryTrait}). Find your direction here: ${shareUrl}`
+  if (platform === 'twitter') {
+    return `Just completed the Northstar DISC Assessment and landed on ${signature.badge}. It highlights how I show up in work, teams, and leadership. Explore your style: ${destinationUrl}`
+  }
+
+  return `I just completed the Northstar DISC Assessment and discovered my behavioral style as “${signature.badge}” (${primaryTrait}${secondaryTrait}). It highlights how I show up at work, in teams, and in leadership. Find your direction here: ${destinationUrl}`
 }
 
-export function buildShareUrl(platform: 'linkedin' | 'twitter', url: string, referralCode?: string) {
+export function buildShareUrl(platform: 'linkedin' | 'twitter' | 'email', url: string, referralCode?: string) {
   const baseUrl = new URL(url)
   if (referralCode) {
     baseUrl.searchParams.set('ref', referralCode)
@@ -72,10 +86,20 @@ export function buildShareUrl(platform: 'linkedin' | 'twitter', url: string, ref
 }
 
 export type ShareEvent = {
-  platform: 'linkedin' | 'twitter'
+  platform: 'linkedin' | 'twitter' | 'email'
   referralCode?: string
   profileSignature?: string
   timestamp: string
+}
+
+export function buildEmailShareSubject(primaryTrait: TraitKey, secondaryTrait: TraitKey) {
+  const signature = getSignatureLeadershipStyle(primaryTrait, secondaryTrait)
+  return `My Northstar DISC style: ${signature.badge}`
+}
+
+export function buildEmailShareBody({ primaryTrait, secondaryTrait, url = 'https://disc-wellness.app', referralCode, copyTemplate }: SharePayload) {
+  const message = buildShareText({ primaryTrait, secondaryTrait, url, referralCode, copyTemplate })
+  return `${message}\n\nReady to explore your own profile? Start here: ${url}`
 }
 
 async function buildPdfReportPdfBytes(
@@ -86,6 +110,7 @@ async function buildPdfReportPdfBytes(
     secondaryTrait?: TraitKey
     completionScore?: number
     generatedAt?: string
+    language?: string
   },
 ) {
   const pdfDoc = await PDFDocument.create()
@@ -94,16 +119,17 @@ async function buildPdfReportPdfBytes(
   const pageWidth = 595.28
   const pageHeight = 841.89
   const margin = 40
+  const t = options?.language ? i18n.getFixedT(options.language, 'translation') : i18n.t.bind(i18n)
   const primaryTrait = options?.primaryTrait ?? options?.profile?.primaryTrait ?? 'D'
   const secondaryTrait = options?.secondaryTrait ?? options?.profile?.secondaryTrait ?? 'C'
   const primaryMeta = traitMeta[primaryTrait]
   const secondaryMeta = traitMeta[secondaryTrait]
   const signatureStyle = getSignatureLeadershipStyle(primaryTrait, secondaryTrait)
   const summary = options?.profile?.narrative ?? collectSectionSummary(element)
-  const sections = collectPdfReportSections(element)
+  const sections = collectPdfReportSections(element, t)
 
   addPdfCoverPage(pdfDoc, font, boldFont, pageWidth, pageHeight, margin, {
-    title: 'Executive Behavioral Report',
+    title: t('report.headerTitle'),
     subtitle: '',
     generatedAt: options?.generatedAt ?? '',
     completionScore: options?.completionScore ?? 0,
@@ -112,6 +138,7 @@ async function buildPdfReportPdfBytes(
     secondaryMeta,
     summary,
     signatureStyle,
+    t,
   })
 
   addPdfDetailPages(pdfDoc, font, boldFont, pageWidth, pageHeight, margin, sections)
@@ -149,10 +176,10 @@ type PdfReportSection = {
   traits?: PdfTraitSummary[]
 }
 
-function collectPdfReportSections(element: HTMLElement): PdfReportSection[] {
+function collectPdfReportSections(element: HTMLElement, t: TFunction): PdfReportSection[] {
   const sections = Array.from(element.querySelectorAll<HTMLElement>('[data-export-section]')).map((section) => {
     const id = section.getAttribute('data-export-section') ?? 'section'
-    const title = section.querySelector<HTMLElement>('h1, h2, h3, h4')?.textContent?.trim() ?? getSectionTitle(id)
+    const title = section.querySelector<HTMLElement>('h1, h2, h3, h4')?.textContent?.trim() ?? getSectionTitle(id, t)
     const bullets = Array.from(section.querySelectorAll('li')).map((item) => cleanText(item.textContent))
     const rawText = cleanText(section.innerText.replace(title, ''))
 
@@ -187,7 +214,7 @@ function collectPdfReportSections(element: HTMLElement): PdfReportSection[] {
       text: baselineText,
       bullets,
       accent: getSectionAccent(id),
-      badge: getSectionBadgeLabel(id),
+      badge: getSectionBadgeLabel(id, t),
       chips: id === 'header' ? extractSectionChips(rawText) : undefined,
       traits: id === 'profile-overview' ? parseProfileTraits(rawText) : undefined,
     }
@@ -223,6 +250,7 @@ function addPdfCoverPage(
     secondaryMeta: { label: string }
     summary: string
     signatureStyle: SignatureStyle
+    t: TFunction
   },
 ) {
   const page = pdfDoc.addPage([pageWidth, pageHeight])
@@ -244,10 +272,10 @@ function addPdfCoverPage(
   page.drawText('Northstar DISC', { x: margin + 26, y: headerTop - 44, size: 26, font: boldFont, color: textDark })
   page.drawText(data.title, { x: margin + 26, y: headerTop - 74, size: 20, font: boldFont, color: textDark })
   page.drawText(data.subtitle, { x: margin + 26, y: headerTop - 100, size: 11, font: font, color: textWarm })
-  page.drawText(`Completion: ${data.completionScore}%`, { x: margin + 26, y: headerTop - 118, size: 10,  font: boldFont, color: textWarm })
-  page.drawText(`Generated: ${data.generatedAt}`, { x: margin + 330, y: headerTop - 118, size: 10, font: font, color: textWarm })
-  page.drawText(`Primary: ${data.primaryMeta.label}`, { x: margin + 26, y: headerTop - 136, size: 10, font: boldFont, color: textWarm })
-  page.drawText(`Secondary: ${data.secondaryMeta.label}`, { x: margin + 330, y: headerTop - 136, size: 10, font: boldFont, color: textWarm })
+  page.drawText(`${data.t('report.completionScore')}: ${data.completionScore}%`, { x: margin + 26, y: headerTop - 118, size: 10,  font: boldFont, color: textWarm })
+  page.drawText(`${data.t('report.generatedLabel')}: ${data.generatedAt}`, { x: margin + 330, y: headerTop - 118, size: 10, font: font, color: textWarm })
+  page.drawText(`${data.t('report.primary')}: ${data.primaryMeta.label}`, { x: margin + 26, y: headerTop - 136, size: 10, font: boldFont, color: textWarm })
+  page.drawText(`${data.t('report.secondary')}: ${data.secondaryMeta.label}`, { x: margin + 330, y: headerTop - 136, size: 10, font: boldFont, color: textWarm })
 
   const leftColumnX = margin + 24
   const leftColumnWidth = pageWidth - margin * 2 - 280
@@ -262,7 +290,7 @@ function addPdfCoverPage(
   page.drawRectangle({ x: leftColumnX - 14, y: summaryTop - summaryHeight, width: summaryWidth + 28, height: summaryHeight, color: cardSurface })
   // accent row at the top of the summary card
   page.drawRectangle({ x: leftColumnX - 14, y: summaryTop - 6, width: summaryWidth + 28, height: 6, color: accent })
-  page.drawText('Executive summary', { x: leftColumnX, y: summaryTop - 24, size: 14, font: boldFont, color: textDark })
+  page.drawText(data.t('report.executiveSummary'), { x: leftColumnX, y: summaryTop - 24, size: 14, font: boldFont, color: textDark })
 
   let cursorY = summaryTop - 44
   summaryLines.forEach((line) => {
@@ -274,23 +302,23 @@ function addPdfCoverPage(
 
   // Signature badge: position below the profile badge
   const signatureTop = profileBadgeTop - 128
-  drawSignatureBadge(page, rightColumnX, signatureTop, 232, `${data.primaryMeta.label} • ${data.secondaryMeta.label}`, data.summary, font, boldFont)
+  drawSignatureBadge(page, rightColumnX, signatureTop, 232, `${data.t('report.executiveSignature')}`, `${data.primaryMeta.label} • ${data.secondaryMeta.label}`, data.summary, font, boldFont)
 
   // Profile overview card sits beneath the signature badge
   const profileOverviewTop = signatureTop - 132
 
   // Trait chips sit below the profile overview
   const traitChipY = profileOverviewTop - 16
-  drawTraitChip(page, rightColumnX, traitChipY + 155, 'Primary Trait:', data.primaryMeta.label, font, boldFont)
-  drawTraitChip(page, rightColumnX, traitChipY + 120, 'Secondary Trait:', data.secondaryMeta.label, font, boldFont)
+  drawTraitChip(page, rightColumnX, traitChipY + 155, data.t('report.primaryTraitLabel'), data.primaryMeta.label, font, boldFont)
+  drawTraitChip(page, rightColumnX, traitChipY + 120, data.t('report.secondaryTraitLabel'), data.secondaryMeta.label, font, boldFont)
 
   // Move Leadership fingerprint to the left column below the Executive summary
   const chartTop = summaryTop - summaryHeight - 10
   const chartHeight = 240
   page.drawRectangle({ x: leftColumnX - 14, y: chartTop - chartHeight, width: summaryWidth + 28, height: chartHeight, color: cardSurface })
   page.drawRectangle({ x: leftColumnX - 14, y: chartTop - 6, width: summaryWidth + 28, height: 6, color: accent })
-  page.drawText('Leadership fingerprint', { x: leftColumnX, y: chartTop - 24, size: 14, font: boldFont, color: textDark })
-  page.drawText('Radar and score profile', { x: leftColumnX, y: chartTop - 40, size: 10, font: font, color: textWarm })
+  page.drawText(data.t('report.leadershipFingerprint'), { x: leftColumnX, y: chartTop - 24, size: 14, font: boldFont, color: textDark })
+  page.drawText(data.t('report.radarScoreProfile'), { x: leftColumnX, y: chartTop - 40, size: 10, font: font, color: textWarm })
 
   // RADAR SETTINGS and SIZE
   const traitScores = data.profile?.scores ?? []
@@ -309,11 +337,11 @@ function drawProfileBadge(page: any, x: number, y: number, width: number, badge:
   page.drawText(badge, { x: x + 14, y: y - 85, size: 10, font, color: rgb(0.38, 0.27, 0.19) })
 }
 
-function drawSignatureBadge(page: any, x: number, y: number, width: number, title: string, description: string, font: any, boldFont: any) {
+function drawSignatureBadge(page: any, x: number, y: number, width: number, header: string, title: string, description: string, font: any, boldFont: any) {
   const badgeHeight = 118
   page.drawRectangle({ x, y: y - badgeHeight + 24, width, height: badgeHeight, color: rgb(0.98, 0.95, 0.90) })
   page.drawRectangle({ x, y: y + 16, width, height: 6, color: rgb(0.73, 0.53, 0.34) })
-  page.drawText('Executive Signature', { x: x + 14, y: y + 130, size: 12, font: boldFont, color: rgb(0.45, 0.32, 0.22) })
+  page.drawText(header, { x: x + 14, y: y + 130, size: 12, font: boldFont, color: rgb(0.45, 0.32, 0.22) })
   page.drawText(title, { x: x + 14, y: y + 30, size: 10, font: boldFont, color: rgb(0.38, 0.27, 0.19) })
 
   const descLines = splitPdfText(description, width - 32, font, 9)
@@ -688,6 +716,7 @@ export async function exportShareCard(
     secondaryTrait?: TraitKey
     completionScore?: number
     generatedAt?: string
+    language?: string
   },
 ) {
   const format = options?.format ?? 'png'
@@ -727,12 +756,12 @@ export async function exportShareCard(
   return { ok: true, fileName: `${fileName}.png` }
 }
 
-export function buildExportLayoutSections(element: HTMLElement) {
+export function buildExportLayoutSections(element: HTMLElement, t: TFunction = i18n.t.bind(i18n)) {
   const sections = Array.from(element.querySelectorAll<HTMLElement>('[data-export-section]'))
     .map((section) => {
       const id = section.getAttribute('data-export-section') ?? 'section'
       const heading = section.querySelector<HTMLElement>('h1, h2, h3, h4')?.textContent?.trim() ?? ''
-      const title = heading || getSectionTitle(id)
+      const title = heading || getSectionTitle(id, t)
       const body = cleanText(section.innerText)
       const accent = getSectionAccent(id)
       return {
@@ -762,16 +791,20 @@ function cleanText(text?: string | null) {
   return (text ?? '').replace(/\s+/g, ' ').trim()
 }
 
-function getSectionTitle(id: string) {
+function getSectionTitle(id: string, t: TFunction) {
   switch (id) {
     case 'header':
-      return 'Executive Overview'
+      return t('report.boardSummary')
     case 'profile-overview':
-      return 'Profile Overview'
+      return t('report.profileOverview')
     case 'footer':
-      return 'Closing Notes'
+      return t('report.closingHeading')
+    case 'core-strengths':
+      return t('report.coreStrengths')
+    case 'development-focus':
+      return t('report.developmentFocus')
     default:
-      return id.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+      return id.startsWith('insight-') ? t('report.insightLabel') : id.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
   }
 }
 
@@ -792,23 +825,23 @@ function getSectionAccent(id: string) {
   }
 }
 
-function getSectionBadgeLabel(id: string) {
+function getSectionBadgeLabel(id: string, t: TFunction) {
   switch (id) {
     case 'header':
-      return 'Board Summary'
+      return t('report.boardSummary')
     case 'profile-overview':
-      return 'Profile Insight'
+      return t('report.profileOverview')
     case 'footer':
-      return 'Closing Note'
+      return t('report.closingHeading')
     case 'core-strengths':
-      return 'Strength Focus'
+      return t('report.coreStrengths')
     case 'development-focus':
-      return 'Growth Area'
+      return t('report.developmentFocus')
     default:
       if (id.startsWith('insight')) {
-        return 'Insight'
+        return t('report.insightLabel')
       }
-      return 'Feature'
+      return t('report.featureLabel', { defaultValue: id.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()) })
   }
 }
 
@@ -864,6 +897,7 @@ async function renderCanvasForExport(element: HTMLElement, options?: {
   secondaryTrait?: TraitKey
   completionScore?: number
   generatedAt?: string
+  language?: string
 }): Promise<HTMLCanvasElement> {
   try {
     const canvas = await html2canvas(element, {
@@ -894,6 +928,7 @@ function buildFallbackExportCanvas(element: HTMLElement, options?: {
   secondaryTrait?: TraitKey
   completionScore?: number
   generatedAt?: string
+  language?: string
 }) {
   const canvas = document.createElement('canvas')
   canvas.width = 1400
@@ -912,11 +947,12 @@ function buildFallbackExportCanvas(element: HTMLElement, options?: {
   const secondaryTrait = options?.secondaryTrait ?? profile?.secondaryTrait ?? 'C'
   const completionScore = options?.completionScore ?? 0
   const generatedAt = options?.generatedAt ?? 'Not provided'
+  const t = options?.language ? i18n.getFixedT(options.language, 'translation') : i18n.t.bind(i18n)
   const summary = profile?.narrative ?? cleanText(element.innerText).slice(0, 900)
   const scoreLines = (profile?.scores ?? []).slice(0, 4)
   const highlightLines = (profile?.highlights ?? []).slice(0, 3)
   const growthLines = (profile?.growthPoints ?? []).slice(0, 3)
-  const layoutSections = buildExportLayoutSections(element)
+  const layoutSections = buildExportLayoutSections(element, t)
   const traitPalette: Record<TraitKey, string> = {
     D: '#c78e69',
     I: '#d8b24a',
@@ -942,16 +978,16 @@ function buildFallbackExportCanvas(element: HTMLElement, options?: {
   ctx.fillText('Northstar DISC', padding + 44, padding + 96)
   ctx.fillStyle = '#4c3a2e'
   ctx.font = '700 24px Arial'
-  ctx.fillText('Executive Report Export', padding + 44, padding + 136)
+  ctx.fillText(t('report.exportTitle'), padding + 44, padding + 136)
 
   ctx.fillStyle = '#6b584d'
   ctx.font = '16px Arial'
   wrapText(ctx, summary, padding + 44, padding + 174, width - padding * 2 - 88, 24)
 
-  drawMetricBadge(ctx, padding + 44, padding + 242, '#f7efe6', '#2f241d', 'Primary', primaryTrait)
-  drawMetricBadge(ctx, padding + 300, padding + 242, '#f7efe6', '#2f241d', 'Secondary', secondaryTrait)
-  drawMetricBadge(ctx, padding + 556, padding + 242, '#f7efe6', '#2f241d', 'Completion', `${completionScore}%`)
-  drawMetricBadge(ctx, padding + 812, padding + 242, '#f7efe6', '#2f241d', 'Generated', generatedAt)
+  drawMetricBadge(ctx, padding + 44, padding + 242, '#f7efe6', '#2f241d', t('report.primaryTraitLabel'), primaryTrait)
+  drawMetricBadge(ctx, padding + 300, padding + 242, '#f7efe6', '#2f241d', t('report.secondaryTraitLabel'), secondaryTrait)
+  drawMetricBadge(ctx, padding + 556, padding + 242, '#f7efe6', '#2f241d', t('report.completionScore'), `${completionScore}%`)
+  drawMetricBadge(ctx, padding + 812, padding + 242, '#f7efe6', '#2f241d', t('report.generatedLabel'), generatedAt)
 
   const cardWidth = (width - padding * 2 - 36) / 2
   const leftX = padding + 28
@@ -963,15 +999,15 @@ function buildFallbackExportCanvas(element: HTMLElement, options?: {
   const insightsY = secondPageY + 240
   const highlightsY = insightsY + 220
 
-  drawInfoCard(ctx, leftX, coverCardY, cardWidth, 180, '#fffdfb', '#8b5e3c', 'Signature Snapshot', `${primaryTrait}${secondaryTrait} leadership with a calm, decisive profile designed for coaching, hiring, and team alignment.`)
+  drawInfoCard(ctx, leftX, coverCardY, cardWidth, 180, '#fffdfb', '#8b5e3c', t('report.signatureSnapshot'), `${primaryTrait}${secondaryTrait} ${t('report.signatureSummary')}`)
 
-  drawTraitCard(ctx, leftX, secondPageY, cardWidth, 220, '#fffdfb', '#5d6f7d', 'Trait Performance', scoreLines, traitPalette)
-  drawInfoCard(ctx, rightX, secondPageY, cardWidth, 220, '#fffdfb', '#688b6a', 'Board-Level Insights', [
-    highlightLines[0] ? `Strength: ${highlightLines[0]}` : '',
-    growthLines[0] ? `Development: ${growthLines[0]}` : '',
-    highlightLines[1] ? `Strength: ${highlightLines[1]}` : '',
+  drawTraitCard(ctx, leftX, secondPageY, cardWidth, 220, '#fffdfb', '#5d6f7d', t('report.traitPerformance'), scoreLines, traitPalette)
+  drawInfoCard(ctx, rightX, secondPageY, cardWidth, 220, '#fffdfb', '#688b6a', t('report.boardLevelInsights'), [
+    highlightLines[0] ? `${t('report.strengthLabel')}: ${highlightLines[0]}` : '',
+    growthLines[0] ? `${t('report.developmentLabel')}: ${growthLines[0]}` : '',
+    highlightLines[1] ? `${t('report.strengthLabel')}: ${highlightLines[1]}` : '',
   ].filter(Boolean).join(' • '))
-  drawInfoCard(ctx, leftX, insightsY, cardWidth, 200, '#fffdfb', '#c78e69', 'Report Highlights', layoutSections.slice(0, 2).map((section) => `${section.title}: ${section.body}`).join(' • '))
+  drawInfoCard(ctx, leftX, insightsY, cardWidth, 200, '#fffdfb', '#c78e69', t('report.reportHighlights'), layoutSections.slice(0, 2).map((section) => `${section.title}: ${section.body}`).join(' • '))
 
   ctx.fillStyle = '#f7efe6'
   roundRect(ctx, leftX, highlightsY + 220, width - padding * 2 - 56, 96, 20)
@@ -981,10 +1017,10 @@ function buildFallbackExportCanvas(element: HTMLElement, options?: {
   ctx.stroke()
   ctx.fillStyle = '#2f241d'
   ctx.font = '700 20px Arial'
-  ctx.fillText('Board packet ready', leftX + 18, highlightsY + 264)
+  ctx.fillText(t('report.boardPacketReady'), leftX + 18, highlightsY + 264)
   ctx.fillStyle = '#6b584d'
   ctx.font = '15px Arial'
-  ctx.fillText('Premium layout, stronger balance, and executive narrative clarity.', leftX + 18, highlightsY + 288)
+  ctx.fillText(t('report.boardPacketBody'), leftX + 18, highlightsY + 288)
 
   return canvas
 }
@@ -1105,6 +1141,7 @@ function buildFallbackExportDataUrl(element: HTMLElement) {
     return 'data:image/png;base64,00'
   }
 
+  const t = i18n.t.bind(i18n)
   const canvas = document.createElement('canvas')
   canvas.width = 1200
   canvas.height = 1600
@@ -1139,18 +1176,18 @@ function buildFallbackExportDataUrl(element: HTMLElement) {
   ctx.fillText('Northstar DISC', padding + 52, padding + 96)
   ctx.font = '600 24px Arial'
   ctx.fillStyle = '#8b735d'
-  ctx.fillText('Leadership Signature • Share Ready', padding + 52, padding + 136)
+  ctx.fillText(t('report.leadershipSignatureTagline'), padding + 52, padding + 136)
 
   ctx.fillStyle = '#4d3b30'
   ctx.font = '700 30px Arial'
-  ctx.fillText('Executive Profile Snapshot', padding + 52, padding + 314)
+  ctx.fillText(t('report.executiveProfileSnapshot'), padding + 52, padding + 314)
 
   ctx.fillStyle = '#f7efe6'
   roundRect(ctx, padding + 44, padding + 350, width - padding * 2 - 88, 220, 22)
   ctx.fill()
   ctx.fillStyle = '#4d3b30'
   ctx.font = '700 24px Arial'
-  ctx.fillText('Core Narrative', padding + 72, padding + 392)
+  ctx.fillText(t('report.coreNarrative'), padding + 72, padding + 392)
   ctx.fillStyle = '#6e5a4f'
   ctx.font = '22px Arial'
   wrapText(ctx, summary, padding + 72, padding + 430, width - padding * 2 - 144, 30)
@@ -1161,10 +1198,10 @@ function buildFallbackExportDataUrl(element: HTMLElement) {
 
   ctx.fillStyle = '#4d3b30'
   ctx.font = '600 24px Arial'
-  ctx.fillText('Why it stands out', padding + 72, height - 190)
+  ctx.fillText(t('report.whyItStandsOut'), padding + 72, height - 190)
   ctx.font = '20px Arial'
   ctx.fillStyle = '#6e5a4f'
-  ctx.fillText('Premium layout • Stronger storytelling • Ready for LinkedIn and PDF', padding + 72, height - 150)
+  ctx.fillText(t('report.premiumLayoutReady'), padding + 72, height - 150)
 
   return canvas.toDataURL('image/png')
 }

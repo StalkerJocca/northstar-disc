@@ -31,9 +31,12 @@ export default function ShareableResultsCard({ profile, primaryTrait, secondaryT
     >
       <div className="rounded-[1.5rem] border border-stone-200/80 bg-white/80 p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.3em] text-stone-500">{t('app.name')}</p>
-            <h3 className="mt-1 text-xl font-semibold text-stone-800">{signature.badge}</h3>
+          <div className="flex items-center gap-3">
+            <img src="/NorthStar.png" alt="Northstar DISC Logo" className="h-10 w-auto rounded-2xl object-contain" />
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.3em] text-stone-500">{t('app.name')}</p>
+              <h3 className="mt-1 text-xl font-semibold text-stone-800">{signature.badge}</h3>
+            </div>
           </div>
           <div className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-stone-600">
             {t('share.cardLabel')}

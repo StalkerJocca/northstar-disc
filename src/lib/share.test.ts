@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PDFDocument } from 'pdf-lib'
-import { buildExportLayoutSections, buildShareText, buildShareUrl, exportShareCard, getSignatureLeadershipStyle, trackShareEvent } from './share'
+import { buildExportLayoutSections, buildShareText, buildShareUrl, buildEmailShareBody, buildEmailShareSubject, exportShareCard, getSignatureLeadershipStyle, trackShareEvent } from './share'
 
 vi.mock('html2canvas', () => ({
   default: vi.fn().mockResolvedValue({
@@ -55,6 +55,30 @@ describe('share helpers', () => {
     expect(text).toContain('Northstar DISC')
     expect(text).toContain('The Analytical Leader')
     expect(text).toContain('https://disc-wellness.app')
+  })
+
+  it('builds a shorter share copy for twitter', () => {
+    const text = buildShareText({
+      primaryTrait: 'D',
+      secondaryTrait: 'C',
+      url: 'https://disc-wellness.app',
+      platform: 'twitter',
+    })
+
+    expect(text).toContain('Explore your style')
+    expect(text).toContain('https://disc-wellness.app')
+  })
+
+  it('builds an email subject and body for sharing', () => {
+    const subject = buildEmailShareSubject('I', 'S')
+    const body = buildEmailShareBody({
+      primaryTrait: 'I',
+      secondaryTrait: 'S',
+      url: 'https://disc-wellness.app',
+    })
+
+    expect(subject).toContain('Northstar DISC')
+    expect(body).toContain('Ready to explore your own profile?')
   })
 
   it('derives a signature style label for the profile', () => {

@@ -4,12 +4,18 @@ import { useTranslation } from 'react-i18next'
 type SocialShareButtonsProps = {
   shareText: string
   url?: string
-  onShare?: (platform: 'linkedin' | 'twitter') => void
+  onShare?: (platform: 'linkedin' | 'twitter' | 'email') => void
 }
 
-const shareUrl = (platform: 'linkedin' | 'twitter', text: string, url: string) => {
+const shareUrl = (platform: 'linkedin' | 'twitter' | 'email', text: string, url: string) => {
   const encodedText = encodeURIComponent(text)
   const encodedUrl = encodeURIComponent(url)
+
+  if (platform === 'email') {
+    const subject = encodeURIComponent('Your Northstar DISC reflection')
+    const body = encodeURIComponent(`${text}\n\n${url}`)
+    return `mailto:?subject=${subject}&body=${body}`
+  }
 
   if (platform === 'linkedin') {
     return `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`
@@ -20,7 +26,7 @@ const shareUrl = (platform: 'linkedin' | 'twitter', text: string, url: string) =
 
 export default function SocialShareButtons({ shareText, url = 'https://disc-wellness.app', onShare }: SocialShareButtonsProps) {
   const { t } = useTranslation()
-  const openShare = (platform: 'linkedin' | 'twitter') => {
+  const openShare = (platform: 'linkedin' | 'twitter' | 'email') => {
     if (onShare) {
       onShare(platform)
       return
@@ -51,6 +57,15 @@ export default function SocialShareButtons({ shareText, url = 'https://disc-well
         className="rounded-full bg-stone-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-stone-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2"
       >
         {t('share.buttonX')}
+      </motion.button>
+      <motion.button
+        type="button"
+        whileHover={{ y: -2, scale: 1.01 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => openShare('email')}
+        className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2"
+      >
+        {t('share.buttonEmail')}
       </motion.button>
     </div>
   )

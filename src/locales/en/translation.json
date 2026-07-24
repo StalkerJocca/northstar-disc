@@ -20,6 +20,72 @@
     "subtitle": "A calm, guided check-in that helps you see how you naturally move through work and relationships.",
     "note": "Three thoughtful prompts. No signup. No pressure."
   },
+  "landing": {
+    "headline": "Transform self-awareness into action.",
+    "subheadline": "Map your leadership, communication, and decision-making style in under 5 minutes.",
+    "intro": "A gentle, premium assessment built for busy leaders and teams who want clear, practical insight.",
+    "badges": {
+      "free": "✦ 100% Free",
+      "noSignup": "✦ No Sign-Up Required",
+      "report": "✦ Instant Executive PDF Report"
+    },
+    "ctaPrimary": "Start Assessment",
+    "featureHeading": "What you’ll get",
+    "featureIntro": "A complete view of how your natural style shows up in work and leadership.",
+    "featureCards": {
+      "chart": {
+        "title": "Interactive Radar Chart",
+        "body": "Precise visual breakdown of Dominance, Influence, Steadiness, and Conscientiousness."
+      },
+      "insights": {
+        "title": "Behavioral Insights",
+        "body": "Actionable feedback on stress triggers, ideal work environments, and leadership style."
+      },
+      "export": {
+        "title": "Executive Export",
+        "body": "One-click download of a retina-ready PDF/PNG report ready for sharing."
+      },
+      "reflection": {
+        "title": "Fast, thoughtful reflection",
+        "body": "A calm, 50-question assessment designed for busy professionals."
+      }
+    },
+    "stepsTitle": "How it works",
+    "stepsIntro": "A quick, guided process to reveal your leadership signature.",
+    "steps": [
+      {
+        "title": "Answer 50 brief scenarios",
+        "description": "Complete the assessment in about 5 minutes."
+      },
+      {
+        "title": "Uncover your DISC profile",
+        "description": "See your primary and secondary behavioral style."
+      },
+      {
+        "title": "Export your executive report",
+        "description": "Download a polished summary ready for LinkedIn."
+      }
+    ],
+    "previewTitle": "Sample result preview",
+    "previewBody": "A polished executive summary that organizes your DISC profile into clear, share-ready insight.",
+    "previewBadge": "Executive snapshot",
+    "previewAction": "See the quality of the output before you start.",
+    "previewFeature1": "Clear trait labels and a refined executive layout.",
+    "previewFeature2": "A share-ready format designed for confident leadership conversations.",
+    "socialProof": {
+      "title": "Trusted by leaders",
+      "items": [
+        "Used by startup founders, team leads, and execs",
+        "Built for polished self-reflection and rapid insight",
+        "Designed for confident LinkedIn-ready storytelling"
+      ]
+    },
+    "ctaFooter": {
+      "title": "Ready to reflect with clarity?",
+      "subtitle": "Start your DISC assessment now and download an executive-ready report.",
+      "note": "No signup. No pressure. Just a strong leadership reflection."
+    }
+  },
   "progress": {
     "flow": "Flow",
     "streak": "Streak",
@@ -42,8 +108,11 @@
     "questionLabel": "Current prompt",
     "resultTitle": "Your gentle profile",
     "resultHeading": "You feel most aligned with {{trait}}",
-    "resultPlaceholder": "We are preparing your profile now."
-    ,
+    "resultPlaceholder": "We are preparing your profile now.",
+    "results": {
+      "completeHeading": "Assessment complete",
+      "insightsReady": "Your personalized insights are ready."
+    },
     "questions": [
       { "prompt": "1. When building momentum on a new project, I tend to...", "options": [ { "label": "Move quickly and decisively to hit ambitious targets", "trait": "D" }, { "label": "Bring warmth, vision, and high energy to the team", "trait": "I" }, { "label": "Create steady calm, harmony, and consistency", "trait": "S" }, { "label": "Refine details, set standards, and ensure accuracy", "trait": "C" } ] },
       { "prompt": "2. In a group setting, I feel most useful when I...", "options": [ { "label": "Set clear direction and take charge of decisions", "trait": "D" }, { "label": "Connect people, inspire ideas, and spark conversation", "trait": "I" }, { "label": "Support team members patiently and listen deeply", "trait": "S" }, { "label": "Organize complex information and provide logical structure", "trait": "C" } ] },
@@ -108,6 +177,7 @@
     "badgeReady": "Signature badge ready",
     "buttonLinkedIn": "Share on LinkedIn",
     "buttonX": "Share on X",
+    "buttonEmail": "Share by email",
     "shareTitle": "Share your DISC reflection",
     "cardLabel": "Share card",
     "topTraits": "Top traits",
@@ -133,12 +203,12 @@
   },
   "support": {
     "title": "Support this work",
-    "heading": "Keep this premium experience moving forward.",
-    "body": "A small contribution helps me keep building thoughtful tools, refined exports, and better leadership experiences. Your support directly powers future features, better polish, and a stronger LinkedIn-ready presentation.",
+    "heading": "Enjoyed your profile report?",
+    "body": "Northstar DISC is a 100% free, independent, and ad-free tool. If this assessment brought value or clarity to your team or career, consider supporting the project with a coffee to help cover hosting and continuous updates.",
     "series": "Follow {{name}} for updates and early access to new improvements:",
     "linkText": "linkedin.com/in/joaocosta1695",
     "note": "Payment support options will be available soon — thank you for helping this project grow.",
-    "button": "Buy me a coffee"
+    "button": "Support the Project ☕"
   },
   "nextStep": {
     "title": "Next-step guidance",
@@ -181,6 +251,28 @@
     "rawScore": "Raw score: {{score}}",
     "candidateName": "Northstar DISC Candidate",
     "brandName": "Northstar DISC",
+    "exportTitle": "Executive share card",
+    "primaryTraitLabel": "Primary",
+    "secondaryTraitLabel": "Secondary",
+    "generatedLabel": "Generated",
+    "signatureSnapshot": "Signature Snapshot",
+    "signatureSummary": "leadership with a calm, decisive profile designed for coaching, hiring, and team alignment.",
+    "traitPerformance": "Trait Performance",
+    "boardLevelInsights": "Board-Level Insights",
+    "strengthLabel": "Strength",
+    "developmentLabel": "Development",
+    "reportHighlights": "Report Highlights",
+    "boardPacketReady": "Board packet ready",
+    "boardPacketBody": "Premium layout, stronger balance, and executive narrative clarity.",
+    "leadershipSignatureTagline": "Leadership Signature • Share Ready",
+    "executiveProfileSnapshot": "Executive Profile Snapshot",
+    "executiveSignature": "Executive Signature",
+    "leadershipFingerprint": "Leadership fingerprint",
+    "radarScoreProfile": "DISC profile overview",
+    "whyItStandsOut": "Why it stands out",
+    "premiumLayoutReady": "Premium layout • Stronger storytelling • Ready for LinkedIn and PDF",
+    "insightLabel": "Insight",
+    "featureLabel": "Feature",
     "insightPanels": [
       {
         "title": "Core Strengths & Key Motivators",
@@ -202,7 +294,17 @@
   },
   "milestone": {
     "title": "Milestone unlocked",
-    "body": "You completed a calm reflection and gave your energy profile a first shape."
+    "body": "You completed a calm reflection and gave your energy profile a first shape.",
+    "badges": {
+      "quarter": "Quarter milestone",
+      "halfway": "Halfway milestone",
+      "nearly": "Almost there"
+    },
+    "messages": {
+      "quarter": "You’ve finished the first section and are making strong progress.",
+      "halfway": "You’re halfway through your reflection and gathering useful leadership insight.",
+      "nearly": "Nearly there—just one final stretch before results appear."
+    }
   },
   "dashboard": {
     "leaderProfile": "Leader profile",

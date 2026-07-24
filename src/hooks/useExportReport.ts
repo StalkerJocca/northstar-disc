@@ -11,7 +11,7 @@ type useExportReportProps = {
   language?: string
 }
 
-export function useExportReport({ profile, primaryTrait, secondaryTrait, completionScore, fileName = 'northstar-disc-report' }: useExportReportProps) {
+export function useExportReport({ profile, primaryTrait, secondaryTrait, completionScore, fileName = 'northstar-disc-report', language }: useExportReportProps) {
   const [isExporting, setIsExporting] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
 
@@ -35,6 +35,7 @@ export function useExportReport({ profile, primaryTrait, secondaryTrait, complet
         secondaryTrait,
         completionScore,
         generatedAt,
+        language,
       })
 
       if (!result.ok) {
@@ -49,7 +50,7 @@ export function useExportReport({ profile, primaryTrait, secondaryTrait, complet
     } finally {
       setIsExporting(false)
     }
-  }, [completionScore, fileName, generatedAt, primaryTrait, profile, secondaryTrait])
+  }, [completionScore, fileName, generatedAt, language, primaryTrait, profile, secondaryTrait])
 
   return { isExporting, exportError, exportReport, generatedAt }
 }

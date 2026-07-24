@@ -20,6 +20,72 @@
     "subtitle": "Uma checagem calma e guiada que ajuda você a ver como você naturalmente se move através do trabalho e relacionamentos.",
     "note": "Três prompts pensados. Sem cadastro. Sem pressão."
   },
+  "landing": {
+    "headline": "Transforme autoconsciência em ação.",
+    "subheadline": "Mapeie seu estilo de liderança, comunicação e tomada de decisão em menos de 5 minutos.",
+    "intro": "Uma avaliação gentil e premium feita para líderes ocupados e equipes que querem insights claros e práticos.",
+    "badges": {
+      "free": "✦ 100% Grátis",
+      "noSignup": "✦ Sem cadastro",
+      "report": "✦ Relatório executivo instantâneo em PDF"
+    },
+    "ctaPrimary": "Iniciar avaliação",
+    "featureHeading": "O que você vai receber",
+    "featureIntro": "Uma visão completa de como seu estilo natural se manifesta no trabalho e na liderança.",
+    "featureCards": {
+      "chart": {
+        "title": "Gráfico radar interativo",
+        "body": "Quebra visual precisa de Dominância, Influência, Estabilidade e Conscienciosidade."
+      },
+      "insights": {
+        "title": "Insights comportamentais",
+        "body": "Feedback acionável sobre gatilhos de estresse, ambientes de trabalho ideais e estilo de liderança."
+      },
+      "export": {
+        "title": "Exportação executiva",
+        "body": "Download com um clique de um relatório PDF/PNG nítido e pronto para compartilhar."
+      },
+      "reflection": {
+        "title": "Reflexão rápida e cuidadosa",
+        "body": "Uma avaliação calma de 50 perguntas projetada para profissionais ocupados."
+      }
+    },
+    "stepsTitle": "Como funciona",
+    "stepsIntro": "Um processo rápido e guiado para revelar sua assinatura de liderança.",
+    "steps": [
+      {
+        "title": "Responda 50 cenários breves",
+        "description": "Complete a avaliação em cerca de 5 minutos."
+      },
+      {
+        "title": "Descubra seu perfil DISC",
+        "description": "Veja seu estilo comportamental primário e secundário."
+      },
+      {
+        "title": "Exporte seu relatório executivo",
+        "description": "Baixe um resumo polido pronto para o LinkedIn."
+      }
+    ],
+    "previewTitle": "Prévia do resultado",
+    "previewBody": "Um resumo executivo polido que organiza seu perfil DISC em insights claros e prontos para compartilhar.",
+    "previewBadge": "Visão executiva",
+    "previewAction": "Veja a qualidade do resultado antes de começar.",
+    "previewFeature1": "Rótulos de traço claros e um layout executivo refinado.",
+    "previewFeature2": "Formato pronto para compartilhar, pensado para conversas de liderança confiantes.",
+    "socialProof": {
+      "title": "Confiado por líderes",
+      "items": [
+        "Usado por fundadores, líderes de equipe e executivos",
+        "Criado para autorreflexão refinada e insights rápidos",
+        "Feito para narrativas prontas para LinkedIn com confiança"
+      ]
+    },
+    "ctaFooter": {
+      "title": "Pronto para refletir com clareza?",
+      "subtitle": "Comece sua avaliação DISC agora e baixe um relatório executivo.",
+      "note": "Sem cadastro. Sem pressão. Apenas uma reflexão forte de liderança."
+    }
+  },
   "progress": {
     "flow": "Fluxo",
     "streak": "Sequência",
@@ -42,8 +108,11 @@
     "questionLabel": "Prompt atual",
     "resultTitle": "Seu perfil gentil",
     "resultHeading": "Você se alinha mais com {{trait}}",
-    "resultPlaceholder": "Estamos preparando seu perfil agora."
-    ,
+    "resultPlaceholder": "Estamos preparando seu perfil agora.",
+    "results": {
+      "completeHeading": "Avaliação concluída",
+      "insightsReady": "Seus insights personalizados estão prontos."
+    },
     "questions": [
       { "prompt": "1. Ao construir momentum em um novo projeto, eu tendo a...", "options": [ { "label": "Mover-se rapidamente e decisivamente para atingir metas ambiciosas", "trait": "D" }, { "label": "Trazer calor, visão e alta energia para a equipe", "trait": "I" }, { "label": "Criar calma constante, harmonia e consistência", "trait": "S" }, { "label": "Aprimorar detalhes, definir padrões e garantir precisão", "trait": "C" } ] },
       { "prompt": "2. Em um ambiente de grupo, eu me sinto mais útil quando eu...", "options": [ { "label": "Defino direção clara e assumo decisões", "trait": "D" }, { "label": "Conecto pessoas, inspiro ideias e provo conversas", "trait": "I" }, { "label": "Apoio membros da equipe com paciência e escuto profundamente", "trait": "S" }, { "label": "Organizo informações complexas e forneço estrutura lógica", "trait": "C" } ] },
@@ -108,6 +177,7 @@
     "badgeReady": "Badge de assinatura pronto",
     "buttonLinkedIn": "Compartilhar no LinkedIn",
     "buttonX": "Compartilhar no X",
+    "buttonEmail": "Compartilhar por email",
     "shareTitle": "Compartilhe sua reflexão DISC",
     "cardLabel": "Cartão de compartilhamento",
     "topTraits": "Principais traços",
@@ -133,12 +203,12 @@
   },
   "support": {
     "title": "Apoie este trabalho",
-    "heading": "Mantenha esta experiência premium avançando.",
-    "body": "Uma pequena contribuição me ajuda a continuar construindo ferramentas cuidadosas, exports refinados e experiências melhores de liderança. Seu apoio alimenta novos recursos, mais polimento e uma apresentação pronta para LinkedIn.",
+    "heading": "Gostaste do teu relatório comportamental?",
+    "body": "O Northstar DISC é uma ferramenta 100% gratuita, independente e sem anúncios. Se este teste trouxe valor ou clareza à tua carreira ou equipa, considera apoiar o projeto com um café para ajudar nos custos de alojamento e melhorias contínuas.",
     "series": "Siga {{name}} para atualizações e acesso antecipado a novas melhorias:",
     "linkText": "linkedin.com/in/joaocosta1695",
     "note": "Opções de suporte por pagamento estarão disponíveis em breve — obrigado por ajudar este projeto a crescer.",
-    "button": "Compre um café"
+    "button": "Apoiar o Projeto ☕"
   },
   "nextStep": {
     "title": "Orientação do próximo passo",
@@ -174,6 +244,28 @@
     "completionDate": "Data de conclusão",
     "completionScore": "Pontuação de conclusão",
     "documentVersion": "Versão do documento",
+    "exportTitle": "Cartão executivo para compartilhar",
+    "primaryTraitLabel": "Primário",
+    "secondaryTraitLabel": "Secundário",
+    "generatedLabel": "Gerado",
+    "signatureSnapshot": "Resumo de assinatura",
+    "signatureSummary": "liderança com um perfil calmo e decisivo projetado para coaching, contratação e alinhamento de equipe.",
+    "traitPerformance": "Desempenho de traços",
+    "boardLevelInsights": "Insights de nível de diretoria",
+    "strengthLabel": "Força",
+    "developmentLabel": "Desenvolvimento",
+    "reportHighlights": "Destaques do relatório",
+    "boardPacketReady": "Pacote de diretoria pronto",
+    "boardPacketBody": "Layout premium, equilíbrio mais forte e clareza narrativa executiva.",
+    "leadershipSignatureTagline": "Assinatura de liderança • Pronto para compartilhar",
+    "executiveProfileSnapshot": "Instantâneo de perfil executivo",
+    "executiveSignature": "Assinatura executiva",
+    "leadershipFingerprint": "Impressão de liderança",
+    "radarScoreProfile": "Visão geral do perfil DISC",
+    "whyItStandsOut": "Por que se destaca",
+    "premiumLayoutReady": "Layout premium • Narrativa mais forte • Pronto para LinkedIn e PDF",
+    "insightLabel": "Insight",
+    "featureLabel": "Recurso",
     "tagline": "Gerado via Northstar DISC — northstar-disc.vercel.app",
     "radarChartLabel": "Gráfico radar do DISC",
     "coreStrengths": "Forças principais",
@@ -202,7 +294,17 @@
   },
   "milestone": {
     "title": "Marco desbloqueado",
-    "body": "Você completou uma reflexão calma e deu ao seu perfil de energia uma primeira forma."
+    "body": "Você completou uma reflexão calma e deu ao seu perfil de energia uma primeira forma.",
+    "badges": {
+      "quarter": "Primeiro marco",
+      "halfway": "Meio caminho",
+      "nearly": "Quase lá"
+    },
+    "messages": {
+      "quarter": "Você finalizou a primeira parte e já está em um bom ritmo.",
+      "halfway": "Você está na metade do caminho e colhendo insights valiosos de liderança.",
+      "nearly": "Quase lá — falta pouco para ver seus resultados."
+    }
   },
   "dashboard": {
     "leaderProfile": "Perfil do líder",
