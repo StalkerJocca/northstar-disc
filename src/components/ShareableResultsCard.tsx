@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import type { DiscScoreResponse } from '../types/disc'
 import { getSignatureLeadershipStyle } from '../lib/share'
 import { traitMeta } from '../lib/discProfile'
@@ -17,6 +18,7 @@ const traitColors = {
 } as const
 
 export default function ShareableResultsCard({ profile, primaryTrait, secondaryTrait }: ShareableResultsCardProps) {
+  const { t } = useTranslation()
   const signature = getSignatureLeadershipStyle(primaryTrait, secondaryTrait)
   const topTraits = (profile?.scores ?? []).slice(0, 3)
 
@@ -30,11 +32,11 @@ export default function ShareableResultsCard({ profile, primaryTrait, secondaryT
       <div className="rounded-[1.5rem] border border-stone-200/80 bg-white/80 p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.3em] text-stone-500">Northstar DISC</p>
+            <p className="text-[11px] uppercase tracking-[0.3em] text-stone-500">{t('app.name')}</p>
             <h3 className="mt-1 text-xl font-semibold text-stone-800">{signature.badge}</h3>
           </div>
           <div className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-stone-600">
-            Share card
+            {t('share.cardLabel')}
           </div>
         </div>
 
@@ -45,13 +47,13 @@ export default function ShareableResultsCard({ profile, primaryTrait, secondaryT
 
         <div className="mt-4 grid gap-3 sm:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-[1.25rem] border border-stone-200 bg-stone-50 p-4">
-            <p className="text-xs uppercase tracking-[0.24em] text-stone-500">Top traits</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-stone-500">{t('share.topTraits')}</p>
             <div className="mt-3 space-y-2">
               {topTraits.map((item) => (
                 <div key={item.trait} className="flex items-center justify-between rounded-full border border-stone-200 bg-white px-3 py-2 text-sm text-stone-700">
                   <span className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: traitColors[item.trait as keyof typeof traitColors] }} />
-                    <span>{traitMeta[item.trait as keyof typeof traitMeta].label}</span>
+                    <span>{t(`traits.${item.trait}`)}</span>
                   </span>
                   <span className="font-semibold">{item.percentage}%</span>
                 </div>
@@ -60,7 +62,7 @@ export default function ShareableResultsCard({ profile, primaryTrait, secondaryT
           </div>
 
           <div className="rounded-[1.25rem] border border-stone-200 bg-stone-50 p-4">
-            <p className="text-xs uppercase tracking-[0.24em] text-stone-500">Why it resonates</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-stone-500">{t('share.whyItResonates')}</p>
             <ul className="mt-3 space-y-2 text-sm leading-7 text-stone-700">
               {(profile?.highlights ?? []).slice(0, 3).map((item) => (
                 <li key={item} className="flex items-start gap-2">

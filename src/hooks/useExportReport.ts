@@ -8,6 +8,7 @@ type useExportReportProps = {
   secondaryTrait: TraitKey
   completionScore: number
   fileName?: string
+  language?: string
 }
 
 export function useExportReport({ profile, primaryTrait, secondaryTrait, completionScore, fileName = 'northstar-disc-report' }: useExportReportProps) {

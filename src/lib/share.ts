@@ -8,6 +8,7 @@ export type SharePayload = {
   secondaryTrait: TraitKey
   url?: string
   referralCode?: string
+  copyTemplate?: string
 }
 
 export type SignatureStyle = {
@@ -47,9 +48,13 @@ export function getSignatureLeadershipStyle(primaryTrait: TraitKey, secondaryTra
   return signatureStyles[primaryTrait]?.[secondaryTrait] ?? signatureStyles[primaryTrait]?.[primaryTrait] ?? signatureStyles.D.D
 }
 
-export function buildShareText({ primaryTrait, secondaryTrait, url = 'https://disc-wellness.app', referralCode }: SharePayload) {
+export function buildShareText({ primaryTrait, secondaryTrait, url = 'https://disc-wellness.app', referralCode, copyTemplate }: SharePayload) {
   const signature = getSignatureLeadershipStyle(primaryTrait, secondaryTrait)
   const shareUrl = buildShareUrl('linkedin', url, referralCode)
+  if (copyTemplate) {
+    return copyTemplate
+  }
+
   return `I just completed the Northstar DISC Assessment and discovered my behavioral style is “${signature.badge}” (${primaryTrait}${secondaryTrait}). Find your direction here: ${shareUrl}`
 }
 

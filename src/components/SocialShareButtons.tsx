@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 
 type SocialShareButtonsProps = {
   shareText: string
@@ -18,6 +19,7 @@ const shareUrl = (platform: 'linkedin' | 'twitter', text: string, url: string) =
 }
 
 export default function SocialShareButtons({ shareText, url = 'https://disc-wellness.app', onShare }: SocialShareButtonsProps) {
+  const { t } = useTranslation()
   const openShare = (platform: 'linkedin' | 'twitter') => {
     if (onShare) {
       onShare(platform)
@@ -39,7 +41,7 @@ export default function SocialShareButtons({ shareText, url = 'https://disc-well
         <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-current">
           <path d="M6.94 8.5A1.56 1.56 0 1 0 6.94 5.38a1.56 1.56 0 0 0 0 3.12ZM5.5 9.75h2.88V18H5.5zM10.42 9.75h2.76v1.12h.04c.38-.72 1.31-1.48 2.7-1.48 2.88 0 3.41 1.9 3.41 4.37V18h-2.88v-7.3c0-1.74-.03-3.98-2.42-3.98-2.43 0-2.8 1.9-2.8 3.85V18H10.42z" />
         </svg>
-        <span>Share on LinkedIn</span>
+        <span>{t('share.buttonLinkedIn')}</span>
       </motion.button>
       <motion.button
         type="button"
@@ -48,7 +50,7 @@ export default function SocialShareButtons({ shareText, url = 'https://disc-well
         onClick={() => openShare('twitter')}
         className="rounded-full bg-stone-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-stone-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2"
       >
-        Share on X
+        {t('share.buttonX')}
       </motion.button>
     </div>
   )

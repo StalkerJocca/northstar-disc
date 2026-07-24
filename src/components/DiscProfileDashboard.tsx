@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import {
   CartesianGrid,
@@ -25,35 +26,11 @@ const traitColors: Record<TraitKey, string> = {
   C: '#5d6f7d',
 }
 
-const insightMap: Record<TraitKey, { environment: string; pressure: string; communication: string }> = {
-  D: {
-    environment: 'High-autonomy spaces where decisions can move quickly and goals stay sharp.',
-    pressure: 'Can become more forceful, urgent, or controlling when timelines compress.',
-    communication: 'Direct, concise, and outcome-led; short feedback is often most useful.',
-  },
-  I: {
-    environment: 'Collaborative, expressive settings where ideas, energy, and social momentum matter.',
-    pressure: 'May become scattered or overly talkative when pressure rises.',
-    communication: 'Warm, narrative-driven, and relational; people respond to energy and clarity.',
-  },
-  S: {
-    environment: 'Steady, supportive teams with clear care, calm pacing, and low-friction structure.',
-    pressure: 'May seem too accommodating or hesitant when conflict surfaces.',
-    communication: 'Patient, empathetic, and reassuring; trust grows through consistency.',
-  },
-  C: {
-    environment: 'Structured, analytical environments where quality, systems, and detail matter.',
-    pressure: 'May become overly cautious, perfectionistic, or withdrawn under stress.',
-    communication: 'Precise, thoughtful, and evidence-led; depth and reliability build trust.',
-  },
-}
-
 export default function DiscProfileDashboard({ profile, completionScore, primaryTrait, secondaryTrait }: DiscProfileDashboardProps) {
-  const primaryMeta = traitMeta[primaryTrait]
-  const secondaryMeta = traitMeta[secondaryTrait]
+  const { t } = useTranslation()
   const chartData = (profile?.scores ?? []).map((item) => ({
     trait: item.trait,
-    subject: traitMeta[item.trait as keyof typeof traitMeta].label,
+    subject: t(`traits.${item.trait}`),
     value: item.percentage,
     fullMark: 100,
   }))
@@ -61,27 +38,30 @@ export default function DiscProfileDashboard({ profile, completionScore, primary
   const traitKpis = (profile?.scores ?? []).map((item) => ({
     trait: item.trait as TraitKey,
     value: item.percentage,
-    label: traitMeta[item.trait as keyof typeof traitMeta].label,
+    label: t(`traits.${item.trait}`),
   }))
 
+  const profileHighlights = (profile?.highlights ?? (t(`traitMeta.${primaryTrait}.strengths`, { returnObjects: true }) as string[])) as string[]
   const insightSections = [
     {
-      title: 'Your Core Strengths',
-      items: profile?.highlights ?? primaryMeta.strengths,
+      title: t('dashboard.coreStrengths'),
+      items: profileHighlights,
     },
     {
-      title: 'Ideal Work Environment',
-      items: [insightMap[primaryTrait].environment],
+      title: t('dashboard.idealEnvironment'),
+      items: [t(`insight.environment${primaryTrait}`)],
     },
     {
-      title: 'Under Pressure Tendencies',
-      items: [insightMap[primaryTrait].pressure],
+      title: t('dashboard.underPressure'),
+      items: [t(`insight.pressure${primaryTrait}`)],
     },
     {
-      title: 'Communication Style',
-      items: [insightMap[primaryTrait].communication],
+      title: t('dashboard.communicationStyle'),
+      items: [t(`insight.communication${primaryTrait}`)],
     },
   ]
+
+  const narrative = `${t(`traitMeta.${primaryTrait}.summary`)} ${t('dashboard.secondaryNarrative', { secondary: t(`traits.${secondaryTrait}`).toLowerCase() })}`
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
@@ -94,14 +74,14 @@ export default function DiscProfileDashboard({ profile, completionScore, primary
         <div className="rounded-[1.5rem] border border-stone-200/80 bg-[linear-gradient(135deg,_#f9f3eb,_#f1e5d8)] p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-stone-500">Leader profile</p>
-              <h3 className="mt-2 text-2xl font-semibold text-stone-800">{primaryMeta.label} with a {secondaryMeta.label.toLowerCase()} undercurrent</h3>
+              <p className="text-sm uppercase tracking-[0.3em] text-stone-500">{t('dashboard.leaderProfile')}</p>
+              <h3 className="mt-2 text-2xl font-semibold text-stone-800">{t('dashboard.profileLine', { primary: t(`traits.${primaryTrait}`), secondary: t(`traits.${secondaryTrait}`).toLowerCase() })}</h3>
               <p className="mt-2 max-w-2xl text-sm leading-7 text-stone-600">
-                {profile?.narrative ?? `${primaryMeta.summary} ${secondaryMeta.summary}`}
+                {profile ? narrative : `${t(`traitMeta.${primaryTrait}.summary`)} ${t('dashboard.secondaryNarrative', { secondary: t(`traits.${secondaryTrait}`).toLowerCase() })}`}
               </p>
             </div>
             <div className="rounded-full border border-stone-200 bg-white/70 px-3 py-2 text-sm font-medium text-stone-700">
-              {completionScore}% complete
+              {t('dashboard.completionLabel', { value: completionScore })}
             </div>
           </div>
 
@@ -116,7 +96,7 @@ export default function DiscProfileDashboard({ profile, completionScore, primary
           </div>
         </div>
 
-        <div className="mt-5 h-80 w-full rounded-[1.5rem] border border-stone-200 bg-[radial-gradient(circle_at_top,_#fffaf6,_#f8efe8)] p-3" aria-label="DISC profile radar chart">
+        <div className="mt-5 h-80 w-full rounded-[1.5rem] border border-stone-200 bg-[radial-gradient(circle_at_top,_#fffaf6,_#f8efe8)] p-3" aria-label={t('dashboard.radarChartLabel')}>
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart cx="50%" cy="50%" outerRadius="78%" data={chartData}>
               <PolarGrid stroke="#d9c5b1" strokeDasharray="3 3" />

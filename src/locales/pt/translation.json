@@ -1,0 +1,275 @@
+{
+  "app": {
+    "name": "Northstar DISC",
+    "tagline": "Transforme autoconsciência em ação.",
+    "description": "Uma reflexão DISC prática e premium para líderes, equipes e profissionais conscientes."
+  },
+  "header": {
+    "questionsInfo": "50 perguntas • ~5 min",
+    "statusLaunch": "Início",
+    "statusResults": "Resultados",
+    "statusStep": "Passo {{current}} de {{total}}",
+    "languageLabel": "Idioma",
+    "followLinkedIn": "Siga João Costa | LinkedIn"
+  },
+  "launch": {
+    "why": "Por que líderes usam",
+    "cta": "Comece sua reflexão",
+    "summary": "Uma reflexão prática e elegante que ajuda você a entender seu estilo de comunicação com clareza.",
+    "intro": "Sua reflexão começa aqui.",
+    "subtitle": "Uma checagem calma e guiada que ajuda você a ver como você naturalmente se move através do trabalho e relacionamentos.",
+    "note": "Três prompts pensados. Sem cadastro. Sem pressão."
+  },
+  "progress": {
+    "flow": "Fluxo",
+    "streak": "Sequência",
+    "showResults": "Resultados",
+    "completion": "Concluído",
+    "streakValue": "{{answered}}/{{total}} perguntas",
+    "completed": "Concluído",
+    "focus": "Foco",
+    "share": "Compartilhar",
+    "brand": "Marca",
+    "ready": "Pronto"
+  },
+  "status": {
+    "saved": "Salvo na área de transferência",
+    "shareHint": "Funciona muito bem para compartilhamento no LinkedIn e exportação offline rápida.",
+    "scoring": "Avaliando sua resposta…",
+    "clipboardFallback": "Copiar resumo"
+  },
+  "quiz": {
+    "questionLabel": "Prompt atual",
+    "resultTitle": "Seu perfil gentil",
+    "resultHeading": "Você se alinha mais com {{trait}}",
+    "resultPlaceholder": "Estamos preparando seu perfil agora."
+    ,
+    "questions": [
+      { "prompt": "1. Ao construir momentum em um novo projeto, eu tendo a...", "options": [ { "label": "Mover-se rapidamente e decisivamente para atingir metas ambiciosas", "trait": "D" }, { "label": "Trazer calor, visão e alta energia para a equipe", "trait": "I" }, { "label": "Criar calma constante, harmonia e consistência", "trait": "S" }, { "label": "Aprimorar detalhes, definir padrões e garantir precisão", "trait": "C" } ] },
+      { "prompt": "2. Em um ambiente de grupo, eu me sinto mais útil quando eu...", "options": [ { "label": "Defino direção clara e assumo decisões", "trait": "D" }, { "label": "Conecto pessoas, inspiro ideias e provo conversas", "trait": "I" }, { "label": "Apoio membros da equipe com paciência e escuto profundamente", "trait": "S" }, { "label": "Organizo informações complexas e forneço estrutura lógica", "trait": "C" } ] },
+      { "prompt": "3. Ao tomar decisões importantes, eu valorizo mais...", "options": [ { "label": "Velocidade, autonomia e impacto direto nos resultados", "trait": "D" }, { "label": "Adesão, entusiasmo e como isso afeta o moral", "trait": "I" }, { "label": "Consenso, estabilidade e minimizar a interrupção", "trait": "S" }, { "label": "Dados, lógica, avaliação de risco e fatos completos", "trait": "C" } ] },
+      { "prompt": "4. Minha velocidade natural de execução é geralmente...", "options": [ { "label": "Urgente e acelerada; eu não gosto de esperar", "trait": "D" }, { "label": "Espontânea e energética, movida por momentum", "trait": "I" }, { "label": "Ritmada e deliberada; prefiro um fluxo constante", "trait": "S" }, { "label": "Metódica e cuidadosa; qualidade vem antes da velocidade", "trait": "C" } ] },
+      { "prompt": "5. Quando recebo um problema complexo com diretrizes vagas, eu instintivamente...", "options": [ { "label": "Assumo a responsabilidade imediatamente e traço meu próprio caminho de solução", "trait": "D" }, { "label": "Faço um brainstorming em voz alta com outros para achar ângulos criativos", "trait": "I" }, { "label": "Procuro alinhamento com a equipe antes de dar o primeiro passo", "trait": "S" }, { "label": "Reuno todos os fatos disponíveis para construir um plano sistemático", "trait": "C" } ] },
+
+      { "prompt": "6. Ao delegar tarefas a outros, minha prioridade é garantir...", "options": [ { "label": "Que foquem inteiramente em alcançar o resultado desejado rapidamente", "trait": "D" }, { "label": "Que se sintam empoderados, animados e inspirados a fazer o trabalho", "trait": "I" }, { "label": "Que tenham o suporte e o tempo necessários para ter sucesso", "trait": "S" }, { "label": "Que tenham instruções precisas, regras e padrões de qualidade", "trait": "C" } ] },
+      { "prompt": "7. Minha reação a regras e procedimentos rígidos é tipicamente...", "options": [ { "label": "Ignorá-los se atrasarem progresso ou resultados", "trait": "D" }, { "label": "Tratá-los como diretrizes flexíveis em vez de limites rígidos", "trait": "I" }, { "label": "Respeitá-los porque fornecem segurança e estrutura", "trait": "S" }, { "label": "Segui-los e aplicá-los estritamente para evitar erros", "trait": "C" } ] },
+      { "prompt": "8. Em uma reunião de alto risco, você provavelmente me verá...", "options": [ { "label": "Desafiando suposições e indo direto aos pontos de ação", "trait": "D" }, { "label": "Apresentando ideias ousadas e mantendo alta energia", "trait": "I" }, { "label": "Ouvindo atentamente e encorajando vozes mais quietas", "trait": "S" }, { "label": "Tomando notas detalhadas, fazendo perguntas profundas e verificando afirmações", "trait": "C" } ] },
+      { "prompt": "9. Como você se sente sobre assumir riscos calculados?", "options": [ { "label": "Eu os abraço de forma ousada se a recompensa potencial for alta", "trait": "D" }, { "label": "Eu entro com entusiasmo se parecer emocionante e novo", "trait": "I" }, { "label": "Prefiro rotas seguras e comprovadas com incerteza mínima", "trait": "S" }, { "label": "Analiso todas as probabilidades profundamente antes de agir", "trait": "C" } ] },
+      { "prompt": "10. Ao começar meu dia de trabalho, prefiro focar primeiro em...", "options": [ { "label": "A tarefa de maior impacto que mova o ponteiro imediatamente", "trait": "D" }, { "label": "Conferir com as pessoas e conectar-se com a equipe", "trait": "I" }, { "label": "Continuar tarefas rotineiras de forma constante e previsível", "trait": "S" }, { "label": "Revisar minha agenda, listas organizadas e prioridades", "trait": "C" } ] },
+
+      { "prompt": "11. Na comunicação diária, meu estilo natural é...", "options": [ { "label": "Direto, breve e focado apenas em resultados", "trait": "D" }, { "label": "Animado, expressivo e narrativo", "trait": "I" }, { "label": "Acolhedor, paciente e focado na escuta ativa", "trait": "S" }, { "label": "Preciso, objetivo e fundamentado em evidências", "trait": "C" } ] },
+      { "prompt": "12. Ao construir relações profissionais, confio mais em pessoas que são...", "options": [ { "label": "Competentes, decisivas e responsáveis por resultados", "trait": "D" }, { "label": "De mente aberta, envolventes e positivas", "trait": "I" }, { "label": "Leais, consistentes e genuinamente solidárias", "trait": "S" }, { "label": "Cuidadosas, honestas e rigorosas em seus padrões", "trait": "C" } ] },
+      { "prompt": "13. Minha abordagem ao fazer networking e conhecer colegas é...", "options": [ { "label": "Estratégica; procuro conexões que impulsionem objetivos-chave", "trait": "D" }, { "label": "Descontraída; adoro envolver pessoas e compartilhar energia", "trait": "I" }, { "label": "Observadora; prefiro conexões profundas 1 a 1 ao longo do tempo", "trait": "S" }, { "label": "Reservada; me envolvo quando há uma razão clara e significativa", "trait": "C" } ] },
+      { "prompt": "14. Ao dar feedback a alguém, costumo ser...", "options": [ { "label": "Direto, franco e focado em corrigir imediatamente", "trait": "D" }, { "label": "Encorajador, otimista e focado no potencial", "trait": "I" }, { "label": "Gentil, tático e cuidadoso para não magoar", "trait": "S" }, { "label": "Específico, objetivo e focado em fatos e erros", "trait": "C" } ] },
+      { "prompt": "15. Pessoas que me conhecem bem descreveriam minha presença social como...", "options": [ { "label": "Assertiva, determinada e imponente", "trait": "D" }, { "label": "Carismática, persuasiva e extrovertida", "trait": "I" }, { "label": "Gentil, confiável e acessível", "trait": "S" }, { "label": "Discreta, analítica e reflexiva", "trait": "C" } ] },
+      { "prompt": "16. Em conversas, fico mais frustrado com...", "options": [ { "label": "Indecisão, hesitação e debates infinitos", "trait": "D" }, { "label": "Pessimismo, regras rígidas demais e checagem de detalhes chata", "trait": "I" }, { "label": "Tom agressivo, confronto e mudanças repentinas", "trait": "S" }, { "label": "Declarações vagas, argumentos emocionais e falta de prova", "trait": "C" } ] },
+      { "prompt": "17. Ao convencer outros, confio principalmente em...", "options": [ { "label": "Afirmação confiante e apontar vantagens claras", "trait": "D" }, { "label": "Entusiasmo, narrativa e visão atraente", "trait": "I" }, { "label": "Mostrar como beneficia o grupo e mantém a paz", "trait": "S" }, { "label": "Apresentar lógica estruturada, dados e fatos bem pesquisados", "trait": "C" } ] },
+      { "prompt": "18. Ao trabalhar em equipes interfuncionais, meu papel frequentemente é...", "options": [ { "label": "O motor que empurra todos até a linha de chegada", "trait": "D" }, { "label": "A faísca que conecta ideias e mantém o ânimo", "trait": "I" }, { "label": "A âncora que mantém todos colaborando e centrados", "trait": "S" }, { "label": "O revisor que garante controle de qualidade e precisão", "trait": "C" } ] },
+      { "prompt": "19. Como você lida com expressões emocionais dos colegas?", "options": [ { "label": "Eu redireciono o foco para fatos e ações necessárias", "trait": "D" }, { "label": "Eu empatizo rapidamente e tento melhorar o humor", "trait": "I" }, { "label": "Ofereço um ouvido paciente e presença de apoio", "trait": "S" }, { "label": "Analiso a situação logicamente para ajudar a resolver a raiz", "trait": "C" } ] },
+      { "prompt": "20. Ao receber elogios, sinto-me mais apreciado quando reconhecem meu...", "options": [ { "label": "Capacidade de superar obstáculos difíceis e entregar grandes resultados", "trait": "D" }, { "label": "Criatividade, entusiasmo e influência na equipe", "trait": "I" }, { "label": "Confiabilidade, paciência e dedicação silenciosa", "trait": "S" }, { "label": "Domínio do assunto, precisão e alta qualidade", "trait": "C" } ] },
+
+      { "prompt": "21. Ao enfrentar uma crise inesperada, meu instinto é...", "options": [ { "label": "Assumir controle imediato e avançar com determinação", "trait": "D" }, { "label": "Mobilizar pessoas, manter positividade e improvisar soluções", "trait": "I" }, { "label": "Manter calma, segurar a fortaleza e apoiar outros", "trait": "S" }, { "label": "Avaliar riscos logicamente e formular um plano claro", "trait": "C" } ] },
+      { "prompt": "22. Sob pressão intensa ou prazos apertados, eu fico mais propenso a me tornar...", "options": [ { "label": "Exigente, impaciente ou excessivamente controlador", "trait": "D" }, { "label": "Excessivamente falante, desorganizado ou disperso", "trait": "I" }, { "label": "Excessivamente acomodado, quieto ou resistente a conflitos", "trait": "S" }, { "label": "Crítico demais, perfeccionista ou retraído", "trait": "C" } ] },
+      { "prompt": "23. Ao lidar com discordância, eu tendo a...", "options": [ { "label": "Confrontar diretamente para resolver rápido", "trait": "D" }, { "label": "Usar charme, humor ou diplomacia para amenizar", "trait": "I" }, { "label": "Ceder ou comprometer para preservar harmonia", "trait": "S" }, { "label": "Apoiar-me em fatos, políticas e lógica para provar o ponto", "trait": "C" } ] },
+      { "prompt": "24. Quando mudanças organizacionais alteram minha rotina usual, eu...", "options": [ { "label": "Adapto-me rapidamente se vejo vantagem ou mais controle", "trait": "D" }, { "label": "Abraço como uma oportunidade nova e empolgante", "trait": "I" }, { "label": "Sinto desconforto inicialmente e preciso de tempo para ajustar", "trait": "S" }, { "label": "Avalio criticamente para ver se o novo sistema é lógico", "trait": "C" } ] },
+      { "prompt": "25. Se alguém desafia minha opinião em público, eu...", "options": [ { "label": "Defendo minha posição com firmeza", "trait": "D" }, { "label": "Reformulo o tópico com leveza para manter a plateia interessada", "trait": "I" }, { "label": "Ouço em silêncio para evitar escalada", "trait": "S" }, { "label": "Forneço evidências, dados e pontos estruturados", "trait": "C" } ] },
+      { "prompt": "26. Meu maior medo interno no trabalho é...", "options": [ { "label": "Ser explorado ou perder o controle dos resultados", "trait": "D" }, { "label": "Ser rejeitado, ignorado ou perder posição social", "trait": "I" }, { "label": "Instabilidade súbita, caos ou prejudicar a harmonia", "trait": "S" }, { "label": "Cometer um erro grave ou ser pego despreparado", "trait": "C" } ] },
+      { "prompt": "27. Quando um plano que eu projetei falha, eu...", "options": [ { "label": "Mudo para o plano B sem perder tempo", "trait": "D" }, { "label": "Reenquadro como lição e mantenho moral alta", "trait": "I" }, { "label": "Busco apoio da equipe e trabalho consistentemente para reparar", "trait": "S" }, { "label": "Faço uma análise detalhada para diagnosticar o problema", "trait": "C" } ] },
+      { "prompt": "28. Quando me sinto sobrecarregado, eu...", "options": [ { "label": "Forço mais, elimino distrações e avanço com força", "trait": "D" }, { "label": "Procuro colaboradores ou converso para liberar o estresse", "trait": "I" }, { "label": "Trabalho sistematicamente, um item por vez", "trait": "S" }, { "label": "Reorganizo prioridades e verifico ordens cuidadosamente", "trait": "C" } ] },
+      { "prompt": "29. Ao lidar com clientes difíceis, minha estratégia é...", "options": [ { "label": "Mostrar autoridade, estabelecer limites e obter resultados rápidos", "trait": "D" }, { "label": "Construir rapport e acalmar com positividade", "trait": "I" }, { "label": "Manter calma e fornecer cuidado consistente", "trait": "S" }, { "label": "Entrega documentos impecáveis e respostas precisas", "trait": "C" } ] },
+      { "prompt": "30. Como você lida com feedback que aponta falhas em seu trabalho?", "options": [ { "label": "Aceito se acelerar resultados, mas prefiro autonomia", "trait": "D" }, { "label": "Prefiro que seja gentil e focado no meu potencial", "trait": "I" }, { "label": "Agradeço quando é privado e com suporte genuíno", "trait": "S" }, { "label": "Analiso contra fatos para verificar precisão", "trait": "C" } ] },
+
+      { "prompt": "31. O que mais motiva você internamente?", "options": [ { "label": "Conquistar vitórias mensuráveis e superar obstáculos", "trait": "D" }, { "label": "Reconhecimento, impacto social e liberdade criativa", "trait": "I" }, { "label": "Segurança, relacionamentos genuínos e paz mental", "trait": "S" }, { "label": "Domínio, precisão e produzir padrões impecáveis", "trait": "C" } ] },
+      { "prompt": "32. Se tivesse um superpoder profissional, seria...", "options": [ { "label": "Coragem e força para situações de alto risco", "trait": "D" }, { "label": "Persuasão magnética e energia inspiradora", "trait": "I" }, { "label": "Lealdade inabalável, paciência e confiabilidade", "trait": "S" }, { "label": "Profundidade analítica e execução de alta precisão", "trait": "C" } ] },
+      { "prompt": "33. Ao revisar meu trabalho, meu filtro principal é...", "options": [ { "label": "\"Isso atingiu o objetivo rapidamente e com eficiência?\"", "trait": "D" }, { "label": "\"Isso é envolvente, inspirador e bem recebido?\"", "trait": "I" }, { "label": "\"Isso é útil, sustentável e justo para todos?\"", "trait": "S" }, { "label": "\"Isso é preciso, em conformidade e checado?\"", "trait": "C" } ] },
+      { "prompt": "34. Sinto-me mais energizado ao final do dia quando...", "options": [ { "label": "Superei um desafio difícil ou atingi um marco", "trait": "D" }, { "label": "Conectei-me com pessoas inspiradoras e gerei ideias", "trait": "I" }, { "label": "Ajudei alguém e mantive um ritmo produtivo", "trait": "S" }, { "label": "Resolvi um problema complexo ou aperfeiçoei um sistema", "trait": "C" } ] },
+      { "prompt": "35. Ao gerenciar projetos, foco em...", "options": [ { "label": "Prazos rigorosos, responsabilização e vitórias", "trait": "D" }, { "label": "Manter entusiasmo, brainstorming e vender a visão", "trait": "I" }, { "label": "Coesão da equipe, ritmo constante e suporte claro", "trait": "S" }, { "label": "Estabelecer padrões, registros de risco e especificações", "trait": "C" } ] },
+      { "prompt": "36. Em desenvolvimento profissional, quero aprender...", "options": [ { "label": "Táticas de liderança, estratégia executiva e negociação", "trait": "D" }, { "label": "Palestras, narrativa e influência de marca", "trait": "I" }, { "label": "Dinâmica de equipe, coaching e resolução de conflitos", "trait": "S" }, { "label": "Conhecimento técnico especializado e métodos", "trait": "C" } ] },
+      { "prompt": "37. Como vê trabalho rotineiro e repetitivo?", "options": [ { "label": "Delego ou automizo; prefiro novos desafios", "trait": "D" }, { "label": "Acho entediante e prefiro variedade", "trait": "I" }, { "label": "Acho conforto e estabilidade em rotinas previsíveis", "trait": "S" }, { "label": "Gosto se posso otimizar processos e sistemas", "trait": "C" } ] },
+      { "prompt": "38. Diante de metas ambiciosas, penso imediatamente em...", "options": [ { "label": "Quão rápido podemos executar e obstáculos", "trait": "D" }, { "label": "Quem podemos envolver para tornar isso empolgante", "trait": "I" }, { "label": "Como organizar o trabalho de forma justa para todos", "trait": "S" }, { "label": "Quais passos exatos, métricas e riscos existem", "trait": "C" } ] },
+      { "prompt": "39. Ao avaliar uma nova oportunidade de negócios, priorizo...", "options": [ { "label": "Alto ROI, vantagem competitiva e escala rápida", "trait": "D" }, { "label": "Inovação, apelo da marca e atratividade de mercado", "trait": "I" }, { "label": "Estabilidade a longo prazo, ética e segurança", "trait": "S" }, { "label": "Lógica clara, dados financeiros verificados e mitigação de riscos", "trait": "C" } ] },
+      { "prompt": "40. Minha relação com perfeccionismo é...", "options": [ { "label": "Concluído é melhor que perfeito; momentum importa", "trait": "D" }, { "label": "Perfeição é secundária a impacto e entusiasmo", "trait": "I" }, { "label": "Perfeição é menos importante que harmonia e trabalho constante", "trait": "S" }, { "label": "Excelência requer altos padrões; detalhes definem qualidade", "trait": "C" } ] },
+
+      { "prompt": "41. Ambiente de trabalho ideal oferece...", "options": [ { "label": "Autonomia, autoridade e liberdade de iniciativa", "trait": "D" }, { "label": "Conexão social, liberdade criativa e energia vibrante", "trait": "I" }, { "label": "Previsibilidade, equipe solidária e drama mínimo", "trait": "S" }, { "label": "Estrutura, clareza de expectativas e tempo para foco", "trait": "C" } ] },
+      { "prompt": "42. Ao aprender novas informações, prefiro...", "options": [ { "label": "Resumos executivos, bullet points e principais insights", "trait": "D" }, { "label": "Visuais envolventes, áudio, histórias e exemplos reais", "trait": "I" }, { "label": "Guias passo-a-passo e tutoriais práticos", "trait": "S" }, { "label": "Documentação completa, especificações técnicas e whitepapers", "trait": "C" } ] },
+      { "prompt": "43. Gestão do meu tempo é...", "options": [ { "label": "Orientada a resultados; adapto-me para vencer", "trait": "D" }, { "label": "Flexível; detesto agendas rígidas", "trait": "I" }, { "label": "Consistente; sigo hábitos diários confiáveis", "trait": "S" }, { "label": "Estruturada; uso calendário e listas precisas", "trait": "C" } ] },
+      { "prompt": "44. Que tipo de líder traz o melhor de você?", "options": [ { "label": "Alguém que define metas ousadas e dá liberdade para executar", "trait": "D" }, { "label": "Alguém inspirador, apoiador e que reconhece publicamente", "trait": "I" }, { "label": "Alguém paciente, consistente e que fornece orientação estável", "trait": "S" }, { "label": "Alguém lógico, claro, organizado e que respeita padrões", "trait": "C" } ] },
+      { "prompt": "45. Ao contribuir em reuniões, prefiro falar...", "options": [ { "label": "Cedo e firmemente, definindo direção", "trait": "D" }, { "label": "Frequentemente e com entusiasmo", "trait": "I" }, { "label": "Quando perguntado, oferecendo pensamentos de apoio", "trait": "S" }, { "label": "Quando tenho fatos verificados e pontos bem pensados", "trait": "C" } ] },
+      { "prompt": "46. Como vê regras e compliance?", "options": [ { "label": "Úteis até atrapalharem eficiência ou crescimento", "trait": "D" }, { "label": "Segundo plano em comparação com inovação e relacionamentos", "trait": "I" }, { "label": "Essenciais para manter segurança, justiça e ordem", "trait": "S" }, { "label": "Base crítica; sem elas, qualidade cai", "trait": "C" } ] },
+      { "prompt": "47. Em brainstorms rápidos, foco em...", "options": [ { "label": "Filtrar a ideia mais rápida que traga resultados", "trait": "D" }, { "label": "Gerar muitas ideias criativas e ousadas", "trait": "I" }, { "label": "Garantir que todos tenham voz e se sintam confortáveis", "trait": "S" }, { "label": "Analisar viabilidade e lógica técnica das ideias", "trait": "C" } ] },
+      { "prompt": "48. Sob microgestão, sinto-me...", "options": [ { "label": "Restrito e frustrado; preciso de espaço", "trait": "D" }, { "label": "Sufocado e sem motivação; perco criatividade", "trait": "I" }, { "label": "Incomodado, mas adapto-me silenciosamente", "trait": "S" }, { "label": "Ok se as diretrizes forem lógicas e justas", "trait": "C" } ] },
+      { "prompt": "49. Em um projeto longo, minha maior força é...", "options": [ { "label": "Manter pressão até concluir", "trait": "D" }, { "label": "Manter engajamento e otimismo da equipe", "trait": "I" }, { "label": "Fornecer esforço consistente dia após dia", "trait": "S" }, { "label": "Garantir zero falhas e qualidade meticulosa", "trait": "C" } ] },
+      { "prompt": "50. Sucesso profissional para mim é...", "options": [ { "label": "Alcançar poder, influência e realizações de alto impacto", "trait": "D" }, { "label": "Causar impacto memorável e inspirar outros", "trait": "I" }, { "label": "Construir vida estável e confiança na comunidade", "trait": "S" }, { "label": "Tornar-se especialista e entregar excelência sem concessões", "trait": "C" } ] }
+    ]
+  },
+  "share": {
+    "sectionTitle": "Compartilhe seu perfil",
+    "sectionSubtitle": "Torne sua reflexão fácil de repassar.",
+    "badgeReady": "Badge de assinatura pronto",
+    "buttonLinkedIn": "Compartilhar no LinkedIn",
+    "buttonX": "Compartilhar no X",
+    "shareTitle": "Compartilhe sua reflexão DISC",
+    "cardLabel": "Cartão de compartilhamento",
+    "topTraits": "Principais traços",
+    "whyItResonates": "Por que isso ressoa",
+    "copyButton": "Copiar resumo",
+    "copiedButton": "Resumo copiado",
+    "savedToClipboard": "Salvo na área de transferência",
+    "defaultStatus": "Funciona muito bem para compartilhamento no LinkedIn e exportação offline rápida.",
+    "copy": "Acabei de completar a Avaliação Northstar DISC e descobri meu estilo comportamental como “{{badge}}” ({{traits}}). Encontre sua direção aqui: {{url}}"
+  },
+  "export": {
+    "title": "Cartão de resultados pronto",
+    "body": "Compartilhe uma reflexão refinada que pareça executiva, clara e pronta para sua próxima conversa.",
+    "cardSubtitle": "{{appName}} cartão de resultados",
+    "sectionTitle": "Compartilhe com sua rede",
+    "sectionHeading": "Uma reflexão polida que você pode publicar em um toque.",
+    "sectionBody": "Uma reflexão calma e cuidadosa para o seu perfil de energia.",
+    "waitingBody": "Isso estará pronto assim que a pontuação anônima for concluída.",
+    "downloadPdf": "Baixar PDF",
+    "preparingExport": "Preparando exportação…",
+    "shareReady": "Pronto para compartilhar",
+    "primaryStyle": "Estilo primário · {{style}}"
+  },
+  "support": {
+    "title": "Apoie este trabalho",
+    "heading": "Mantenha esta experiência premium avançando.",
+    "body": "Uma pequena contribuição me ajuda a continuar construindo ferramentas cuidadosas, exports refinados e experiências melhores de liderança. Seu apoio alimenta novos recursos, mais polimento e uma apresentação pronta para LinkedIn.",
+    "series": "Siga {{name}} para atualizações e acesso antecipado a novas melhorias:",
+    "linkText": "linkedin.com/in/joaocosta1695",
+    "note": "Opções de suporte por pagamento estarão disponíveis em breve — obrigado por ajudar este projeto a crescer.",
+    "button": "Compre um café"
+  },
+  "nextStep": {
+    "title": "Orientação do próximo passo",
+    "heading": "Um pequeno próximo passo pode tornar essa reflexão mais útil.",
+    "intro": "Seu perfil se torna mais útil quando você o usa como lente para uma escolha esta semana.",
+    "actions": [
+      "Escolha uma reunião onde você possa diminuir o ritmo e fazer uma pergunta esclarecedora antes de agir.",
+      "Escolha um relacionamento em que a empatia importa mais do que a urgência.",
+      "Use seu estilo mais forte para criar uma pequena vitória para outra pessoa esta semana."
+    ]
+  },
+  "report": {
+    "headerTitle": "Relatório Comportamental Executivo",
+    "boardSummary": "Resumo Executivo de Nível de Diretoria",
+    "executiveSummary": "Resumo executivo",
+    "profileOverview": "Visão geral do perfil",
+    "completionDate": "Data de conclusão",
+    "completionScore": "Pontuação de conclusão",
+    "documentVersion": "Versão do documento",
+    "primary": "Primário",
+    "secondary": "Secundário",
+    "closingHeading": "Notas finais",
+    "closingBody": "Obrigado por revisar este resumo do perfil de liderança. Para uma versão polida e pronta para LinkedIn, siga o trabalho ou envie feedback.",
+    "followLink": "Siga-me no LinkedIn:",
+    "followLinkText": "João Costa | LinkedIn",
+    "buyCoffee": "Compre um café",
+    "buyCoffeeBody": "ou compartilhe feedback para ajudar a manter este projeto em movimento.",
+    "badgeLabel": "Emblema de Resumo Executivo",
+    "badgeSummary": "Primário: {{primary}} | Secundário: {{secondary}}",
+    "badgeBody": "Um perfil comportamental de alta clareza projetado para coaching, contratação e planejamento de equipe.",
+    "interpretation": "Interpretação: {{primary}} lidera o perfil com uma contribuição de apoio {{secondary}}.",
+    "profileOverview": "Visão geral do perfil",
+    "completionDate": "Data de conclusão",
+    "completionScore": "Pontuação de conclusão",
+    "documentVersion": "Versão do documento",
+    "tagline": "Gerado via Northstar DISC — northstar-disc.vercel.app",
+    "radarChartLabel": "Gráfico radar do DISC",
+    "coreStrengths": "Forças principais",
+    "developmentFocus": "Foco de desenvolvimento",
+    "rawScore": "Pontuação bruta: {{score}}",
+    "candidateName": "Candidato Northstar DISC",
+    "brandName": "Northstar DISC",
+    "insightPanels": [
+      {
+        "title": "Forças Principais e Motivadores Chave",
+        "body": "Esse perfil tende a mover-se rapidamente da intenção para a ação, cria momentum em cenários ambíguos e responde bem quando a oportunidade é direcional e oportuna."
+      },
+      {
+        "title": "Ambiente de Trabalho e Liderança Ideal",
+        "body": "O melhor ambiente combina metas fortes, autonomia, expectativas claras e espaço suficiente para agir com convicção enquanto ainda colabora com as pessoas certas."
+      },
+      {
+        "title": "Tendências Comportamentais sob Pressão",
+        "body": "Sob pressão, o perfil se torna mais decisivo, mais orientado a resultados, e mais focado em urgência, alinhamento e execução prática em vez de debate prolongado."
+      },
+      {
+        "title": "Dicas de Comunicação e Colaboração Acionáveis",
+        "body": "Use atualizações curtas e diretas, enquadre a conversa em torno de resultados e combine confiança com um convite deliberado para que outros contribuam e se mantenham alinhados."
+      }
+    ]
+  },
+  "milestone": {
+    "title": "Marco desbloqueado",
+    "body": "Você completou uma reflexão calma e deu ao seu perfil de energia uma primeira forma."
+  },
+  "dashboard": {
+    "leaderProfile": "Perfil do líder",
+    "profileLine": "{{primary}} com uma camada de {{secondary}}",
+    "radarChartLabel": "Gráfico radar do perfil DISC",
+    "secondaryNarrative": "Em uma camada mais silenciosa, {{secondary}} também molda a forma como você se conecta, organiza ou responde quando a pressão aumenta.",
+    "completionLabel": "{{value}}% concluído",
+    "coreStrengths": "Seus pontos fortes centrais",
+    "idealEnvironment": "Ambiente de trabalho ideal",
+    "underPressure": "Tendências sob pressão",
+    "communicationStyle": "Estilo de comunicação"
+  },
+  "insight": {
+    "environmentD": "Espaços de alta autonomia onde decisões podem avançar rapidamente e metas permanecem claras.",
+    "pressureD": "Pode se tornar mais contundente, urgente ou controlador quando prazos se comprimem.",
+    "communicationD": "Direto, conciso e orientado a resultados; um feedback curto costuma ser mais útil.",
+    "environmentI": "Ambientes colaborativos e expressivos onde ideias, energia e momentum social importam.",
+    "pressureI": "Pode se tornar disperso ou excessivamente falante quando a pressão aumenta.",
+    "communicationI": "Acolhedor, narrativo e relacional; as pessoas respondem à energia e à clareza.",
+    "environmentS": "Equipes estáveis e de apoio com cuidado claro, ritmo calmo e estrutura de baixo atrito.",
+    "pressureS": "Pode parecer muito acomodador ou hesitante quando o conflito surge.",
+    "communicationS": "Paciente, empático e reconfortante; a confiança cresce pela consistência.",
+    "environmentC": "Ambientes estruturados e analíticos onde qualidade, sistemas e detalhes importam.",
+    "pressureC": "Pode se tornar excessivamente cauteloso, perfeccionista ou retraído sob estresse.",
+    "communicationC": "Preciso, reflexivo e baseado em evidências; profundidade e confiabilidade criam confiança."
+  },
+  "traits": {
+    "D": "Drive",
+    "I": "Influence",
+    "S": "Steadiness",
+    "C": "Conscientiousness"
+  },
+  "traitMeta": {
+    "D": {
+      "summary": "Você tende a agir com clareza e convicção quando algo precisa de impulso.",
+      "strengths": [
+        "Você cria momentum rapidamente.",
+        "Você ajuda equipes a tomar decisões.",
+        "Você se sente confortável com ação."
+      ]
+    },
+    "I": {
+      "summary": "Você traz energia, otimismo e conexão humana ao ambiente ao seu redor.",
+      "strengths": [
+        "Você gera conversas e conexão.",
+        "Você faz ideias parecerem acolhedoras.",
+        "Você traz calor para a sala."
+      ]
+    },
+    "S": {
+      "summary": "Você cria calma e confiança sendo constante, paciente e confiável.",
+      "strengths": [
+        "Você traz estabilidade a momentos difíceis.",
+        "Você faz equipes se sentirem seguras.",
+        "Você carrega paciência e consistência."
+      ]
+    },
+    "C": {
+      "summary": "Você tende a notar detalhes, proteger a qualidade e estruturar a complexidade.",
+      "strengths": [
+        "Você eleva o padrão do trabalho.",
+        "Você percebe o que outros podem não notar.",
+        "Você cria sistemas reflexivos e clareza."
+      ]
+    }
+  },
+  "buttons": {
+    "backToIntro": "Voltar à introdução"
+  }
+}
