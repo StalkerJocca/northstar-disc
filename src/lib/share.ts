@@ -160,7 +160,16 @@ function buildSocialShareCardElement(options: {
   const profile = options.profile
   const url = options.url ?? 'https://northstar-disc.vercel.app'
   const destinationUrl = buildShareUrl(url, options.referralCode)
-  const signatureText = `${primaryTrait}${secondaryTrait} • ${signature.badge}`
+  const traitNames: Record<TraitKey, string> = {
+    D: 'Dominance',
+    I: 'Influence',
+    S: 'Steadiness',
+    C: 'Conscientiousness',
+  }
+  const profileBlend =
+    primaryTrait === secondaryTrait
+      ? traitNames[primaryTrait]
+      : `${traitNames[primaryTrait]} and ${traitNames[secondaryTrait]}`
 
   const scores = profile?.scores ?? [
     { trait: 'D', percentage: 70 },
@@ -204,8 +213,8 @@ function buildSocialShareCardElement(options: {
   leftTop.style.alignItems = 'flex-start'
 
   const logo = document.createElement('img')
-  logo.src = '/NorthStar.png'
-  logo.alt = 'NorthStar logo'
+  logo.src = '/LOGO.png'
+  logo.alt = 'Northstar logo'
   logo.style.height = '40px'
   logo.style.width = 'auto'
   logo.style.maxWidth = 'none'
@@ -215,13 +224,23 @@ function buildSocialShareCardElement(options: {
   logo.crossOrigin = 'anonymous'
   leftTop.appendChild(logo)
 
-  const title = document.createElement('div')
-  title.textContent = signatureText
-  title.style.fontSize = '36px'
-  title.style.fontWeight = '700'
-  title.style.lineHeight = '1.05'
-  title.style.letterSpacing = '-0.02em'
-  title.style.maxWidth = '560px'
+  const profileLabel = document.createElement('div')
+  profileLabel.textContent = `PRIMARY PROFILE: ${profileBlend}`
+  profileLabel.style.fontSize = '22px'
+  profileLabel.style.fontWeight = '700'
+  profileLabel.style.letterSpacing = '-0.02em'
+  profileLabel.style.textTransform = 'uppercase'
+  profileLabel.style.color = '#4c3b2f'
+  profileLabel.style.maxWidth = '560px'
+
+  const badgeTitle = document.createElement('div')
+  badgeTitle.textContent = signature.badge
+  badgeTitle.style.fontSize = '34px'
+  badgeTitle.style.fontWeight = '800'
+  badgeTitle.style.lineHeight = '1.05'
+  badgeTitle.style.letterSpacing = '-0.03em'
+  badgeTitle.style.color = '#2f241d'
+  badgeTitle.style.maxWidth = '560px'
 
   const subtitle = document.createElement('div')
   subtitle.textContent = signature.headline
@@ -261,16 +280,24 @@ function buildSocialShareCardElement(options: {
   const footer = document.createElement('div')
   footer.style.marginTop = '32px'
   footer.style.padding = '18px 24px'
-  footer.style.borderRadius = '20px'
-  footer.style.backgroundColor = '#ffffff'
-  footer.style.border = '1px solid rgba(120, 99, 67, 0.12)'
+  footer.style.borderRadius = '22px'
+  footer.style.backgroundColor = '#efebe3'
+  footer.style.border = '1px solid rgba(145, 125, 102, 0.25)'
+  footer.style.boxShadow = '0 10px 20px rgba(31, 25, 16, 0.08)'
   footer.style.fontSize = '14px'
-  footer.style.fontWeight = '600'
-  footer.style.color = '#7c6755'
+  footer.style.fontWeight = '700'
+  footer.style.color = '#322819'
+  footer.style.letterSpacing = '0.02em'
+  footer.style.lineHeight = '1.4'
+  footer.style.display = 'flex'
+  footer.style.alignItems = 'center'
+  footer.style.justifyContent = 'space-between'
+  footer.style.gap = '12px'
   footer.textContent = `Discover your profile at ${destinationUrl.replace(/^https?:\/\//, '')}`
 
   left.appendChild(leftTop)
-  left.appendChild(title)
+  left.appendChild(profileLabel)
+  left.appendChild(badgeTitle)
   left.appendChild(subtitle)
   left.appendChild(strengthsBox)
   left.appendChild(footer)
@@ -281,25 +308,56 @@ function buildSocialShareCardElement(options: {
   right.style.justifyContent = 'space-between'
 
   const chartShell = document.createElement('div')
-  chartShell.style.height = '320px'
+  chartShell.style.height = '380px'
   chartShell.style.width = '100%'
   chartShell.style.display = 'flex'
   chartShell.style.alignItems = 'center'
   chartShell.style.justifyContent = 'center'
+  chartShell.style.padding = '24px'
+  chartShell.style.overflow = 'visible'
   chartShell.style.backgroundColor = '#ffffff'
   chartShell.style.borderRadius = '28px'
   chartShell.style.border = '1px solid rgba(120, 99, 67, 0.12)'
   chartShell.style.boxShadow = '0 20px 50px rgba(75, 58, 45, 0.08)'
 
   const chartSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  chartSvg.setAttribute('width', '320')
-  chartSvg.setAttribute('height', '320')
-  chartSvg.setAttribute('viewBox', '0 0 320 320')
+  chartSvg.setAttribute('width', '360')
+  chartSvg.setAttribute('height', '360')
+  chartSvg.setAttribute('viewBox', '0 0 360 360')
   chartSvg.style.display = 'block'
 
   const axesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g')
-  const center = { x: 160, y: 160 }
-  const radius = 132
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs')
+  const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient')
+  gradient.setAttribute('id', 'radarGradient')
+  gradient.setAttribute('x1', '0%')
+  gradient.setAttribute('y1', '0%')
+  gradient.setAttribute('x2', '100%')
+  gradient.setAttribute('y2', '100%')
+
+  const stopA = document.createElementNS('http://www.w3.org/2000/svg', 'stop')
+  stopA.setAttribute('offset', '0%')
+  stopA.setAttribute('stop-color', '#f8ddce')
+  stopA.setAttribute('stop-opacity', '0.96')
+  gradient.appendChild(stopA)
+
+  const stopB = document.createElementNS('http://www.w3.org/2000/svg', 'stop')
+  stopB.setAttribute('offset', '52%')
+  stopB.setAttribute('stop-color', '#d29d8b')
+  stopB.setAttribute('stop-opacity', '0.88')
+  gradient.appendChild(stopB)
+
+  const stopC = document.createElementNS('http://www.w3.org/2000/svg', 'stop')
+  stopC.setAttribute('offset', '100%')
+  stopC.setAttribute('stop-color', '#a1655f')
+  stopC.setAttribute('stop-opacity', '0.76')
+  gradient.appendChild(stopC)
+
+  defs.appendChild(gradient)
+  chartSvg.appendChild(defs)
+
+  const center = { x: 180, y: 180 }
+  const radius = 140
   const axes = ['D', 'I', 'S', 'C'] as TraitKey[]
 
   for (let ring = 1; ring <= 4; ring += 1) {
@@ -323,23 +381,27 @@ function buildSocialShareCardElement(options: {
     axis.setAttribute('y1', String(center.y))
     axis.setAttribute('x2', String(x))
     axis.setAttribute('y2', String(y))
-    axis.setAttribute('stroke', 'rgba(103,71,53,0.18)')
+    axis.setAttribute('stroke', '#5E788A')
     axis.setAttribute('stroke-width', '2')
     axesGroup.appendChild(axis)
 
-    const labelRadius = radius + 24
+    const labelRadius = radius + 20
     const labelX = center.x + Math.cos(angle) * labelRadius
     const labelY = center.y + Math.sin(angle) * labelRadius
     const label = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-    label.textContent = trait
-    label.setAttribute('x', String(labelX))
+    label.textContent = trait === 'C' ? 'C' : trait
+    let adjustedLabelX = labelX
+    if (trait === 'C') {
+      adjustedLabelX = Math.max(labelX, 24)
+    }
+    label.setAttribute('x', String(adjustedLabelX))
     label.setAttribute('y', String(labelY))
     label.setAttribute('text-anchor', x > center.x ? 'start' : x < center.x ? 'end' : 'middle')
     label.setAttribute('dominant-baseline', 'middle')
     label.setAttribute('font-family', 'Inter, sans-serif')
     label.setAttribute('font-size', '18')
-    label.setAttribute('font-weight', '700')
-    label.setAttribute('fill', '#4c3b2f')
+    label.setAttribute('font-weight', '800')
+    label.setAttribute('fill', '#2f3e52')
     axesGroup.appendChild(label)
   })
 
@@ -356,8 +418,9 @@ function buildSocialShareCardElement(options: {
     })
     .join(' ')
   polygon.setAttribute('points', polygonPoints)
-  polygon.setAttribute('fill', 'rgba(199,142,105,0.24)')
-  polygon.setAttribute('stroke', '#c78e69')
+  polygon.setAttribute('fill', 'url(#radarGradient)')
+  polygon.setAttribute('fill-opacity', '0.92')
+  polygon.setAttribute('stroke', '#9b5f58')
   polygon.setAttribute('stroke-width', '3')
   chartSvg.appendChild(polygon)
 
@@ -372,7 +435,7 @@ function buildSocialShareCardElement(options: {
     dot.setAttribute('cy', String(y))
     dot.setAttribute('r', '10')
     dot.setAttribute('fill', '#ffffff')
-    dot.setAttribute('stroke', '#c78e69')
+    dot.setAttribute('stroke', '#9b5f58')
     dot.setAttribute('stroke-width', '3')
     chartSvg.appendChild(dot)
   })
@@ -389,9 +452,9 @@ function buildSocialShareCardElement(options: {
     const pill = document.createElement('div')
     pill.style.padding = '18px 20px'
     pill.style.borderRadius = '20px'
-    pill.style.backgroundColor = '#ffffff'
-    pill.style.border = '1px solid rgba(120, 99, 67, 0.12)'
-    pill.style.boxShadow = '0 12px 24px rgba(75, 58, 45, 0.08)'
+    pill.style.backgroundColor = '#f5f1ec'
+    pill.style.border = '1px solid rgba(120, 99, 67, 0.18)'
+    pill.style.boxShadow = '0 10px 22px rgba(75, 58, 45, 0.06)'
     pill.style.display = 'flex'
     pill.style.alignItems = 'center'
     pill.style.justifyContent = 'space-between'
@@ -400,13 +463,13 @@ function buildSocialShareCardElement(options: {
     traitLabel.textContent = score.trait
     traitLabel.style.fontWeight = '700'
     traitLabel.style.fontSize = '18px'
-    traitLabel.style.color = '#4c3b2f'
+    traitLabel.style.color = '#3e3227'
 
     const percentLabel = document.createElement('span')
     percentLabel.textContent = `${score.percentage}%`
     percentLabel.style.fontWeight = '700'
     percentLabel.style.fontSize = '18px'
-    percentLabel.style.color = '#b26949'
+    percentLabel.style.color = '#7c4f3d'
 
     pill.appendChild(traitLabel)
     pill.appendChild(percentLabel)
