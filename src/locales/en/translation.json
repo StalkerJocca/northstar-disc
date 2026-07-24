@@ -186,7 +186,10 @@
     "copiedButton": "Copied summary",
     "savedToClipboard": "Saved to clipboard",
     "defaultStatus": "Works beautifully for LinkedIn-style sharing and quick offline export.",
-    "copy": "I just completed the Northstar DISC Assessment and discovered my behavioral style is “{{badge}}” ({{traits}}). Find your direction here: {{url}}"
+    "copy": "I just mapped my leadership and behavioral profile with Northstar DISC! My primary style is {{badge}}. Check out your own profile for free here: {{url}} #DISC #Leadership #PersonalGrowth #NorthstarDISC",
+    "toastShareSuccess": "✨ Image downloaded & message copied to clipboard! Paste it directly into your post.",
+    "toastShareDownload": "✨ Image downloaded! Copy the post text below and paste it into your share.",
+    "toastShareError": "Something went wrong while preparing your share card. Please try again."
   },
   "export": {
     "title": "Results card ready",

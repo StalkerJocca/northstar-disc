@@ -186,7 +186,10 @@
     "copiedButton": "Resumo copiado",
     "savedToClipboard": "Salvo na área de transferência",
     "defaultStatus": "Funciona muito bem para compartilhamento no LinkedIn e exportação offline rápida.",
-    "copy": "Acabei de completar a Avaliação Northstar DISC e descobri meu estilo comportamental como “{{badge}}” ({{traits}}). Encontre sua direção aqui: {{url}}"
+    "copy": "Acabei de mapear o meu perfil de liderança e comunicação no Northstar DISC! O meu perfil primário é {{badge}}. Descobre o teu perfil gratuitamente aqui: {{url}} #DISC #Liderança #DesenvolvimentoPessoal #NorthstarDISC",
+    "toastShareSuccess": "✨ Imagem gerada e texto copiado para a área de transferência! Cole diretamente na sua publicação.",
+    "toastShareDownload": "✨ Imagem gerada! Copie o texto da publicação abaixo e cole na sua partilha.",
+    "toastShareError": "Algo correu mal ao preparar a sua partilha. Tente novamente."
   },
   "export": {
     "title": "Cartão de resultados pronto",

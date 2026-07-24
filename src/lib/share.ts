@@ -60,7 +60,7 @@ export function buildShareText({
   platform = 'linkedin',
 }: SharePayload) {
   const signature = getSignatureLeadershipStyle(primaryTrait, secondaryTrait)
-  const destinationUrl = platform === 'email' ? url : buildShareUrl(platform, url, referralCode)
+  const destinationUrl = buildShareUrl(url, referralCode)
   if (copyTemplate) {
     return copyTemplate
   }
@@ -72,18 +72,356 @@ export function buildShareText({
   return `I just completed the Northstar DISC Assessment and discovered my behavioral style as “${signature.badge}” (${primaryTrait}${secondaryTrait}). It highlights how I show up at work, in teams, and in leadership. Find your direction here: ${destinationUrl}`
 }
 
-export function buildShareUrl(platform: 'linkedin' | 'twitter' | 'email', url: string, referralCode?: string) {
+export function buildShareUrl(url: string, referralCode?: string) {
   const baseUrl = new URL(url)
   if (referralCode) {
     baseUrl.searchParams.set('ref', referralCode)
   }
 
-  if (platform === 'linkedin') {
-    return baseUrl.toString()
-  }
-
   return baseUrl.toString()
 }
+
+export function buildSocialShareCopy({
+  primaryTrait,
+  secondaryTrait,
+  url = 'https://northstar-disc.vercel.app',
+  referralCode,
+  language,
+}: SharePayload & { language?: string }) {
+  const signature = getSignatureLeadershipStyle(primaryTrait, secondaryTrait)
+  const destinationUrl = buildShareUrl(url, referralCode)
+  const t = language ? i18n.getFixedT(language, 'translation') : i18n.t.bind(i18n)
+  return t('share.copy', {
+    badge: signature.badge,
+    url: destinationUrl,
+  })
+}
+
+export function buildSocialIntentUrl(platform: 'linkedin' | 'twitter', text: string, url: string) {
+  const encodedUrl = encodeURIComponent(url)
+  if (platform === 'linkedin') {
+    return `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`
+  }
+
+  const encodedText = encodeURIComponent(text)
+  return `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`
+}
+
+export async function generateSocialShareCardImage(options: {
+  primaryTrait: TraitKey
+  secondaryTrait: TraitKey
+  profile?: DiscScoreResponse['profile'] | null
+  url?: string
+  referralCode?: string
+  language?: string
+}) {
+  if (typeof document === 'undefined') {
+    throw new Error('Social card generation requires a browser environment.')
+  }
+
+  const element = buildSocialShareCardElement(options)
+  document.body.appendChild(element)
+
+  try {
+    const canvas = await html2canvas(element, {
+      width: 1200,
+      height: 627,
+      backgroundColor: null,
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+    })
+
+    return new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error('Unable to create image blob from social share card.'))
+          return
+        }
+        resolve(blob)
+      }, 'image/png')
+    })
+  } finally {
+    element.remove()
+  }
+}
+
+function buildSocialShareCardElement(options: {
+  primaryTrait: TraitKey
+  secondaryTrait: TraitKey
+  profile?: DiscScoreResponse['profile'] | null
+  url?: string
+  referralCode?: string
+  language?: string
+}) {
+  const primaryTrait = options.primaryTrait
+  const secondaryTrait = options.secondaryTrait
+  const signature = getSignatureLeadershipStyle(primaryTrait, secondaryTrait)
+  const profile = options.profile
+  const url = options.url ?? 'https://northstar-disc.vercel.app'
+  const destinationUrl = buildShareUrl(url, options.referralCode)
+  const signatureText = `${primaryTrait}${secondaryTrait} • ${signature.badge}`
+
+  const scores = profile?.scores ?? [
+    { trait: 'D', percentage: 70 },
+    { trait: 'I', percentage: 65 },
+    { trait: 'S', percentage: 55 },
+    { trait: 'C', percentage: 50 },
+  ]
+
+  const strengths = [
+    '✦ Encouraging presence',
+    '✦ Balanced decision making',
+    '✦ Practical, grounded insight',
+  ]
+
+  const container = document.createElement('div')
+  container.style.width = '1200px'
+  container.style.height = '627px'
+  container.style.padding = '40px'
+  container.style.backgroundColor = '#FAF8F5'
+  container.style.borderRadius = '32px'
+  container.style.boxSizing = 'border-box'
+  container.style.boxShadow = 'inset 0 0 0 1px rgba(0, 0, 0, 0.04)'
+  container.style.display = 'grid'
+  container.style.gridTemplateColumns = '5fr 7fr'
+  container.style.gap = '32px'
+  container.style.fontFamily = 'Inter, system-ui, sans-serif'
+  container.style.color = '#2f241d'
+  container.style.position = 'absolute'
+  container.style.left = '-9999px'
+  container.style.top = '0'
+
+  const left = document.createElement('div')
+  left.style.display = 'flex'
+  left.style.flexDirection = 'column'
+  left.style.justifyContent = 'space-between'
+
+  const leftTop = document.createElement('div')
+  leftTop.style.display = 'flex'
+  leftTop.style.flexDirection = 'column'
+  leftTop.style.gap = '24px'
+  leftTop.style.alignItems = 'flex-start'
+
+  const logo = document.createElement('img')
+  logo.src = '/NorthStar.png'
+  logo.alt = 'NorthStar logo'
+  logo.style.height = '40px'
+  logo.style.width = 'auto'
+  logo.style.maxWidth = 'none'
+  logo.style.objectFit = 'contain'
+  logo.style.display = 'block'
+  logo.style.alignSelf = 'flex-start'
+  logo.crossOrigin = 'anonymous'
+  leftTop.appendChild(logo)
+
+  const title = document.createElement('div')
+  title.textContent = signatureText
+  title.style.fontSize = '36px'
+  title.style.fontWeight = '700'
+  title.style.lineHeight = '1.05'
+  title.style.letterSpacing = '-0.02em'
+  title.style.maxWidth = '560px'
+
+  const subtitle = document.createElement('div')
+  subtitle.textContent = signature.headline
+  subtitle.style.fontSize = '18px'
+  subtitle.style.fontWeight = '500'
+  subtitle.style.lineHeight = '1.6'
+  subtitle.style.color = '#5d4a3b'
+  subtitle.style.maxWidth = '560px'
+
+  const strengthsBox = document.createElement('div')
+  strengthsBox.style.padding = '24px'
+  strengthsBox.style.borderRadius = '24px'
+  strengthsBox.style.backgroundColor = '#ffffff'
+  strengthsBox.style.border = '1px solid rgba(120, 99, 67, 0.12)'
+  strengthsBox.style.boxShadow = '0 16px 40px rgba(75, 58, 45, 0.08)'
+
+  const strengthsHeading = document.createElement('div')
+  strengthsHeading.textContent = 'Key strengths'
+  strengthsHeading.style.fontSize = '16px'
+  strengthsHeading.style.fontWeight = '700'
+  strengthsHeading.style.marginBottom = '14px'
+  strengthsBox.appendChild(strengthsHeading)
+
+  const bulletList = document.createElement('div')
+  bulletList.style.display = 'grid'
+  bulletList.style.gap = '10px'
+  strengths.forEach((item) => {
+    const row = document.createElement('div')
+    row.textContent = item
+    row.style.fontSize = '16px'
+    row.style.lineHeight = '1.7'
+    row.style.color = '#4c3b2f'
+    bulletList.appendChild(row)
+  })
+  strengthsBox.appendChild(bulletList)
+
+  const footer = document.createElement('div')
+  footer.style.marginTop = '32px'
+  footer.style.padding = '18px 24px'
+  footer.style.borderRadius = '20px'
+  footer.style.backgroundColor = '#ffffff'
+  footer.style.border = '1px solid rgba(120, 99, 67, 0.12)'
+  footer.style.fontSize = '14px'
+  footer.style.fontWeight = '600'
+  footer.style.color = '#7c6755'
+  footer.textContent = `Discover your profile at ${destinationUrl.replace(/^https?:\/\//, '')}`
+
+  left.appendChild(leftTop)
+  left.appendChild(title)
+  left.appendChild(subtitle)
+  left.appendChild(strengthsBox)
+  left.appendChild(footer)
+
+  const right = document.createElement('div')
+  right.style.display = 'flex'
+  right.style.flexDirection = 'column'
+  right.style.justifyContent = 'space-between'
+
+  const chartShell = document.createElement('div')
+  chartShell.style.height = '320px'
+  chartShell.style.width = '100%'
+  chartShell.style.display = 'flex'
+  chartShell.style.alignItems = 'center'
+  chartShell.style.justifyContent = 'center'
+  chartShell.style.backgroundColor = '#ffffff'
+  chartShell.style.borderRadius = '28px'
+  chartShell.style.border = '1px solid rgba(120, 99, 67, 0.12)'
+  chartShell.style.boxShadow = '0 20px 50px rgba(75, 58, 45, 0.08)'
+
+  const chartSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  chartSvg.setAttribute('width', '320')
+  chartSvg.setAttribute('height', '320')
+  chartSvg.setAttribute('viewBox', '0 0 320 320')
+  chartSvg.style.display = 'block'
+
+  const axesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+  const center = { x: 160, y: 160 }
+  const radius = 132
+  const axes = ['D', 'I', 'S', 'C'] as TraitKey[]
+
+  for (let ring = 1; ring <= 4; ring += 1) {
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+    circle.setAttribute('cx', String(center.x))
+    circle.setAttribute('cy', String(center.y))
+    circle.setAttribute('r', String((radius / 4) * ring))
+    circle.setAttribute('fill', 'none')
+    circle.setAttribute('stroke', 'rgba(103,71,53,0.12)')
+    circle.setAttribute('stroke-width', '1')
+    axesGroup.appendChild(circle)
+  }
+
+  axes.forEach((trait, index) => {
+    const angle = (Math.PI / 2) * index - Math.PI / 2
+    const x = center.x + Math.cos(angle) * radius
+    const y = center.y + Math.sin(angle) * radius
+
+    const axis = document.createElementNS('http://www.w3.org/2000/svg', 'line')
+    axis.setAttribute('x1', String(center.x))
+    axis.setAttribute('y1', String(center.y))
+    axis.setAttribute('x2', String(x))
+    axis.setAttribute('y2', String(y))
+    axis.setAttribute('stroke', 'rgba(103,71,53,0.18)')
+    axis.setAttribute('stroke-width', '2')
+    axesGroup.appendChild(axis)
+
+    const labelRadius = radius + 24
+    const labelX = center.x + Math.cos(angle) * labelRadius
+    const labelY = center.y + Math.sin(angle) * labelRadius
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+    label.textContent = trait
+    label.setAttribute('x', String(labelX))
+    label.setAttribute('y', String(labelY))
+    label.setAttribute('text-anchor', x > center.x ? 'start' : x < center.x ? 'end' : 'middle')
+    label.setAttribute('dominant-baseline', 'middle')
+    label.setAttribute('font-family', 'Inter, sans-serif')
+    label.setAttribute('font-size', '18')
+    label.setAttribute('font-weight', '700')
+    label.setAttribute('fill', '#4c3b2f')
+    axesGroup.appendChild(label)
+  })
+
+  chartSvg.appendChild(axesGroup)
+
+  const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
+  const polygonPoints = scores
+    .map((score, index) => {
+      const angle = (Math.PI / 2) * index - Math.PI / 2
+      const ratio = Math.max(0.12, score.percentage / 100)
+      const x = center.x + Math.cos(angle) * radius * ratio
+      const y = center.y + Math.sin(angle) * radius * ratio
+      return `${x},${y}`
+    })
+    .join(' ')
+  polygon.setAttribute('points', polygonPoints)
+  polygon.setAttribute('fill', 'rgba(199,142,105,0.24)')
+  polygon.setAttribute('stroke', '#c78e69')
+  polygon.setAttribute('stroke-width', '3')
+  chartSvg.appendChild(polygon)
+
+  scores.forEach((score, index) => {
+    const angle = (Math.PI / 2) * index - Math.PI / 2
+    const ratio = Math.max(0.12, score.percentage / 100)
+    const x = center.x + Math.cos(angle) * radius * ratio
+    const y = center.y + Math.sin(angle) * radius * ratio
+
+    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+    dot.setAttribute('cx', String(x))
+    dot.setAttribute('cy', String(y))
+    dot.setAttribute('r', '10')
+    dot.setAttribute('fill', '#ffffff')
+    dot.setAttribute('stroke', '#c78e69')
+    dot.setAttribute('stroke-width', '3')
+    chartSvg.appendChild(dot)
+  })
+
+  chartShell.appendChild(chartSvg)
+
+  const scoreGrid = document.createElement('div')
+  scoreGrid.style.display = 'grid'
+  scoreGrid.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))'
+  scoreGrid.style.gap = '16px'
+  scoreGrid.style.marginTop = '24px'
+
+  scores.forEach((score) => {
+    const pill = document.createElement('div')
+    pill.style.padding = '18px 20px'
+    pill.style.borderRadius = '20px'
+    pill.style.backgroundColor = '#ffffff'
+    pill.style.border = '1px solid rgba(120, 99, 67, 0.12)'
+    pill.style.boxShadow = '0 12px 24px rgba(75, 58, 45, 0.08)'
+    pill.style.display = 'flex'
+    pill.style.alignItems = 'center'
+    pill.style.justifyContent = 'space-between'
+
+    const traitLabel = document.createElement('span')
+    traitLabel.textContent = score.trait
+    traitLabel.style.fontWeight = '700'
+    traitLabel.style.fontSize = '18px'
+    traitLabel.style.color = '#4c3b2f'
+
+    const percentLabel = document.createElement('span')
+    percentLabel.textContent = `${score.percentage}%`
+    percentLabel.style.fontWeight = '700'
+    percentLabel.style.fontSize = '18px'
+    percentLabel.style.color = '#b26949'
+
+    pill.appendChild(traitLabel)
+    pill.appendChild(percentLabel)
+    scoreGrid.appendChild(pill)
+  })
+
+  right.appendChild(chartShell)
+  right.appendChild(scoreGrid)
+
+  container.appendChild(left)
+  container.appendChild(right)
+
+  return container
+}
+
 
 export type ShareEvent = {
   platform: 'linkedin' | 'twitter' | 'email'
@@ -671,7 +1009,7 @@ function readShareAnalytics(): ShareAnalytics {
   }
 }
 
-export function trackShareEvent({ platform, referralCode, profileSignature }: { platform: 'linkedin' | 'twitter'; referralCode?: string; profileSignature?: string }) {
+export function trackShareEvent({ platform, referralCode, profileSignature }: { platform: 'linkedin' | 'twitter' | 'email'; referralCode?: string; profileSignature?: string }) {
   const analytics = readShareAnalytics()
   const event: ShareEvent = {
     platform,

@@ -87,7 +87,7 @@ describe('share helpers', () => {
   })
 
   it('appends a referral code to outbound share links', () => {
-    expect(buildShareUrl('linkedin', 'https://disc-wellness.app', 'abc123')).toContain('ref=abc123')
+    expect(buildShareUrl('https://disc-wellness.app', 'abc123')).toContain('ref=abc123')
   })
 
   it('stores share events for referral analytics', () => {

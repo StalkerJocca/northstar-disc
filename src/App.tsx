@@ -9,7 +9,18 @@ import SocialShareButtons from './components/SocialShareButtons'
 import ExecutiveReportDocument from './components/exports/ExecutiveReportDocument'
 import { useExportReport } from './hooks/useExportReport'
 import { submitDiscScore } from './lib/discApi'
-import { buildOgImageUrl, buildShareUrl, buildShareText, trackShareEvent, getSignatureLeadershipStyle } from './lib/share'
+import {
+  buildEmailShareBody,
+  buildEmailShareSubject,
+  buildOgImageUrl,
+  buildShareUrl,
+  buildShareText,
+  buildSocialShareCopy,
+  buildSocialIntentUrl,
+  generateSocialShareCardImage,
+  trackShareEvent,
+  getSignatureLeadershipStyle,
+} from './lib/share'
 import { landingVariants, testimonials, caseStudies } from './lib/content'
 import type { DiscScoreResponse, TraitKey } from './types/disc'
 
@@ -106,6 +117,8 @@ function App() {
   const [profile, setProfile] = useState<DiscScoreResponse['profile'] | null>(persistedProgress?.profile ?? null)
   const [apiError, setApiError] = useState<string | null>(persistedProgress?.apiError ?? null)
   const [isScoring, setIsScoring] = useState(persistedProgress?.isScoring ?? false)
+  const [shareStatus, setShareStatus] = useState<string | null>(null)
+  const [isShareLoading, setIsShareLoading] = useState(false)
   const shareCardRef = useRef<HTMLDivElement | null>(null)
   const reportExportRef = useRef<HTMLDivElement | null>(null)
   const [celebrate, setCelebrate] = useState(false)
@@ -185,6 +198,15 @@ function App() {
     const timeout = window.setTimeout(() => setCelebrate(false), 2200)
     return () => window.clearTimeout(timeout)
   }, [showResults])
+
+  useEffect(() => {
+    if (!shareStatus) {
+      return
+    }
+
+    const timeout = window.setTimeout(() => setShareStatus(null), 4200)
+    return () => window.clearTimeout(timeout)
+  }, [shareStatus])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -277,7 +299,7 @@ function App() {
     : t('progress.streakValue', { answered: answers.length, total: questions.length })
   const shareStatusText = copied ? t('status.saved') : t('status.shareHint')
   const referralCode = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('ref') ?? undefined : undefined
-  const shareUrl = buildShareUrl('linkedin', typeof window !== 'undefined' ? window.location.href : 'https://disc-wellness.app', referralCode)
+  const shareUrl = buildShareUrl(typeof window !== 'undefined' ? window.location.href : 'https://disc-wellness.app', referralCode)
   const signature = profile ? getSignatureLeadershipStyle(profile.primaryTrait, profile.secondaryTrait).badge : t('app.name')
   const shareText = buildShareText({
     primaryTrait: (profile?.primaryTrait ?? 'D') as 'D' | 'I' | 'S' | 'C',
@@ -290,12 +312,95 @@ function App() {
       url: shareUrl,
     }),
   })
+  const socialShareCopy = buildSocialShareCopy({
+    primaryTrait: (profile?.primaryTrait ?? 'D') as TraitKey,
+    secondaryTrait: (profile?.secondaryTrait ?? 'C') as TraitKey,
+    url: 'https://northstar-disc.vercel.app',
+    referralCode,
+    language,
+  })
   const confettiPieces = Array.from({ length: 10 }, (_, index) => ({
     id: index,
     left: `${8 + index * 8}%`,
     delay: index * 0.04,
     color: ['#c78e69', '#8b5e3c', '#d8b08b', '#7c6c5f'][index % 4],
   }))
+
+  const handleSocialShare = async (platform: 'linkedin' | 'twitter' | 'email') => {
+    if (!profile) {
+      return
+    }
+
+    setIsShareLoading(true)
+    setShareStatus(null)
+    const sharePageUrl = buildShareUrl(typeof window !== 'undefined' ? window.location.href : 'https://northstar-disc.vercel.app', referralCode)
+    const textCopy = socialShareCopy
+    const emailSubject = buildEmailShareSubject(profile.primaryTrait, profile.secondaryTrait)
+    const emailBody = buildEmailShareBody({
+      primaryTrait: profile.primaryTrait,
+      secondaryTrait: profile.secondaryTrait,
+      url: sharePageUrl,
+      referralCode,
+      copyTemplate: textCopy,
+    })
+
+    if (platform === 'email') {
+      window.open(`mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`, '_blank', 'noopener,noreferrer')
+      setShareStatus(t('share.toastShareSuccess'))
+      trackShareEvent({ platform, referralCode, profileSignature: signature })
+      setIsShareLoading(false)
+      return
+    }
+
+    try {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(textCopy)
+      }
+    } catch {
+      // Continue anyway if clipboard text copy fails.
+    }
+
+    try {
+      const imageBlob = await generateSocialShareCardImage({
+        primaryTrait: (profile.primaryTrait ?? 'D') as TraitKey,
+        secondaryTrait: (profile.secondaryTrait ?? 'C') as TraitKey,
+        profile,
+        url: 'https://northstar-disc.vercel.app',
+        referralCode,
+        language,
+      })
+
+      const downloadLink = document.createElement('a')
+      const imageUrl = URL.createObjectURL(imageBlob)
+      downloadLink.href = imageUrl
+      downloadLink.download = 'Northstar_DISC_Profile.png'
+      document.body.appendChild(downloadLink)
+      downloadLink.click()
+      document.body.removeChild(downloadLink)
+      window.setTimeout(() => URL.revokeObjectURL(imageUrl), 1500)
+
+      if (navigator.clipboard && typeof (window as any).ClipboardItem === 'function') {
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': imageBlob })])
+        } catch {
+          // ignore clipboard image fallback failures.
+        }
+      }
+    } catch (error) {
+      console.warn('Premium share image generation failed:', error)
+    }
+
+    const intentUrl = buildSocialIntentUrl(
+      platform,
+      textCopy,
+      sharePageUrl,
+    )
+
+    window.open(intentUrl, '_blank', 'noopener,noreferrer')
+    setShareStatus(t('share.toastShareSuccess'))
+    trackShareEvent({ platform, referralCode, profileSignature: signature })
+    setIsShareLoading(false)
+  }
 
   useEffect(() => {
     if (typeof document === 'undefined') {
@@ -520,8 +625,15 @@ function App() {
                       {t('share.badgeReady')}
                     </div>
                   </div>
-                  <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <SocialShareButtons shareText={shareText} />
+                  <div className="space-y-3">
+                    {shareStatus ? (
+                      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 shadow-sm">
+                        {shareStatus}
+                      </div>
+                    ) : null}
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <SocialShareButtons shareText={socialShareCopy} onShare={handleSocialShare} disabled={isShareLoading} />
+                    </div>
                   </div>
                 </div>
 
