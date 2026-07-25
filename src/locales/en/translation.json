@@ -22,14 +22,14 @@
   },
   "landing": {
     "headline": "Transform self-awareness into action.",
-    "subheadline": "Map your leadership, communication, and decision-making style in under 5 minutes.",
-    "intro": "A gentle, premium assessment built for busy leaders and teams who want clear, practical insight.",
+    "subheadline": "Map your leadership, communication, and decision-making style in under five minutes.",
+    "intro": "A refined, premium assessment built for busy leaders and teams who want clear, practical insight.",
     "badges": {
       "free": "✦ 100% Free",
       "noSignup": "✦ No Sign-Up Required",
       "report": "✦ Instant Executive PDF Report"
     },
-    "ctaPrimary": "Start Assessment",
+    "ctaPrimary": "Start your reflection",
     "featureHeading": "What you’ll get",
     "featureIntro": "A complete view of how your natural style shows up in work and leadership.",
     "featureCards": {
@@ -67,7 +67,7 @@
       }
     ],
     "previewTitle": "Sample result preview",
-    "previewBody": "A polished executive summary that organizes your DISC profile into clear, share-ready insight.",
+    "previewBody": "A polished executive summary that turns your DISC profile into clear, share-ready insight.",
     "previewBadge": "Executive snapshot",
     "previewAction": "See the quality of the output before you start.",
     "previewFeature1": "Clear trait labels and a refined executive layout.",
@@ -83,7 +83,7 @@
     "ctaFooter": {
       "title": "Ready to reflect with clarity?",
       "subtitle": "Start your DISC assessment now and download an executive-ready report.",
-      "note": "No signup. No pressure. Just a strong leadership reflection."
+      "note": "No signup. No pressure. Just a sharp leadership reflection."
     }
   },
   "progress": {
@@ -137,7 +137,7 @@
       { "prompt": "19. How do you handle emotional expressions from teammates?", "options": [ { "label": "I redirect focus back to the facts and required actions", "trait": "D" }, { "label": "I empathize quickly and try to brighten the mood", "trait": "I" }, { "label": "I offer a quiet, patient ear and a supportive presence", "trait": "S" }, { "label": "I analyze the situation logically to help solve the root issue", "trait": "C" } ] },
       { "prompt": "20. When receiving praise, I feel most appreciated when acknowledged for my...", "options": [ { "label": "Ability to conquer tough obstacles and deliver big wins", "trait": "D" }, { "label": "Creativity, enthusiasm, and influence on the team", "trait": "I" }, { "label": "Dependability, patience, and silent dedication", "trait": "S" }, { "label": "Subject matter mastery, accuracy, and high quality", "trait": "C" } ] },
 
-      { "prompt": "21. When faced with an unexpected crisis or obstacle, my instinct is to...", "options": [ { "label": "Take immediate control and push through with force", "trait": "D" }, { "label": "Rally people, stay positive, and improvise creative workarounds", "trait": "I" }, { "label": "Stay calm, hold the fort, and support others through the shift", "trait": "S" }, { "label": "Step back, assess risks logically, and formulate a clear plan", "trait": "C" } ] },
+      { "prompt": "21. When faced with an unexpected crisis or obstacle, my instinct is to...", "options": [ { "label": "Take control and push through with force", "trait": "D" }, { "label": "Rally people, stay positive, and improvise creative workarounds", "trait": "I" }, { "label": "Stay calm, hold the fort, and support others through the shift", "trait": "S" }, { "label": "Step back, assess risks logically, and formulate a clear plan", "trait": "C" } ] },
       { "prompt": "22. Under intense pressure or tight deadlines, I am most prone to become...", "options": [ { "label": "Demanding, impatient, or overly controlling", "trait": "D" }, { "label": "Overly talkative, disorganized, or scattered", "trait": "I" }, { "label": "Overly accommodating, quiet, or resistant to conflict", "trait": "S" }, { "label": "Overly critical, perfectionistic, or withdrawn", "trait": "C" } ] },
       { "prompt": "23. When dealing with workplace disagreement or conflict, I tend to...", "options": [ { "label": "Confront it directly to clear the air and resolve it fast", "trait": "D" }, { "label": "Use charm, humor, or diplomacy to smooth things over", "trait": "I" }, { "label": "Yield or compromise to preserve team harmony and calm", "trait": "S" }, { "label": "Rely on objective facts, policy, and logic to prove the point", "trait": "C" } ] },
       { "prompt": "24. When organizational changes disrupt my usual routine, I...", "options": [ { "label": "Adapt quickly if I see how it gives me more advantage/control", "trait": "D" }, { "label": "Embrace it eagerly as a fresh and exciting opportunity", "trait": "I" }, { "label": "Feel uneasy initially and need time to adjust safely", "trait": "S" }, { "label": "Evaluate it critically to check if the new system is truly logical", "trait": "C" } ] },
@@ -318,7 +318,12 @@
     "coreStrengths": "Your Core Strengths",
     "idealEnvironment": "Ideal Work Environment",
     "underPressure": "Under Pressure Tendencies",
-    "communicationStyle": "Communication Style"
+    "communicationStyle": "Communication Style",
+    "percentileLabel": "Balance percentile",
+    "percentileContext": "Compared with other leadership profiles, this {{primary}} and {{secondary}} blend sits in the {{percentile}} percentile for clear, balanced behavioral presence.",
+    "communicationUnderPressure": "Communication style under pressure",
+    "idealWorkEnvironment": "Ideal work environment",
+    "leadershipSuperpowers": "Leadership superpowers"
   },
   "insight": {
     "environmentD": "High-autonomy spaces where decisions can move quickly and goals stay sharp.",

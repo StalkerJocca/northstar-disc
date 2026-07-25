@@ -27,7 +27,7 @@ export default function ShareableResultsCard({ profile, primaryTrait, secondaryT
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28 }}
-      className="w-full overflow-hidden rounded-[2rem] border border-stone-200 bg-[linear-gradient(135deg,_#fffaf4,_#f5eadf)] p-5 shadow-[0_20px_60px_-25px_rgba(84,56,45,0.35)]"
+      className="w-full overflow-hidden rounded-[2rem] border border-stone-200 bg-[linear-gradient(135deg,_#fffaf4,_#f5eadf)] p-4 shadow-[0_22px_60px_-28px_rgba(84,56,45,0.3)] sm:p-5"
     >
       <div className="rounded-[1.5rem] border border-stone-200/80 bg-white/80 p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3">

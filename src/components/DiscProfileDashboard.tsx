@@ -42,6 +42,13 @@ export default function DiscProfileDashboard({ profile, completionScore, primary
   }))
 
   const profileHighlights = (profile?.highlights ?? (t(`traitMeta.${primaryTrait}.strengths`, { returnObjects: true }) as string[])) as string[]
+  const averageScore = (profile?.scores.reduce((sum, item) => sum + item.percentage, 0) ?? 0) / Math.max(1, profile?.scores.length ?? 4)
+  const balancePercentile = Math.min(95, Math.max(15, Math.round((averageScore * 0.82) + ((profile?.scores[0]?.percentage ?? 72) - (profile?.scores[3]?.percentage ?? 42)) * 0.08)))
+  const balanceContext = t('dashboard.percentileContext', {
+    percentile: `${balancePercentile}th`,
+    primary: t(`traits.${primaryTrait}`),
+    secondary: t(`traits.${secondaryTrait}`),
+  })
   const insightSections = [
     {
       title: t('dashboard.coreStrengths'),
@@ -60,6 +67,20 @@ export default function DiscProfileDashboard({ profile, completionScore, primary
       items: [t(`insight.communication${primaryTrait}`)],
     },
   ]
+  const behavioralCards = [
+    {
+      title: t('dashboard.communicationUnderPressure'),
+      body: t(`insight.pressure${primaryTrait}`),
+    },
+    {
+      title: t('dashboard.idealWorkEnvironment'),
+      body: t(`insight.environment${primaryTrait}`),
+    },
+    {
+      title: t('dashboard.leadershipSuperpowers'),
+      body: profileHighlights[0] ?? t(`traitMeta.${primaryTrait}.summary`),
+    },
+  ]
 
   const detailedProfile = [
     { label: t('dashboard.work'), value: traitMeta[primaryTrait].work },
@@ -76,7 +97,7 @@ export default function DiscProfileDashboard({ profile, completionScore, primary
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: 'easeOut' }}
-        className="rounded-[2rem] border border-stone-200/80 bg-white/85 p-5 shadow-[0_20px_60px_-25px_rgba(84,56,45,0.35)] backdrop-blur sm:p-6"
+        className="rounded-[2rem] border border-stone-200/80 bg-white/90 p-4 shadow-[0_22px_60px_-28px_rgba(84,56,45,0.3)] backdrop-blur sm:p-6"
       >
         <div className="rounded-[1.5rem] border border-stone-200/80 bg-[linear-gradient(135deg,_#f9f3eb,_#f1e5d8)] p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -112,7 +133,7 @@ export default function DiscProfileDashboard({ profile, completionScore, primary
           </div>
         </div>
 
-        <div className="mt-5 h-80 w-full rounded-[1.5rem] border border-stone-200 bg-[radial-gradient(circle_at_top,_#fffaf6,_#f8efe8)] p-3" aria-label={t('dashboard.radarChartLabel')}>
+        <div className="mt-5 h-80 w-full overflow-hidden rounded-[1.5rem] border border-stone-200 bg-[radial-gradient(circle_at_top,_#fffaf6,_#f8efe8)] p-3" aria-label={t('dashboard.radarChartLabel')}>
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart cx="50%" cy="50%" outerRadius="78%" data={chartData}>
               <PolarGrid stroke="#d9c5b1" strokeDasharray="3 3" />
@@ -172,13 +193,17 @@ export default function DiscProfileDashboard({ profile, completionScore, primary
         transition={{ duration: 0.35, ease: 'easeOut', delay: 0.08 }}
         className="space-y-3"
       >
+        <div className="rounded-[1.5rem] border border-stone-200/80 bg-[linear-gradient(135deg,_#fffaf4,_#f6ebdf)] p-4 shadow-[0_10px_30px_-20px_rgba(84,56,45,0.35)]">
+          <p className="text-xs uppercase tracking-[0.24em] text-stone-500">{t('dashboard.percentileLabel')}</p>
+          <p className="mt-2 text-sm leading-7 text-stone-700">{balanceContext}</p>
+        </div>
         {insightSections.map((section, index) => (
           <motion.div
             key={section.title}
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.28, ease: 'easeOut', delay: 0.12 + index * 0.08 }}
-            className="rounded-[1.5rem] border border-stone-200/80 bg-white/80 p-4 shadow-[0_10px_30px_-20px_rgba(84,56,45,0.35)]"
+            className="rounded-[1.5rem] border border-stone-200/80 bg-white/85 p-4 shadow-[0_10px_30px_-20px_rgba(84,56,45,0.35)]"
           >
             <p className="text-xs uppercase tracking-[0.24em] text-stone-500">{section.title}</p>
             <ul className="mt-3 space-y-2 text-sm leading-7 text-stone-700">
@@ -191,6 +216,20 @@ export default function DiscProfileDashboard({ profile, completionScore, primary
             </ul>
           </motion.div>
         ))}
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-1">
+          {behavioralCards.map((card, index) => (
+            <motion.div
+              key={card.title}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.28, ease: 'easeOut', delay: 0.16 + index * 0.06 }}
+              className="rounded-[1.5rem] border border-stone-200/80 bg-stone-50 p-4"
+            >
+              <p className="text-xs uppercase tracking-[0.24em] text-stone-500">{card.title}</p>
+              <p className="mt-2 text-sm leading-7 text-stone-700">{card.body}</p>
+            </motion.div>
+          ))}
+        </div>
       </motion.div>
     </div>
   )

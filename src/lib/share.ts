@@ -52,6 +52,23 @@ export function getSignatureLeadershipStyle(primaryTrait: TraitKey, secondaryTra
   return signatureStyles[primaryTrait]?.[secondaryTrait] ?? signatureStyles[primaryTrait]?.[primaryTrait] ?? signatureStyles.D.D
 }
 
+const shareHashtags = {
+  linkedin: '#DISC #Leadership #PersonalGrowth #NorthstarDISC',
+  twitter: '#DISC #Leadership #NorthstarDISC',
+}
+
+export function buildLinkedInShareText(payload: SharePayload) {
+  const signature = getSignatureLeadershipStyle(payload.primaryTrait, payload.secondaryTrait)
+  const destinationUrl = buildShareUrl(payload.url ?? 'https://disc-wellness.app', payload.referralCode, payload.profileCode)
+  return `I just completed the Northstar DISC Assessment and discovered my behavioral style as “${signature.badge}” (${payload.primaryTrait}${payload.secondaryTrait}). It highlights how I show up at work, in teams, and in leadership. Find your direction here: ${destinationUrl} ${shareHashtags.linkedin}`.trim()
+}
+
+export function buildXShareText(payload: SharePayload) {
+  const signature = getSignatureLeadershipStyle(payload.primaryTrait, payload.secondaryTrait)
+  const destinationUrl = buildShareUrl(payload.url ?? 'https://disc-wellness.app', payload.referralCode, payload.profileCode)
+  return `Just completed the Northstar DISC Assessment and landed on ${signature.badge}. It highlights how I show up in work, teams, and leadership. Explore your style: ${destinationUrl} ${shareHashtags.twitter}`.trim()
+}
+
 export function buildShareText({
   primaryTrait,
   secondaryTrait,
@@ -68,10 +85,10 @@ export function buildShareText({
   }
 
   if (platform === 'twitter') {
-    return `Just completed the Northstar DISC Assessment and landed on ${signature.badge}. It highlights how I show up in work, teams, and leadership. Explore your style: ${destinationUrl}`
+    return buildXShareText({ primaryTrait, secondaryTrait, url, referralCode, profileCode, platform: 'twitter' })
   }
 
-  return `I just completed the Northstar DISC Assessment and discovered my behavioral style as “${signature.badge}” (${primaryTrait}${secondaryTrait}). It highlights how I show up at work, in teams, and in leadership. Find your direction here: ${destinationUrl}`
+  return buildLinkedInShareText({ primaryTrait, secondaryTrait, url, referralCode, profileCode, platform: 'linkedin' })
 }
 
 export function buildShareUrl(url: string, referralCode?: string, profileCode?: string) {

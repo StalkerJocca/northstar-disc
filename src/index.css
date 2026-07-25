@@ -4,25 +4,96 @@
   font-family: 'Inter', 'Segoe UI', sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #3f352d;
+  color: #2f241e;
   background-color: #fcfaf7;
+  color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  --bg-base: #fcfaf7;
+  --bg-soft: #f7efe7;
+  --surface-card: #fffdfa;
+  --surface-muted: #f4ebdf;
+  --surface-accent: #f9f2eb;
+  --border-soft: #e7ddd0;
+  --border-strong: #d2b79b;
+  --text-primary: #2f241e;
+  --text-secondary: #665649;
+  --text-muted: #7d6f5f;
+  --accent-primary: #8b5e3c;
+  --accent-strong: #6f4428;
+  --shadow-card: 0 24px 60px -28px rgba(84, 56, 45, 0.24);
+  --shadow-soft: 0 16px 44px -24px rgba(84, 56, 45, 0.22);
+  --radius-xl: 2rem;
+  --radius-lg: 1.5rem;
+  --radius-md: 1.25rem;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #fcfaf7;
+  overflow-x: hidden;
+  background: linear-gradient(180deg, #f8efe9 0%, #fcfaf7 60%, #f4ebe3 100%);
+  color: var(--text-primary);
 }
 
 * {
   box-sizing: border-box;
 }
 
+body, p, h1, h2, h3, h4, h5, h6 {
+  overflow-wrap: anywhere;
+}
+
 button {
   cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+img {
+  max-width: 100%;
+}
+
+.surface-card {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-xl);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(16px);
+}
+
+.surface-panel {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: var(--shadow-soft);
+}
+
+.surface-muted {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+}
+
+.focus-ring {
+  @apply outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg-base)];
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

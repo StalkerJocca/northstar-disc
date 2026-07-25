@@ -55,6 +55,7 @@ describe('share helpers', () => {
     expect(text).toContain('Northstar DISC')
     expect(text).toContain('The Analytical Leader')
     expect(text).toContain('https://disc-wellness.app')
+    expect(text).toContain('#DISC')
   })
 
   it('builds a shorter share copy for twitter', () => {

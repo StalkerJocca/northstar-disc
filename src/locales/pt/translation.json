@@ -22,14 +22,14 @@
   },
   "landing": {
     "headline": "Transforme autoconsciência em ação.",
-    "subheadline": "Mapeie seu estilo de liderança, comunicação e tomada de decisão em menos de 5 minutos.",
-    "intro": "Uma avaliação gentil e premium feita para líderes ocupados e equipes que querem insights claros e práticos.",
+    "subheadline": "Mapeie seu estilo de liderança, comunicação e tomada de decisão em menos de cinco minutos.",
+    "intro": "Uma avaliação refinada e premium feita para líderes ocupados e equipes que querem insights claros e práticos.",
     "badges": {
       "free": "✦ 100% Grátis",
       "noSignup": "✦ Sem cadastro",
       "report": "✦ Relatório executivo instantâneo em PDF"
     },
-    "ctaPrimary": "Iniciar avaliação",
+    "ctaPrimary": "Comece sua reflexão",
     "featureHeading": "O que você vai receber",
     "featureIntro": "Uma visão completa de como seu estilo natural se manifesta no trabalho e na liderança.",
     "featureCards": {
@@ -67,7 +67,7 @@
       }
     ],
     "previewTitle": "Prévia do resultado",
-    "previewBody": "Um resumo executivo polido que organiza seu perfil DISC em insights claros e prontos para compartilhar.",
+    "previewBody": "Um resumo executivo polido que transforma seu perfil DISC em insights claros e prontos para compartilhar.",
     "previewBadge": "Visão executiva",
     "previewAction": "Veja a qualidade do resultado antes de começar.",
     "previewFeature1": "Rótulos de traço claros e um layout executivo refinado.",
@@ -83,7 +83,7 @@
     "ctaFooter": {
       "title": "Pronto para refletir com clareza?",
       "subtitle": "Comece sua avaliação DISC agora e baixe um relatório executivo.",
-      "note": "Sem cadastro. Sem pressão. Apenas uma reflexão forte de liderança."
+      "note": "Sem cadastro. Sem pressão. Apenas uma reflexão de liderança mais precisa."
     }
   },
   "progress": {
@@ -318,7 +318,12 @@
     "coreStrengths": "Seus pontos fortes centrais",
     "idealEnvironment": "Ambiente de trabalho ideal",
     "underPressure": "Tendências sob pressão",
-    "communicationStyle": "Estilo de comunicação"
+    "communicationStyle": "Estilo de comunicação",
+    "percentileLabel": "Percentil de equilíbrio",
+    "percentileContext": "Em comparação com outros perfis de liderança, esta combinação de {{primary}} e {{secondary}} fica no percentil {{percentile}} para presença comportamental clara e equilibrada.",
+    "communicationUnderPressure": "Estilo de comunicação sob pressão",
+    "idealWorkEnvironment": "Ambiente de trabalho ideal",
+    "leadershipSuperpowers": "Superpoderes de liderança"
   },
   "insight": {
     "environmentD": "Espaços de alta autonomia onde decisões podem avançar rapidamente e metas permanecem claras.",

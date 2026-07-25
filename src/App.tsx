@@ -1,11 +1,13 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import DiscProfileDashboard from './components/DiscProfileDashboard'
 import LandingPage from './components/LandingPage'
 import ProgressBadge from './components/ProgressBadge'
 import ShareableResultsCard from './components/ShareableResultsCard'
 import SocialShareButtons from './components/SocialShareButtons'
+import ConsentBanner from './components/ConsentBanner'
+import PrivacyModal from './components/PrivacyModal'
 import ExecutiveReportDocument from './components/exports/ExecutiveReportDocument'
 import { useExportReport } from './hooks/useExportReport'
 import { submitDiscScore } from './lib/discApi'
@@ -35,7 +37,7 @@ function LanguageSwitcher({ current, onChange, ariaLabel }: { current: string; o
     <select
       value={current}
       onChange={(event) => onChange(event.target.value)}
-      className="rounded-full border border-stone-200 bg-white/90 px-3 py-1 text-sm text-stone-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-stone-500"
+      className="rounded-full border border-stone-200 bg-white/90 px-3 py-2 text-sm text-stone-700 shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2"
       aria-label={ariaLabel}
     >
       {languages.map((language) => (
@@ -50,6 +52,31 @@ function LanguageSwitcher({ current, onChange, ariaLabel }: { current: string; o
 // Questions are now provided via i18n resources (quiz.questions)
 
 const STORAGE_KEY = 'disc-wellness-progress'
+const CONSENT_STORAGE_KEY = 'disc-wellness-consent'
+
+const serializeConsent = (choice: 'essential' | 'all') => JSON.stringify({ preference: choice, analytics: choice === 'all' })
+
+const readStoredConsent = (): 'undecided' | 'essential' | 'all' => {
+  if (typeof window === 'undefined') {
+    return 'undecided'
+  }
+
+  const stored = window.localStorage.getItem(CONSENT_STORAGE_KEY)
+  if (!stored) {
+    return 'undecided'
+  }
+
+  if (stored === 'essential' || stored === 'all') {
+    return stored
+  }
+
+  try {
+    const parsed = JSON.parse(stored) as { preference?: string; analytics?: boolean }
+    return parsed.preference === 'essential' || parsed.preference === 'all' ? parsed.preference : 'undecided'
+  } catch {
+    return stored.includes('analytics') ? 'all' : 'undecided'
+  }
+}
 
 type PersistedProgress = {
   step: number
@@ -119,7 +146,14 @@ function App() {
   const [apiError, setApiError] = useState<string | null>(persistedProgress?.apiError ?? null)
   const [isScoring, setIsScoring] = useState(persistedProgress?.isScoring ?? false)
   const [shareStatus, setShareStatus] = useState<string | null>(null)
+  const [reviewMode, setReviewMode] = useState(false)
+  const [editingAnswerIndex, setEditingAnswerIndex] = useState<number | null>(null)
+  const [submissionAttempts, setSubmissionAttempts] = useState(0)
+  const [resumeNotice, setResumeNotice] = useState<string | null>(null)
+  const [shareModalOpen, setShareModalOpen] = useState(false)
   const [isShareLoading, setIsShareLoading] = useState(false)
+  const [consent, setConsent] = useState<'undecided' | 'essential' | 'all'>(readStoredConsent)
+  const [privacyModalOpen, setPrivacyModalOpen] = useState(false)
   const shareCardRef = useRef<HTMLDivElement | null>(null)
   const reportExportRef = useRef<HTMLDivElement | null>(null)
   const [celebrate, setCelebrate] = useState(false)
@@ -138,11 +172,72 @@ function App() {
   })
 
   const currentQuestion = questions[step]
+  const hasSavedProgress = Boolean(started || answers.length > 0 || showResults || profile !== null || apiError !== null || step > 0 || selected !== null || isScoring)
+  const reviewSummary = useMemo(() => {
+    const counts = answers.reduce<Record<TraitKey, number>>((acc, trait) => {
+      acc[trait as TraitKey] = (acc[trait as TraitKey] ?? 0) + 1
+      return acc
+    }, { D: 0, I: 0, S: 0, C: 0 })
+
+    return (Object.entries(counts) as Array<[TraitKey, number]>).sort(([, a], [, b]) => b - a).slice(0, 3).map(([trait, count]) => ({ trait, count }))
+  }, [answers])
 
   const primaryTrait = profile?.primaryTrait ?? 'D'
 
-  const handleSelect = async (trait: string) => {
+  const submitAssessment = async (finalAnswers: string[]) => {
+    setIsScoring(true)
+    setApiError(null)
+
+    try {
+      const payload = { answers: finalAnswers.map((answer) => ({ trait: answer as 'D' | 'I' | 'S' | 'C' })) }
+      const result = await submitDiscScore(payload)
+
+      if (result.success) {
+        setProfile(result.profile)
+        setShowResults(true)
+        setReviewMode(false)
+        setSubmissionAttempts(0)
+        return
+      }
+
+      throw new Error(result.error)
+    } catch (error) {
+      const nextAttempt = submissionAttempts + 1
+      setSubmissionAttempts(nextAttempt)
+      if (nextAttempt <= 2) {
+        setApiError('The scoring service is taking a moment. Retrying automatically…')
+        const fallbackResult = await submitDiscScore({ answers: finalAnswers.map((answer) => ({ trait: answer as 'D' | 'I' | 'S' | 'C' })) })
+        if (fallbackResult.success) {
+          setProfile(fallbackResult.profile)
+          setShowResults(true)
+          setReviewMode(false)
+          setSubmissionAttempts(0)
+          return
+        }
+        setApiError(error instanceof Error ? error.message : 'Unable to score your results right now.')
+      } else {
+        setApiError(error instanceof Error ? error.message : 'Unable to score your results right now.')
+      }
+      setShowResults(false)
+    } finally {
+      setIsScoring(false)
+    }
+  }
+
+  const handleQuestionAnswer = async (trait: string, replaceIndex?: number) => {
     setSelected(trait)
+
+    if (typeof replaceIndex === 'number') {
+      const updatedAnswers = [...answers]
+      updatedAnswers[replaceIndex] = trait
+      setAnswers(updatedAnswers)
+      setEditingAnswerIndex(null)
+      setReviewMode(true)
+      setSelected(null)
+      setApiError(null)
+      return
+    }
+
     const nextAnswers = [...answers, trait]
     setAnswers(nextAnswers)
 
@@ -154,30 +249,12 @@ function App() {
       return
     }
 
-    setIsScoring(true)
-    setApiError(null)
+    setReviewMode(true)
+    setSelected(null)
+  }
 
-    try {
-      const result = await submitDiscScore({ answers: nextAnswers.map((answer) => ({ trait: answer as 'D' | 'I' | 'S' | 'C' })) })
-      if (result.success) {
-        setProfile(result.profile)
-        setShowResults(true)
-      } else {
-        setApiError(result.error)
-        setShowResults(false)
-      }
-    } catch (error) {
-      const fallbackResult = await submitDiscScore({ answers: nextAnswers.map((answer) => ({ trait: answer as 'D' | 'I' | 'S' | 'C' })) })
-      if (fallbackResult.success) {
-        setProfile(fallbackResult.profile)
-        setShowResults(true)
-      } else {
-        setApiError(error instanceof Error ? error.message : 'Unable to score your results right now.')
-        setShowResults(false)
-      }
-    } finally {
-      setIsScoring(false)
-    }
+  const handleSelect = async (trait: string) => {
+    await handleQuestionAnswer(trait)
   }
 
   const progress = ((step + (selected ? 1 : 0)) / questions.length) * 100
@@ -214,6 +291,14 @@ function App() {
       return
     }
 
+    window.localStorage.setItem(CONSENT_STORAGE_KEY, consent === 'undecided' ? JSON.stringify({ preference: 'essential', analytics: false }) : serializeConsent(consent))
+  }, [consent])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
     const hasProgress = started || answers.length > 0 || showResults || profile !== null || apiError !== null || step > 0 || selected !== null || isScoring
 
     if (!hasProgress) {
@@ -239,6 +324,13 @@ function App() {
 
   const startReflection = () => {
     setStarted(true)
+    setResumeNotice(null)
+  }
+
+  const resumeAssessment = () => {
+    setStarted(true)
+    setResumeNotice('Your saved progress is ready to continue.')
+    setShowResults(false)
   }
 
   const goToIntro = () => {
@@ -249,10 +341,71 @@ function App() {
     setStarted(false)
     setProfile(null)
     setApiError(null)
+    setReviewMode(false)
+    setSubmissionAttempts(0)
+    setResumeNotice(null)
 
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(STORAGE_KEY)
     }
+  }
+
+  const handleConsentChoice = (choice: 'essential' | 'all') => {
+    setConsent(choice)
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(CONSENT_STORAGE_KEY, serializeConsent(choice))
+    }
+  }
+
+  const handleEditAnswer = (index: number) => {
+    setEditingAnswerIndex(index)
+    setStep(index)
+    setReviewMode(false)
+    setSelected(null)
+    setApiError(null)
+  }
+
+  const handleClearAssessmentData = () => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(STORAGE_KEY)
+      window.localStorage.removeItem('disc-wellness.share-analytics')
+    }
+
+    goToIntro()
+    setShareStatus('Your assessment data has been cleared from this browser.')
+  }
+
+  const handleExportRawData = () => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      consent,
+      assessment: {
+        step,
+        answers,
+        selected,
+        showResults,
+        started,
+        profile,
+        apiError,
+        isScoring,
+      },
+      analytics: typeof window !== 'undefined' ? JSON.parse(window.localStorage.getItem('disc-wellness.share-analytics') ?? 'null') : null,
+    }
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'northstar-disc-raw-data.json'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    setShareStatus('Your raw DISC data was exported as JSON.')
   }
 
   const handleShare = async () => {
@@ -359,6 +512,22 @@ function App() {
       return
     }
 
+    if (typeof navigator !== 'undefined' && 'share' in navigator && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({
+          title: t('share.shareTitle'),
+          text: textCopy,
+          url: sharePageUrl,
+        })
+        setShareStatus(t('share.toastShareSuccess'))
+        trackShareEvent({ platform, referralCode, profileSignature: signature })
+        setIsShareLoading(false)
+        return
+      } catch {
+        // Fall back to the custom share modal for desktop and unsupported browsers.
+      }
+    }
+
     try {
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(textCopy)
@@ -397,15 +566,7 @@ function App() {
       console.warn('Premium share image generation failed:', error)
     }
 
-    const intentUrl = buildSocialIntentUrl(
-      platform,
-      textCopy,
-      sharePageUrl,
-    )
-
-    window.open(intentUrl, '_blank', 'noopener,noreferrer')
-    setShareStatus(t('share.toastShareSuccess'))
-    trackShareEvent({ platform, referralCode, profileSignature: signature })
+    setShareModalOpen(true)
     setIsShareLoading(false)
   }
 
@@ -464,22 +625,43 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#f8efe9,_#fcfaf7_60%,_#f4ebe3)] text-stone-700">
-      <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
-        <header className="mb-4 flex items-center justify-between rounded-full border border-stone-200/70 bg-white/70 px-4 py-3 shadow-sm backdrop-blur">
+      <ConsentBanner consent={consent} onAcceptAll={() => handleConsentChoice('all')} onEssentialOnly={() => handleConsentChoice('essential')} />
+      <PrivacyModal open={privacyModalOpen} onClose={() => setPrivacyModalOpen(false)} consent={consent} onConsentChange={handleConsentChoice} onClearData={handleClearAssessmentData} onExportData={handleExportRawData} />
+      {shareModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true">
+          <div className="w-full max-w-md rounded-[2rem] border border-stone-200 bg-white p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm uppercase tracking-[0.24em] text-stone-500">Share options</p>
+                <h3 className="mt-2 text-xl font-semibold text-stone-900">Choose where you want to share</h3>
+              </div>
+              <button type="button" onClick={() => setShareModalOpen(false)} className="rounded-full border border-stone-200 px-3 py-2 text-sm font-semibold text-stone-700">Close</button>
+            </div>
+            <p className="mt-3 text-sm leading-7 text-stone-600">Your ready-to-share message has been prepared. Pick the channel that best fits your post.</p>
+            <div className="mt-5 space-y-2">
+              <button type="button" onClick={() => { setShareModalOpen(false); void handleSocialShare('linkedin') }} className="flex w-full items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-left text-sm font-semibold text-stone-800 transition hover:bg-stone-100">Share on LinkedIn <span aria-hidden="true">↗</span></button>
+              <button type="button" onClick={() => { setShareModalOpen(false); void handleSocialShare('twitter') }} className="flex w-full items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-left text-sm font-semibold text-stone-800 transition hover:bg-stone-100">Share on X <span aria-hidden="true">↗</span></button>
+              <button type="button" onClick={() => { setShareModalOpen(false); void handleSocialShare('email') }} className="flex w-full items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-left text-sm font-semibold text-stone-800 transition hover:bg-stone-100">Share by email <span aria-hidden="true">↗</span></button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+        <header className="mb-4 flex flex-col gap-3 rounded-[2rem] border border-stone-200/70 bg-white/70 px-4 py-3 shadow-[0_18px_45px_-24px_rgba(84,56,45,0.3)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-stone-200 bg-white/95 p-1 shadow-sm">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-stone-200 bg-white/95 p-1 shadow-sm">
               <img src="/LOGO.png" alt="NorthStar mark" className="h-10 w-auto object-contain" />
             </div>
-            <div className="flex flex-col leading-tight">
+            <div className="flex min-w-0 flex-col leading-tight">
               <span className="text-[11px] uppercase tracking-[0.3em] text-stone-500">NorthStar DISC</span>
               <span className="text-lg font-semibold text-stone-800">{t('app.tagline')}</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-sm text-stone-600">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-sm text-stone-600">
               {t('header.questionsInfo')}
             </div>
-            <div className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-sm text-stone-600">
+            <div className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-sm text-stone-600">
               {showResults ? t('header.statusResults') : started ? t('header.statusStep', { current: step + 1, total: questions.length }) : t('header.statusLaunch')}
             </div>
             <LanguageSwitcher current={language} onChange={(value) => i18n.changeLanguage(value)} ariaLabel={t('header.languageLabel')} />
@@ -488,7 +670,7 @@ function App() {
 
         <AnimatePresence mode="sync">
           {!started && !showResults ? (
-            <LandingPage onStart={startReflection} />
+            <LandingPage onStart={startReflection} hasSavedProgress={hasSavedProgress} onResume={resumeAssessment} />
           ) : started && !showResults ? (
             <motion.section
               key="quiz"
@@ -518,6 +700,11 @@ function App() {
                     />
                   </div>
                 </div>
+                {resumeNotice ? (
+                  <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                    {resumeNotice}
+                  </div>
+                ) : null}
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <div className="flex flex-wrap gap-2">
                     <ProgressBadge label={t('progress.flow')} value={`${completionPercent}%`} />
@@ -529,42 +716,102 @@ function App() {
                     </div>
                   ) : null}
                 </div>
-                <p className="mb-2 text-sm text-stone-500">{t('launch.intro')}</p>
+                <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
+                  <div>
+                    <p className="font-medium text-stone-800">{reviewMode ? 'Review your responses' : t('launch.intro')}</p>
+                    <p className="mt-1 text-stone-600">{reviewMode ? 'You can revise earlier answers before you submit your final profile.' : `${step + 1} of ${questions.length} questions`}</p>
+                  </div>
+                  <div className="rounded-full border border-stone-300 bg-white px-3 py-2 font-semibold text-stone-700">
+                    {reviewMode ? 'Review' : `Question ${step + 1} of ${questions.length}`}
+                  </div>
+                </div>
+                <p className="mb-2 text-sm text-stone-500">{t('launch.subtitle')}</p>
                 <h2 className="mb-2 text-2xl font-semibold leading-tight text-stone-800 sm:text-3xl">
                   {t('launch.subtitle')}
                 </h2>
                 <p className="mb-4 text-sm leading-7 text-stone-600">{t('launch.note')}</p>
                 <div className="mb-5 rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
                   <p className="font-medium text-stone-800">{t('quiz.questionLabel')}</p>
-                  <p className="mt-1">{currentQuestion.prompt}</p>
+                  <p className="mt-1">{reviewMode ? 'Review your responses before final submission.' : currentQuestion.prompt}</p>
                 </div>
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentQuestion.prompt}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
-                    className="grid gap-3"
-                  >
-                    {currentQuestion.options.map((option) => (
-                      <motion.button
-                        key={option.label}
-                        type="button"
-                        onClick={() => handleSelect(option.trait)}
-                        whileHover={{ y: -2, scale: 1.01 }}
-                        whileTap={{ scale: 0.98 }}
-                        className={`rounded-2xl border px-4 py-4 text-left text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2 ${
-                          selected === option.trait
-                            ? 'border-stone-600 bg-stone-900 text-white shadow-lg'
-                            : 'border-stone-200 bg-stone-50 text-stone-700 hover:border-stone-300 hover:bg-white'
-                        }`}
-                      >
-                        {option.label}
-                      </motion.button>
-                    ))}
-                  </motion.div>
-                </AnimatePresence>
+                {reviewMode ? (
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
+                      <p className="font-medium text-stone-800">Selected answers</p>
+                      <div className="mt-3 space-y-2">
+                        {answers.map((answer, index) => (
+                          <div key={`${answer}-${index}`} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-stone-200 bg-white px-3 py-2">
+                            <span className="text-sm text-stone-700">{questions[index]?.prompt ?? `Question ${index + 1}`}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-stone-600">Response saved</span>
+                              <button type="button" onClick={() => handleEditAnswer(index)} className="text-sm font-semibold text-stone-700 underline decoration-stone-300 underline-offset-4">Edit</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                      <button type="button" onClick={() => setReviewMode(false)} className="rounded-full border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2">Back to questions</button>
+                      <button type="button" onClick={() => submitAssessment(answers)} className="rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2">Submit assessment</button>
+                    </div>
+                  </div>
+                ) : editingAnswerIndex !== null ? (
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`${editingAnswerIndex}-${currentQuestion.prompt}`}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+                      className="grid gap-3"
+                    >
+                      {currentQuestion.options.map((option) => (
+                        <motion.button
+                          key={option.label}
+                          type="button"
+                          onClick={() => handleQuestionAnswer(option.trait, editingAnswerIndex)}
+                          whileHover={{ y: -2, scale: 1.01 }}
+                          whileTap={{ scale: 0.98 }}
+                          className={`rounded-2xl border px-4 py-4 text-left text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2 ${
+                            answers[editingAnswerIndex] === option.trait
+                              ? 'border-stone-600 bg-stone-900 text-white shadow-lg'
+                              : 'border-stone-200 bg-stone-50 text-stone-700 hover:border-stone-300 hover:bg-white'
+                          }`}
+                        >
+                          {option.label}
+                        </motion.button>
+                      ))}
+                    </motion.div>
+                  </AnimatePresence>
+                ) : (
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentQuestion.prompt}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+                      className="grid gap-3"
+                    >
+                      {currentQuestion.options.map((option) => (
+                        <motion.button
+                          key={option.label}
+                          type="button"
+                          onClick={() => handleSelect(option.trait)}
+                          whileHover={{ y: -2, scale: 1.01 }}
+                          whileTap={{ scale: 0.98 }}
+                          className={`rounded-2xl border px-4 py-4 text-left text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2 ${
+                            selected === option.trait
+                              ? 'border-stone-600 bg-stone-900 text-white shadow-lg'
+                              : 'border-stone-200 bg-stone-50 text-stone-700 hover:border-stone-300 hover:bg-white'
+                          }`}
+                        >
+                          {option.label}
+                        </motion.button>
+                      ))}
+                    </motion.div>
+                  </AnimatePresence>
+                )}
               </motion.div>
             </motion.section>
           ) : (
@@ -871,6 +1118,14 @@ function App() {
           )}
         </AnimatePresence>
       </main>
+      <footer className="mx-auto flex w-full max-w-6xl flex-col gap-3 border-t border-stone-200/70 px-3 py-5 text-sm text-stone-600 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="max-w-2xl">Northstar DISC respects your privacy and gives you control over your assessment data.</p>
+          <button type="button" onClick={() => setPrivacyModalOpen(true)} className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 font-medium text-stone-700 transition hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2" aria-label="Privacy & Data Settings">
+            Privacy & Data Settings
+          </button>
+        </div>
+      </footer>
     </div>
   )
 }

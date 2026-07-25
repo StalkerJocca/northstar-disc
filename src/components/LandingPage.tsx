@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next'
 
 type LandingPageProps = {
   onStart: () => void
+  hasSavedProgress?: boolean
+  onResume?: () => void
 }
 
-export default function LandingPage({ onStart }: LandingPageProps) {
+export default function LandingPage({ onStart, hasSavedProgress = false, onResume }: LandingPageProps) {
   const { t } = useTranslation()
 
   const featureCards = [
@@ -87,6 +89,17 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 {t('landing.ctaPrimary')}
                 <span aria-hidden="true" className="text-xl">→</span>
               </motion.button>
+              {hasSavedProgress && onResume ? (
+                <motion.button
+                  type="button"
+                  onClick={onResume}
+                  whileHover={{ y: -2, scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-6 py-4 text-sm font-semibold text-stone-700 transition duration-200 hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2"
+                >
+                  Resume saved assessment
+                </motion.button>
+              ) : null}
             </div>
           </div>
 

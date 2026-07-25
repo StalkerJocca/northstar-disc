@@ -32,9 +32,9 @@ describe('DISC experience', () => {
 
     expect(screen.getAllByText(/northstar disc/i).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/turn self-awareness into action/i).length).toBeGreaterThan(0)
-    expect(screen.getByRole('button', { name: /start your reflection/i })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /start your reflection/i }).length).toBeGreaterThan(0)
 
-    fireEvent.click(screen.getByRole('button', { name: /start your reflection/i }))
+    fireEvent.click(screen.getAllByRole('button', { name: /start your reflection/i })[0])
 
     await waitFor(() => {
       expect(screen.getByText(/your reflection starts here/i)).toBeInTheDocument()
@@ -55,5 +55,50 @@ describe('DISC experience', () => {
       expect(screen.getByText(/when making important decisions/i)).toBeInTheDocument()
     })
     expect(screen.getByText(/step 3 of 50/i)).toBeInTheDocument()
+  })
+
+  it('lets users review and edit a previous answer before submitting the assessment', async () => {
+    const persistedState = {
+      step: 49,
+      answers: Array(49).fill('D'),
+      selected: null,
+      showResults: false,
+      started: true,
+      profile: null,
+      apiError: null,
+      isScoring: false,
+    }
+
+    window.localStorage.setItem('disc-wellness-progress', JSON.stringify(persistedState))
+
+    render(<App />)
+
+    expect(screen.getByText(/question 50 of 50/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /achieving power, influence, and high-impact accomplishments/i }))
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/review your responses/i)[0]).toBeInTheDocument()
+    })
+
+    expect(screen.getByRole('button', { name: /submit assessment/i })).toBeInTheDocument()
+  })
+
+  it('shows the consent banner and lets users clear their local assessment data', async () => {
+    render(<App />)
+
+    expect(screen.getByText(/we use cookies and local storage/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /accept all/i }))
+
+    expect(window.localStorage.getItem('disc-wellness-consent')).toContain('analytics')
+
+    fireEvent.click(screen.getByRole('button', { name: /privacy & data settings/i }))
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /clear my assessment data/i }))
+
+    expect(window.localStorage.getItem('disc-wellness-progress')).toBeNull()
   })
 })
