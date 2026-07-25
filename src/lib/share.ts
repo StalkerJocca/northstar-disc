@@ -10,6 +10,7 @@ export type SharePayload = {
   secondaryTrait: TraitKey
   url?: string
   referralCode?: string
+  profileCode?: string
   copyTemplate?: string
   platform?: 'linkedin' | 'twitter' | 'email'
 }
@@ -56,11 +57,12 @@ export function buildShareText({
   secondaryTrait,
   url = 'https://disc-wellness.app',
   referralCode,
+  profileCode,
   copyTemplate,
   platform = 'linkedin',
 }: SharePayload) {
   const signature = getSignatureLeadershipStyle(primaryTrait, secondaryTrait)
-  const destinationUrl = buildShareUrl(url, referralCode)
+  const destinationUrl = buildShareUrl(url, referralCode, profileCode)
   if (copyTemplate) {
     return copyTemplate
   }
@@ -72,10 +74,13 @@ export function buildShareText({
   return `I just completed the Northstar DISC Assessment and discovered my behavioral style as “${signature.badge}” (${primaryTrait}${secondaryTrait}). It highlights how I show up at work, in teams, and in leadership. Find your direction here: ${destinationUrl}`
 }
 
-export function buildShareUrl(url: string, referralCode?: string) {
+export function buildShareUrl(url: string, referralCode?: string, profileCode?: string) {
   const baseUrl = new URL(url)
   if (referralCode) {
     baseUrl.searchParams.set('ref', referralCode)
+  }
+  if (profileCode) {
+    baseUrl.searchParams.set('profile', profileCode.toUpperCase())
   }
 
   return baseUrl.toString()
@@ -86,10 +91,11 @@ export function buildSocialShareCopy({
   secondaryTrait,
   url = 'https://northstar-disc.vercel.app',
   referralCode,
+  profileCode,
   language,
 }: SharePayload & { language?: string }) {
   const signature = getSignatureLeadershipStyle(primaryTrait, secondaryTrait)
-  const destinationUrl = buildShareUrl(url, referralCode)
+  const destinationUrl = buildShareUrl(url, referralCode, profileCode)
   const t = language ? i18n.getFixedT(language, 'translation') : i18n.t.bind(i18n)
   return t('share.copy', {
     badge: signature.badge,

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://northstar-disc.vercel.app/sitemap.xml

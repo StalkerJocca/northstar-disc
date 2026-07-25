@@ -21,6 +21,7 @@ import {
   trackShareEvent,
   getSignatureLeadershipStyle,
 } from './lib/share'
+import { defaultPageTitle, defaultPageDescription, defaultOgImage, parseProfileCode } from './lib/seo'
 import { landingVariants, testimonials, caseStudies } from './lib/content'
 import type { DiscScoreResponse, TraitKey } from './types/disc'
 
@@ -298,25 +299,31 @@ function App() {
     ? t('progress.completed')
     : t('progress.streakValue', { answered: answers.length, total: questions.length })
   const shareStatusText = copied ? t('status.saved') : t('status.shareHint')
-  const referralCode = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('ref') ?? undefined : undefined
-  const shareUrl = buildShareUrl(typeof window !== 'undefined' ? window.location.href : 'https://disc-wellness.app', referralCode)
-  const signature = profile ? getSignatureLeadershipStyle(profile.primaryTrait, profile.secondaryTrait).badge : t('app.name')
+  const urlSearchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams()
+  const referralCode = urlSearchParams.get('ref') ?? undefined
+  const profileQuery = urlSearchParams.get('profile') ?? undefined
+  const sharedProfile = parseProfileCode(profileQuery)
+  const inferredProfileCode = profile ? `${profile.primaryTrait}${profile.secondaryTrait}` : sharedProfile ? `${sharedProfile.primaryTrait}${sharedProfile.secondaryTrait}` : undefined
+  const shareUrl = buildShareUrl(typeof window !== 'undefined' ? window.location.href : 'https://disc-wellness.app', referralCode, inferredProfileCode)
+  const signature = profile ? getSignatureLeadershipStyle(profile.primaryTrait, profile.secondaryTrait).badge : (sharedProfile ? getSignatureLeadershipStyle(sharedProfile.primaryTrait, sharedProfile.secondaryTrait).badge : t('app.name'))
   const shareText = buildShareText({
-    primaryTrait: (profile?.primaryTrait ?? 'D') as 'D' | 'I' | 'S' | 'C',
-    secondaryTrait: (profile?.secondaryTrait ?? 'C') as 'D' | 'I' | 'S' | 'C',
+    primaryTrait: (profile?.primaryTrait ?? sharedProfile?.primaryTrait ?? 'D') as 'D' | 'I' | 'S' | 'C',
+    secondaryTrait: (profile?.secondaryTrait ?? sharedProfile?.secondaryTrait ?? 'C') as 'D' | 'I' | 'S' | 'C',
     url: shareUrl,
     referralCode,
+    profileCode: inferredProfileCode,
     copyTemplate: t('share.copy', {
       badge: signature,
-      traits: `${(profile?.primaryTrait ?? 'D') as 'D' | 'I' | 'S' | 'C'}${(profile?.secondaryTrait ?? 'C') as 'D' | 'I' | 'S' | 'C'}`,
+      traits: `${(profile?.primaryTrait ?? sharedProfile?.primaryTrait ?? 'D') as 'D' | 'I' | 'S' | 'C'}${(profile?.secondaryTrait ?? sharedProfile?.secondaryTrait ?? 'C') as 'D' | 'I' | 'S' | 'C'}`,
       url: shareUrl,
     }),
   })
   const socialShareCopy = buildSocialShareCopy({
-    primaryTrait: (profile?.primaryTrait ?? 'D') as TraitKey,
-    secondaryTrait: (profile?.secondaryTrait ?? 'C') as TraitKey,
+    primaryTrait: (profile?.primaryTrait ?? sharedProfile?.primaryTrait ?? 'D') as TraitKey,
+    secondaryTrait: (profile?.secondaryTrait ?? sharedProfile?.secondaryTrait ?? 'C') as TraitKey,
     url: 'https://northstar-disc.vercel.app',
     referralCode,
+    profileCode: inferredProfileCode,
     language,
   })
   const confettiPieces = Array.from({ length: 10 }, (_, index) => ({
@@ -407,24 +414,31 @@ function App() {
       return
     }
 
-    const signature = profile ? getSignatureLeadershipStyle(profile.primaryTrait, profile.secondaryTrait).badge : t('app.name')
-    const ogImageUrl = buildOgImageUrl(signature, referralCode)
+    const signature = profile ? getSignatureLeadershipStyle(profile.primaryTrait, profile.secondaryTrait).badge : (sharedProfile ? getSignatureLeadershipStyle(sharedProfile.primaryTrait, sharedProfile.secondaryTrait).badge : t('app.name'))
+    const pageTitle = profile ? `${signature} • ${t('app.name')}` : defaultPageTitle
+    const pageDescription = profile ? `${signature}. ${t('app.description')}` : defaultPageDescription
+    const ogImageUrl = profile ? buildOgImageUrl(signature, referralCode) : defaultOgImage
 
-    document.title = `${signature} • ${t('app.name')}`
+    document.title = pageTitle
 
     const descriptionMeta = document.querySelector('meta[name="description"]')
     if (descriptionMeta) {
-      descriptionMeta.setAttribute('content', `${signature}. ${t('app.description')}`)
+      descriptionMeta.setAttribute('content', pageDescription)
     }
 
     const ogTitle = document.querySelector('meta[property="og:title"]')
     if (ogTitle) {
-      ogTitle.setAttribute('content', `${signature} • ${t('app.name')}`)
+      ogTitle.setAttribute('content', pageTitle)
     }
 
     const ogDescription = document.querySelector('meta[property="og:description"]')
     if (ogDescription) {
-      ogDescription.setAttribute('content', `${signature}. ${t('app.description')}`)
+      ogDescription.setAttribute('content', pageDescription)
+    }
+
+    const ogUrl = document.querySelector('meta[property="og:url"]')
+    if (ogUrl) {
+      ogUrl.setAttribute('content', shareUrl)
     }
 
     const ogImage = document.querySelector('meta[property="og:image"]')
@@ -432,11 +446,21 @@ function App() {
       ogImage.setAttribute('content', ogImageUrl)
     }
 
+    const twitterTitle = document.querySelector('meta[name="twitter:title"]')
+    if (twitterTitle) {
+      twitterTitle.setAttribute('content', pageTitle)
+    }
+
+    const twitterDescription = document.querySelector('meta[name="twitter:description"]')
+    if (twitterDescription) {
+      twitterDescription.setAttribute('content', pageDescription)
+    }
+
     const twitterImage = document.querySelector('meta[name="twitter:image"]')
     if (twitterImage) {
       twitterImage.setAttribute('content', ogImageUrl)
     }
-  }, [profile, referralCode])
+  }, [profile, referralCode, sharedProfile, shareUrl, t])
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#f8efe9,_#fcfaf7_60%,_#f4ebe3)] text-stone-700">
