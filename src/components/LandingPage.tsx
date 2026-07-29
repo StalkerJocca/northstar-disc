@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
+import PricingPage from './PricingPage'
 
 type LandingPageProps = {
   onStart: () => void
@@ -204,6 +205,8 @@ export default function LandingPage({ onStart, onLaunchTeam, hasSavedProgress = 
           </div>
         </div>
       </motion.div>
+
+      <PricingPage onStart={onStart} />
 
       <motion.section id="white-label" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }} className="rounded-[2rem] border border-[#dcc9b7] bg-[linear-gradient(135deg,_#fffaf5,_#f1e2d3)] p-6 shadow-[0_18px_50px_-24px_rgba(84,56,45,0.22)] sm:p-8">
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#8b5e3c]">Enterprise / Coach</p>

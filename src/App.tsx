@@ -33,6 +33,10 @@ import { memberReturnUrl, readInvite } from './lib/teamInvite'
 import { getStoredEnterpriseLicense, getStoredExecutivePurchase, startEnterpriseCheckout, startExecutiveCheckout, verifyEnterpriseLicense, verifyExecutivePurchase } from './lib/payments'
 import { defaultPageTitle, defaultPageDescription, defaultOgImage, parseProfileCode } from './lib/seo'
 import type { DiscScoreResponse, TraitKey } from './types/disc'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
+import AuthModal from './components/AuthModal'
+import AccountView from './components/AccountView'
+import { saveReport } from './lib/reportStore'
 
 const DiscProfileDashboard = lazy(() => import('./components/DiscProfileDashboard'))
 const TeamDashboard = lazy(() => import('./components/TeamDashboard'))
@@ -145,8 +149,11 @@ const milestoneMessages = [
   },
 ] as const
 
-function App() {
+function AppContent() {
   const { branding } = useBranding()
+  const { user, loading: authLoading } = useAuth()
+  const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
   const [enterpriseLicensed, setEnterpriseLicensed] = useState(false)
   const persistedProgress = readPersistedProgress()
   const [step, setStep] = useState(persistedProgress?.step ?? 0)
@@ -182,6 +189,7 @@ function App() {
   const [consent, setConsent] = useState<'undecided' | 'essential' | 'all'>(readStoredConsent)
   const [privacyModalOpen, setPrivacyModalOpen] = useState(false)
   const reportExportRef = useRef<HTMLDivElement | null>(null)
+  const savedReportProfile = useRef<DiscScoreResponse['profile'] | null>(null)
   const shareModalCloseRef = useRef<HTMLButtonElement | null>(null)
   const [celebrate, setCelebrate] = useState(false)
   const { t, i18n } = useTranslation()
@@ -766,6 +774,12 @@ function App() {
   }, [profile, referralCode, sharedProfile, shareUrl, t])
 
   useEffect(() => {
+    if (!user || !showResults || !profile || savedReportProfile.current === profile) return
+    savedReportProfile.current = profile
+    void saveReport(profile).catch((error) => console.warn('Unable to save report:', error))
+  }, [profile, showResults, user])
+
+  useEffect(() => {
     if (!shareModalOpen) return
 
     shareModalCloseRef.current?.focus()
@@ -779,6 +793,7 @@ function App() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top,_#f8efe9,_#fcfaf7_60%,_#f4ebe3)] text-stone-700">
       <ConsentBanner consent={consent} onAcceptAll={() => handleConsentChoice('all')} onEssentialOnly={() => handleConsentChoice('essential')} />
+      <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
       <PrivacyModal open={privacyModalOpen} onClose={() => setPrivacyModalOpen(false)} consent={consent} onConsentChange={handleConsentChoice} onClearData={handleClearAssessmentData} onExportData={handleExportRawData} />
       <ExecutivePaywallModal open={executivePaywallOpen} onClose={() => setExecutivePaywallOpen(false)} onCheckout={handleExecutiveCheckout} isStartingCheckout={isStartingCheckout} error={checkoutError} />
       <EnterprisePaywallModal open={enterprisePaywallOpen} onClose={() => setEnterprisePaywallOpen(false)} onCheckout={handleEnterpriseCheckout} isStartingCheckout={isStartingEnterpriseCheckout} error={enterpriseCheckoutError} />
@@ -821,8 +836,10 @@ function App() {
               {showResults ? t('header.statusResults') : started ? t('header.statusStep', { current: step + 1, total: questions.length }) : t('header.statusLaunch')}
             </div>
             <LanguageSwitcher current={language} onChange={(value) => i18n.changeLanguage(value)} ariaLabel={t('header.languageLabel')} />
+            {!authLoading ? user ? <button type="button" onClick={() => setAccountOpen(true)} className="rounded-full bg-stone-900 px-3 py-2 text-sm font-medium text-white">My account</button> : <button type="button" onClick={() => setAuthModalOpen(true)} className="rounded-full border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700">Sign in / Register</button> : null}
           </div>
         </header>
+        {accountOpen && user ? <AccountView onClose={() => setAccountOpen(false)} /> : <>
         {teamInvite ? <div className="mb-4 rounded-2xl border border-[#dfcdbd] bg-[#fff7ef] px-4 py-3 text-sm text-stone-700">You are taking this assessment for the <strong>{teamInvite.name}</strong> workspace.</div> : null}
         {teamResponseUrl && showResults ? <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"><span>Your profile is ready for the {teamInvite?.name} workspace.</span><button type="button" onClick={() => void navigator.clipboard.writeText(teamResponseUrl)} className="rounded-full bg-emerald-900 px-3 py-1.5 text-xs font-semibold text-white">Copy completed profile link</button></div> : null}
 
@@ -1303,6 +1320,7 @@ function App() {
             </motion.section>
           )}
         </AnimatePresence>
+        </>}
       </main>
       <footer className="mx-auto flex w-full max-w-6xl flex-col gap-3 border-t border-stone-200/70 px-3 py-5 text-sm text-stone-600 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1316,4 +1334,6 @@ function App() {
   )
 }
 
-export default App
+export default function App() {
+  return <AuthProvider><AppContent /></AuthProvider>
+}
