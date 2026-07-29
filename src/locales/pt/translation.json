@@ -29,7 +29,7 @@
       "noSignup": "✦ Sem cadastro",
       "report": "✦ Relatório executivo instantâneo em PDF"
     },
-    "ctaPrimary": "Comece sua reflexão",
+    "ctaPrimary": "Fazer avaliação individual gratuita",
     "featureHeading": "O que você vai receber",
     "featureIntro": "Uma visão completa de como seu estilo natural se manifesta no trabalho e na liderança.",
     "featureCards": {
@@ -211,6 +211,7 @@
     "primaryStyle": "Estilo primário · {{style}}"
   },
   "pdfReport": {
+    "watermark": "NORTHSTAR DISC • EXECUTIVO",
     "eyebrow": "Exportação executiva",
     "title": "Relatório PDF executivo",
     "description": "Transfira um perfil de quatro páginas em alta fidelidade para conversas de coaching, planeamento de desenvolvimento e impressão.",

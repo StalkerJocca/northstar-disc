@@ -21,6 +21,9 @@ This project delivers a complete front-end experience for a DISC personality ass
 - Rich results experience with narrative summaries, trait insights, and KPI-style highlights
 - Shareable profile card designed for social distribution
 - PNG/PDF export support for the results card
+- A free one-page individual PDF and a paid five-page executive PDF dossier
+- Stripe Checkout for one-time executive-report purchases
+- Enterprise / Coach white-label Executive PDF branding
 - Referral-aware share links and share event tracking hooks for growth measurement
 - SEO and social metadata support for preview cards on LinkedIn and other platforms
 
@@ -94,6 +97,21 @@ Recommended deployment flow:
 2. Set the build command to `npm run build`.
 3. Set the output directory to `dist`.
 4. Deploy from the main branch.
+
+### Executive report checkout
+
+Create a one-time Stripe Price for the executive report, then configure these server-only environment variables in Vercel:
+
+```bash
+STRIPE_SECRET_KEY=sk_...
+STRIPE_EXECUTIVE_REPORT_PRICE_ID=price_...
+STRIPE_TEAM_ANALYSIS_PRICE_ID=price_...
+STRIPE_ENTERPRISE_WHITE_LABEL_PRICE_ID=price_...
+```
+
+The executive-report flow uses Stripe Checkout in `payment` mode. The Stripe price is separate from any existing donation product or payment link.
+
+The Enterprise / Coach white-label tier uses a recurring Stripe Price. It unlocks agency branding for Executive PDF exports; its checkout and license verification are separate from the one-time Executive Report purchase.
 
 ## Product Notes
 

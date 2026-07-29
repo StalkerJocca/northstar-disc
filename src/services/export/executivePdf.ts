@@ -3,6 +3,7 @@ import type { ReactElement } from 'react'
 import type { DocumentProps } from '@react-pdf/renderer'
 import type { ExecutivePdfLabels } from '../../components/exports/ExecutivePdfReport'
 import type { DiscProfile, TraitKey } from '../../types/disc'
+import type { BrandingConfig } from '../../theme.config'
 
 type ExecutivePdfOptions = {
   profile: DiscProfile | null
@@ -11,6 +12,7 @@ type ExecutivePdfOptions = {
   candidateName: string
   generatedAt: string
   labels: ExecutivePdfLabels
+  branding?: BrandingConfig
 }
 
 export async function downloadExecutivePdf(options: ExecutivePdfOptions) {

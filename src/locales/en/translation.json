@@ -29,7 +29,7 @@
       "noSignup": "✦ No Sign-Up Required",
       "report": "✦ Instant Executive PDF Report"
     },
-    "ctaPrimary": "Start your reflection",
+    "ctaPrimary": "Take Free Individual Assessment",
     "featureHeading": "What you’ll get",
     "featureIntro": "A complete view of how your natural style shows up in work and leadership.",
     "featureCards": {
@@ -211,6 +211,7 @@
     "primaryStyle": "Primary style · {{style}}"
   },
   "pdfReport": {
+    "watermark": "NORTHSTAR DISC • EXECUTIVE",
     "eyebrow": "Executive export",
     "title": "Executive PDF report",
     "description": "Download a high-fidelity four-page profile for coaching conversations, development planning, and printing.",

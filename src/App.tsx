@@ -5,9 +5,14 @@ import LandingPage from './components/LandingPage'
 import ProgressBadge from './components/ProgressBadge'
 import ShareableResultsCard from './components/ShareableResultsCard'
 import SocialShareButtons from './components/SocialShareButtons'
+import SocialCaptionGenerator from './components/SocialCaptionGenerator'
+import WhiteLabelBrandingModal from './components/WhiteLabelBrandingModal'
+import EnterprisePaywallModal from './components/EnterprisePaywallModal'
+import { useBranding } from './contexts/BrandingContext'
 import ConsentBanner from './components/ConsentBanner'
 import PrivacyModal from './components/PrivacyModal'
 import ExecutivePaywallModal from './components/ExecutivePaywallModal'
+import TeamDynamicsHub from './components/TeamDynamicsHub'
 import { useExportReport } from './hooks/useExportReport'
 import { submitDiscScore } from './lib/discApi'
 import {
@@ -23,7 +28,9 @@ import {
 import { generateSocialCardImage } from './services/export'
 import { downloadExecutivePdf } from './services/export/executivePdf'
 import { downloadFreePdf } from './services/export/freePdf'
-import { getStoredExecutivePurchase, startExecutiveCheckout, verifyExecutivePurchase } from './lib/payments'
+import { downloadProfileJson } from './services/export/profileJson'
+import { memberReturnUrl, readInvite } from './lib/teamInvite'
+import { getStoredEnterpriseLicense, getStoredExecutivePurchase, startEnterpriseCheckout, startExecutiveCheckout, verifyEnterpriseLicense, verifyExecutivePurchase } from './lib/payments'
 import { defaultPageTitle, defaultPageDescription, defaultOgImage, parseProfileCode } from './lib/seo'
 import type { DiscScoreResponse, TraitKey } from './types/disc'
 
@@ -139,6 +146,8 @@ const milestoneMessages = [
 ] as const
 
 function App() {
+  const { branding } = useBranding()
+  const [enterpriseLicensed, setEnterpriseLicensed] = useState(false)
   const persistedProgress = readPersistedProgress()
   const [step, setStep] = useState(persistedProgress?.step ?? 0)
   const [answers, setAnswers] = useState<string[]>(persistedProgress?.answers ?? [])
@@ -163,9 +172,15 @@ function App() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [executiveUnlocked, setExecutiveUnlocked] = useState(false)
   const [pendingExecutiveDownload, setPendingExecutiveDownload] = useState(false)
+  const [whiteLabelModalOpen, setWhiteLabelModalOpen] = useState(false)
+  const [enterprisePaywallOpen, setEnterprisePaywallOpen] = useState(false)
+  const [isStartingEnterpriseCheckout, setIsStartingEnterpriseCheckout] = useState(false)
+  const [enterpriseCheckoutError, setEnterpriseCheckoutError] = useState<string | null>(null)
+  const [teamHubOpen, setTeamHubOpen] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('team_session_id'))
+  const [teamInvite] = useState(() => typeof window !== 'undefined' ? readInvite() : null)
+  const [teamResponseUrl, setTeamResponseUrl] = useState<string | null>(null)
   const [consent, setConsent] = useState<'undecided' | 'essential' | 'all'>(readStoredConsent)
   const [privacyModalOpen, setPrivacyModalOpen] = useState(false)
-  const shareCardRef = useRef<HTMLDivElement | null>(null)
   const reportExportRef = useRef<HTMLDivElement | null>(null)
   const shareModalCloseRef = useRef<HTMLButtonElement | null>(null)
   const [celebrate, setCelebrate] = useState(false)
@@ -190,12 +205,13 @@ function App() {
   const hasSavedProgress = Boolean(started || answers.length > 0 || showResults || profile !== null || apiError !== null || step > 0 || selected !== null || isScoring)
   const primaryTrait = profile?.primaryTrait ?? 'D'
 
-  const generateExecutivePdf = async () => {
+  const generateExecutivePdf = async (brandingOverride?: typeof branding) => {
     if (!profile) return
     setIsExecutivePdfGenerating(true)
     try {
       await downloadExecutivePdf({
         profile,
+        branding: enterpriseLicensed ? (brandingOverride ?? branding) : undefined,
         primaryTrait: primaryTrait as TraitKey,
         secondaryTrait: (profile.secondaryTrait ?? 'C') as TraitKey,
         candidateName: reportName.trim() || t('pdfReport.defaultName'),
@@ -203,9 +219,10 @@ function App() {
         labels: {
           brand: t('app.name'), reportTitle: t('pdfReport.title'), executiveProfile: t('pdfReport.executiveProfile'), generated: t('pdfReport.generated'), primary: t('report.primary'), secondary: t('report.secondary'), profileOverview: t('report.profileOverview'), narrative: t('report.executiveSummary'), narrativeText: t(`traitMeta.${primaryTrait}.summary`), scores: t('pdfReport.scores'), behaviouralInsights: t('pdfReport.behaviouralInsights'), communication: t('dashboard.communicationStyle'), workStyle: t('dashboard.work'), stressTriggers: t('dashboard.underPressure'), growthAreas: t('report.developmentFocus'), actionPlan: t('pdfReport.actionPlan'), actionPlanIntro: t('pdfReport.actionPlanIntro'), notes: t('pdfReport.notes'),
           traitNames: { D: t('traits.D'), I: t('traits.I'), S: t('traits.S'), C: t('traits.C') },
-          communicationText: t(`insight.communication${primaryTrait}`), workStyleText: t(`insight.environment${primaryTrait}`), stressText: t(`insight.pressure${primaryTrait}`), growthPoints: t(`profileGrowthPoints.${primaryTrait}`, { returnObjects: true }) as string[], conflictManagement: t('pdfReport.conflictManagement'), coachingRecommendations: t('pdfReport.coachingRecommendations'), conflictText: t(`pdfReport.conflictText.${primaryTrait}`), coachingPoints: t(`pdfReport.coachingPoints.${primaryTrait}`, { returnObjects: true }) as string[],
+          communicationText: t(`insight.communication${primaryTrait}`), workStyleText: t(`insight.environment${primaryTrait}`), stressText: t(`insight.pressure${primaryTrait}`), growthPoints: t(`profileGrowthPoints.${primaryTrait}`, { returnObjects: true }) as string[], conflictManagement: t('pdfReport.conflictManagement'), coachingRecommendations: t('pdfReport.coachingRecommendations'), conflictText: t(`pdfReport.conflictText.${primaryTrait}`), coachingPoints: t(`pdfReport.coachingPoints.${primaryTrait}`, { returnObjects: true }) as string[], watermark: t('pdfReport.watermark'),
         },
       })
+      downloadProfileJson(profile, reportName.trim() || t('pdfReport.defaultName'))
     } catch (error) {
       setShareStatus(error instanceof Error ? error.message : t('pdfReport.error'))
     } finally {
@@ -233,6 +250,22 @@ function App() {
     }
   }
 
+  const handleEnterpriseCheckout = async () => {
+    setIsStartingEnterpriseCheckout(true)
+    setEnterpriseCheckoutError(null)
+    try {
+      await startEnterpriseCheckout()
+    } catch (error) {
+      setEnterpriseCheckoutError(error instanceof Error ? error.message : 'Enterprise checkout is unavailable.')
+      setIsStartingEnterpriseCheckout(false)
+    }
+  }
+
+  const handleSaveBrandingAndExport = (newBranding: typeof branding) => {
+    setWhiteLabelModalOpen(false)
+    void generateExecutivePdf(newBranding)
+  }
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const returnedSession = params.get('pro_session_id')
@@ -245,6 +278,22 @@ function App() {
         params.delete('pro_session_id')
         window.history.replaceState({}, '', `${window.location.pathname}${params.size ? `?${params.toString()}` : ''}${window.location.hash}`)
         setPendingExecutiveDownload(true)
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const returnedSession = params.get('enterprise_session_id')
+    const sessionId = returnedSession ?? getStoredEnterpriseLicense()
+    if (!sessionId) return
+    void verifyEnterpriseLicense(sessionId).then((licensed) => {
+      if (!licensed) return
+      setEnterpriseLicensed(true)
+      if (returnedSession) {
+        params.delete('enterprise_session_id')
+        window.history.replaceState({}, '', `${window.location.pathname}${params.size ? `?${params.toString()}` : ''}${window.location.hash}`)
+        setWhiteLabelModalOpen(true)
       }
     })
   }, [])
@@ -265,6 +314,12 @@ function App() {
 
       if (result.success) {
         setProfile(result.profile)
+        if (teamInvite) {
+          const responseUrl = memberReturnUrl(teamInvite, result.profile)
+          setTeamResponseUrl(responseUrl)
+          const responseLocation = new URL(responseUrl)
+          window.history.replaceState({}, '', `${responseLocation.pathname}${responseLocation.search}${responseLocation.hash}`)
+        }
         setShowResults(true)
         setReviewMode(false)
         setSubmissionAttempts(0)
@@ -517,6 +572,7 @@ function App() {
           generatedAt,
           labels: { brand: t('app.name'), title: t('freePdf.title'), summary: t('freePdf.summary'), strengths: t('dashboard.coreStrengths'), generated: t('pdfReport.generated'), traitNames: { D: t('traits.D'), I: t('traits.I'), S: t('traits.S'), C: t('traits.C') }, narrative: t(`traitMeta.${primaryTrait}.summary`), highlights: t(`traitMeta.${primaryTrait}.strengths`, { returnObjects: true }) as string[] },
         })
+        downloadProfileJson(profile, t('freePdf.title'))
       } catch (error) {
         setShareStatus(error instanceof Error ? error.message : t('freePdf.error'))
       }
@@ -725,6 +781,8 @@ function App() {
       <ConsentBanner consent={consent} onAcceptAll={() => handleConsentChoice('all')} onEssentialOnly={() => handleConsentChoice('essential')} />
       <PrivacyModal open={privacyModalOpen} onClose={() => setPrivacyModalOpen(false)} consent={consent} onConsentChange={handleConsentChoice} onClearData={handleClearAssessmentData} onExportData={handleExportRawData} />
       <ExecutivePaywallModal open={executivePaywallOpen} onClose={() => setExecutivePaywallOpen(false)} onCheckout={handleExecutiveCheckout} isStartingCheckout={isStartingCheckout} error={checkoutError} />
+      <EnterprisePaywallModal open={enterprisePaywallOpen} onClose={() => setEnterprisePaywallOpen(false)} onCheckout={handleEnterpriseCheckout} isStartingCheckout={isStartingEnterpriseCheckout} error={enterpriseCheckoutError} />
+      <WhiteLabelBrandingModal open={whiteLabelModalOpen} isLicensed={enterpriseLicensed} onClose={() => setWhiteLabelModalOpen(false)} onUpgrade={() => { setWhiteLabelModalOpen(false); setEnterpriseCheckoutError(null); setEnterprisePaywallOpen(true) }} onSaveAndExport={handleSaveBrandingAndExport} />
       {shareModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-stone-950/60 px-3 py-4 backdrop-blur-sm sm:px-6" role="dialog" aria-modal="true" aria-labelledby="share-modal-title" aria-describedby="share-modal-description">
           <div className="executive-card my-auto w-full max-w-md p-5 sm:p-6">
@@ -765,10 +823,14 @@ function App() {
             <LanguageSwitcher current={language} onChange={(value) => i18n.changeLanguage(value)} ariaLabel={t('header.languageLabel')} />
           </div>
         </header>
+        {teamInvite ? <div className="mb-4 rounded-2xl border border-[#dfcdbd] bg-[#fff7ef] px-4 py-3 text-sm text-stone-700">You are taking this assessment for the <strong>{teamInvite.name}</strong> workspace.</div> : null}
+        {teamResponseUrl && showResults ? <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"><span>Your profile is ready for the {teamInvite?.name} workspace.</span><button type="button" onClick={() => void navigator.clipboard.writeText(teamResponseUrl)} className="rounded-full bg-emerald-900 px-3 py-1.5 text-xs font-semibold text-white">Copy completed profile link</button></div> : null}
 
         <AnimatePresence mode="sync">
-          {!started && !showResults ? (
-            <LandingPage onStart={startReflection} hasSavedProgress={hasSavedProgress} onResume={resumeAssessment} />
+          {teamHubOpen ? (
+            <TeamDynamicsHub onBack={() => setTeamHubOpen(false)} />
+          ) : !started && !showResults ? (
+            <LandingPage onStart={startReflection} onLaunchTeam={() => setTeamHubOpen(true)} hasSavedProgress={hasSavedProgress} onResume={resumeAssessment} />
           ) : started && !showResults ? (
             <motion.section
               key="quiz"
@@ -1012,6 +1074,11 @@ function App() {
                     completionScore={completionScore}
                     primaryTrait={primaryTrait as 'D' | 'I' | 'S' | 'C'}
                     secondaryTrait={(profile?.secondaryTrait ?? 'C') as 'D' | 'I' | 'S' | 'C'}
+                    onDownloadFreeSummary={() => void handleDownloadCard('pdf')}
+                    onUnlockExecutive={handleExecutivePdfDownload}
+                    onDownloadJson={() => profile && downloadProfileJson(profile, t('freePdf.title'))}
+                    sharePreview={<ShareableResultsCard profile={profile} primaryTrait={(profile?.primaryTrait ?? 'D') as 'D' | 'I' | 'S' | 'C'} secondaryTrait={(profile?.secondaryTrait ?? 'C') as 'D' | 'I' | 'S' | 'C'} />}
+                    captionGenerator={<SocialCaptionGenerator primaryTrait={primaryTrait as TraitKey} secondaryTrait={(profile?.secondaryTrait ?? 'C') as TraitKey} shareUrl={shareUrl} />}
                   />
                 </Suspense>
 
@@ -1032,17 +1099,13 @@ function App() {
                   </div>
                 </section>
 
+                <section id="white-label" className="mt-5 rounded-[2rem] border border-[#dcc9b7] bg-[#fffaf5] p-5 shadow-sm">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-semibold uppercase tracking-[.22em] text-[#8b5e3c]">Enterprise / Coach</p><h3 className="mt-1 text-xl font-semibold text-stone-900">Custom Branding / White-Label</h3><p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600">Co-brand Executive PDFs with your agency name, logo, accent colour, and report footer.</p></div><button type="button" onClick={() => setWhiteLabelModalOpen(true)} className="rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white">{enterpriseLicensed ? 'Manage Branding & Export' : 'Explore White-Labeling'}</button></div>
+                </section>
+
                 <Suspense fallback={<div className="mt-5 h-64 animate-pulse rounded-[2rem] bg-stone-100" aria-label="Loading team dashboard" />}>
                   <TeamDashboard currentProfile={profile} />
                 </Suspense>
-
-                <div ref={shareCardRef}>
-                  <ShareableResultsCard
-                    profile={profile}
-                    primaryTrait={(profile?.primaryTrait ?? 'D') as 'D' | 'I' | 'S' | 'C'}
-                    secondaryTrait={(profile?.secondaryTrait ?? 'C') as 'D' | 'I' | 'S' | 'C'}
-                  />
-                </div>
 
                 <div ref={reportExportRef} className="fixed left-[-9999px] top-0 z-[-1] w-[900px] bg-transparent" aria-hidden="true">
                   <Suspense fallback={null}>
@@ -1243,7 +1306,7 @@ function App() {
       </main>
       <footer className="mx-auto flex w-full max-w-6xl flex-col gap-3 border-t border-stone-200/70 px-3 py-5 text-sm text-stone-600 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="max-w-2xl">Northstar DISC respects your privacy and gives you control over your assessment data.</p>
+          <p className="max-w-2xl">Northstar DISC respects your privacy and gives you control over your assessment data. <button type="button" onClick={() => document.getElementById('white-label')?.scrollIntoView({ behavior: 'smooth', block: 'center' })} className="underline underline-offset-2">Are you an HR Coach or Consultant? Explore White-Labeling Options.</button></p>
           <button type="button" onClick={() => setPrivacyModalOpen(true)} className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 font-medium text-stone-700 transition hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2" aria-label="Privacy & Data Settings">
             Privacy & Data Settings
           </button>

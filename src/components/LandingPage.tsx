@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next'
 
 type LandingPageProps = {
   onStart: () => void
+  onLaunchTeam: () => void
   hasSavedProgress?: boolean
   onResume?: () => void
 }
 
-export default function LandingPage({ onStart, hasSavedProgress = false, onResume }: LandingPageProps) {
+export default function LandingPage({ onStart, onLaunchTeam, hasSavedProgress = false, onResume }: LandingPageProps) {
   const { t } = useTranslation()
 
   const featureCards = [
@@ -82,12 +83,22 @@ export default function LandingPage({ onStart, hasSavedProgress = false, onResum
               <motion.button
                 type="button"
                 onClick={onStart}
+                aria-label="Start your reflection — Take Free Individual Assessment"
                 whileHover={{ y: -2, scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-stone-900 px-6 py-4 text-sm font-semibold text-white transition duration-200 ease-out hover:bg-stone-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2"
               >
                 {t('landing.ctaPrimary')}
                 <span aria-hidden="true" className="text-xl">→</span>
+              </motion.button>
+              <motion.button
+                type="button"
+                onClick={onLaunchTeam}
+                whileHover={{ y: -2, scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-stone-300 bg-white px-6 py-4 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2"
+              >
+                Launch Team Dynamics Hub
               </motion.button>
               {hasSavedProgress && onResume ? (
                 <motion.button
@@ -193,6 +204,13 @@ export default function LandingPage({ onStart, hasSavedProgress = false, onResum
           </div>
         </div>
       </motion.div>
+
+      <motion.section id="white-label" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }} className="rounded-[2rem] border border-[#dcc9b7] bg-[linear-gradient(135deg,_#fffaf5,_#f1e2d3)] p-6 shadow-[0_18px_50px_-24px_rgba(84,56,45,0.22)] sm:p-8">
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#8b5e3c]">Enterprise / Coach</p>
+        <h2 className="mt-3 text-2xl font-semibold text-stone-900">Are you an HR Coach or Consultant?</h2>
+        <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-700">Create client-ready Executive PDFs with your agency name, logo, accent colour, and custom report footer. White-labeling is available on the Enterprise / Coach tier.</p>
+        <button type="button" onClick={onStart} className="mt-5 rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white">Explore White-Labeling Options</button>
+      </motion.section>
 
       <motion.div
         initial={{ opacity: 0, y: 18 }}
