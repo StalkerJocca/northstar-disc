@@ -1,4 +1,4 @@
-import { isTraitKey, traitKeys, type DiscAnswer, type DiscScoreRequest, type DiscScoreResponse, type TraitKey } from '../types/disc'
+import { isTraitKey, traitKeys, type DiscAnswer, type DiscScoreRequest, type DiscScoreResponse, type TraitKey } from '../types/disc.js'
 
 const traitMeta: Record<TraitKey, { label: string; summary: string; strengths: string[]; stretch: string[]; shareLine: string }> = {
   D: {
@@ -51,7 +51,7 @@ export function buildDiscScoreResult(request: DiscScoreRequest): DiscScoreRespon
     totals[answer.trait] += 1
   })
 
-  const maxValue = Math.max(...Object.values(totals))
+  const maxValue = Math.max(...traitKeys.map((trait) => totals[trait]))
   const scores = traitKeys.map((trait) => ({
     trait,
     score: totals[trait],

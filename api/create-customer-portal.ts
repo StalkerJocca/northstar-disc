@@ -1,5 +1,5 @@
 import Stripe from 'stripe'
-import { getAuthenticatedUser, getSupabaseAdmin } from './supabase'
+import { getAuthenticatedUser, getSupabaseAdmin } from './supabase.js'
 export async function POST(request: Request) {
   const user = await getAuthenticatedUser(request); const secretKey = process.env.STRIPE_SECRET_KEY
   if (!user || !secretKey) return Response.json({ error: 'Authentication is required.' }, { status: 401 })

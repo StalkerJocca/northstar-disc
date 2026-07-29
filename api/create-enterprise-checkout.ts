@@ -1,5 +1,5 @@
 import Stripe from 'stripe'
-import { getAuthenticatedUser } from './supabase'
+import { getAuthenticatedUser } from './supabase.js'
 
 export async function POST(request: Request) {
   const secretKey = process.env.STRIPE_SECRET_KEY

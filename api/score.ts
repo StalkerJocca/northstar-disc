@@ -1,5 +1,5 @@
-import type { DiscScoreErrorResponse, DiscScoreRequest, DiscScoreResponse } from '../src/types/disc'
-import { buildDiscScoreResult } from '../src/lib/discScoring'
+import type { DiscScoreErrorResponse, DiscScoreRequest, DiscScoreResponse } from '../src/types/disc.js'
+import { buildDiscScoreResult } from '../src/lib/discScoring.js'
 
 export default async function handler(request: Request): Promise<Response> {
   try {
