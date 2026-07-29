@@ -20,11 +20,12 @@ import {
   getSignatureLeadershipStyle,
 } from './lib/share'
 import { generateSocialCardImage } from './services/export'
+import { downloadExecutivePdf } from './services/export/executivePdf'
 import { defaultPageTitle, defaultPageDescription, defaultOgImage, parseProfileCode } from './lib/seo'
-import { landingVariants, testimonials, caseStudies } from './lib/content'
 import type { DiscScoreResponse, TraitKey } from './types/disc'
 
 const DiscProfileDashboard = lazy(() => import('./components/DiscProfileDashboard'))
+const TeamDashboard = lazy(() => import('./components/TeamDashboard'))
 const ExecutiveReportDocument = lazy(() => import('./components/exports/ExecutiveReportDocument'))
 
 const languages = [
@@ -152,13 +153,19 @@ function App() {
   const [resumeNotice, setResumeNotice] = useState<string | null>(null)
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [isShareLoading, setIsShareLoading] = useState(false)
+  const [isExecutivePdfGenerating, setIsExecutivePdfGenerating] = useState(false)
+  const [reportName, setReportName] = useState('')
   const [consent, setConsent] = useState<'undecided' | 'essential' | 'all'>(readStoredConsent)
   const [privacyModalOpen, setPrivacyModalOpen] = useState(false)
   const shareCardRef = useRef<HTMLDivElement | null>(null)
   const reportExportRef = useRef<HTMLDivElement | null>(null)
+  const shareModalCloseRef = useRef<HTMLButtonElement | null>(null)
   const [celebrate, setCelebrate] = useState(false)
   const { t, i18n } = useTranslation()
   const nextStepActions = t('nextStep.actions', { returnObjects: true }) as string[]
+  const audienceCards = t('resultsAudience.cards', { returnObjects: true }) as Array<{ title: string; body: string }>
+  const testimonials = t('resultsAudience.testimonials', { returnObjects: true }) as Array<{ quote: string; author: string }>
+  const caseStudies = t('resultsAudience.caseStudies', { returnObjects: true }) as Array<{ headline: string; body: string }>
   const questions = t('quiz.questions', { returnObjects: true }) as Array<{ prompt: string; options: Array<{ label: string; trait: string }> }>
   const language = i18n.resolvedLanguage?.split('-')[0] ?? 'en'
   const prefersReducedMotion = useReducedMotion()
@@ -174,6 +181,29 @@ function App() {
   const currentQuestion = questions[step]
   const hasSavedProgress = Boolean(started || answers.length > 0 || showResults || profile !== null || apiError !== null || step > 0 || selected !== null || isScoring)
   const primaryTrait = profile?.primaryTrait ?? 'D'
+
+  const handleExecutivePdfDownload = async () => {
+    if (!profile) return
+    setIsExecutivePdfGenerating(true)
+    try {
+      await downloadExecutivePdf({
+        profile,
+        primaryTrait: primaryTrait as TraitKey,
+        secondaryTrait: (profile.secondaryTrait ?? 'C') as TraitKey,
+        candidateName: reportName.trim() || t('pdfReport.defaultName'),
+        generatedAt,
+        labels: {
+          brand: t('app.name'), reportTitle: t('pdfReport.title'), executiveProfile: t('pdfReport.executiveProfile'), generated: t('pdfReport.generated'), primary: t('report.primary'), secondary: t('report.secondary'), profileOverview: t('report.profileOverview'), narrative: t('report.executiveSummary'), narrativeText: t(`traitMeta.${primaryTrait}.summary`), scores: t('pdfReport.scores'), behaviouralInsights: t('pdfReport.behaviouralInsights'), communication: t('dashboard.communicationStyle'), workStyle: t('dashboard.work'), stressTriggers: t('dashboard.underPressure'), growthAreas: t('report.developmentFocus'), actionPlan: t('pdfReport.actionPlan'), actionPlanIntro: t('pdfReport.actionPlanIntro'), notes: t('pdfReport.notes'),
+          traitNames: { D: t('traits.D'), I: t('traits.I'), S: t('traits.S'), C: t('traits.C') },
+          communicationText: t(`insight.communication${primaryTrait}`), workStyleText: t(`insight.environment${primaryTrait}`), stressText: t(`insight.pressure${primaryTrait}`), growthPoints: t(`profileGrowthPoints.${primaryTrait}`, { returnObjects: true }) as string[],
+        },
+      })
+    } catch (error) {
+      setShareStatus(error instanceof Error ? error.message : t('pdfReport.error'))
+    } finally {
+      setIsExecutivePdfGenerating(false)
+    }
+  }
 
   const submitAssessment = async (finalAnswers: string[]) => {
     setIsScoring(true)
@@ -614,30 +644,41 @@ function App() {
     }
   }, [profile, referralCode, sharedProfile, shareUrl, t])
 
+  useEffect(() => {
+    if (!shareModalOpen) return
+
+    shareModalCloseRef.current?.focus()
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShareModalOpen(false)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [shareModalOpen])
+
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#f8efe9,_#fcfaf7_60%,_#f4ebe3)] text-stone-700">
+    <div className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top,_#f8efe9,_#fcfaf7_60%,_#f4ebe3)] text-stone-700">
       <ConsentBanner consent={consent} onAcceptAll={() => handleConsentChoice('all')} onEssentialOnly={() => handleConsentChoice('essential')} />
       <PrivacyModal open={privacyModalOpen} onClose={() => setPrivacyModalOpen(false)} consent={consent} onConsentChange={handleConsentChoice} onClearData={handleClearAssessmentData} onExportData={handleExportRawData} />
       {shareModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true">
-          <div className="w-full max-w-md rounded-[2rem] border border-stone-200 bg-white p-5 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-stone-950/60 px-3 py-4 backdrop-blur-sm sm:px-6" role="dialog" aria-modal="true" aria-labelledby="share-modal-title" aria-describedby="share-modal-description">
+          <div className="executive-card my-auto w-full max-w-md p-5 sm:p-6">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-sm uppercase tracking-[0.24em] text-stone-500">Share options</p>
-                <h3 className="mt-2 text-xl font-semibold text-stone-900">Choose where you want to share</h3>
+                <p className="text-sm uppercase tracking-[0.24em] text-stone-500">{t('share.modal.eyebrow')}</p>
+                <h3 id="share-modal-title" className="mt-2 text-xl font-semibold text-stone-900">{t('share.modal.title')}</h3>
               </div>
-              <button type="button" onClick={() => setShareModalOpen(false)} className="rounded-full border border-stone-200 px-3 py-2 text-sm font-semibold text-stone-700">Close</button>
+              <button ref={shareModalCloseRef} type="button" onClick={() => setShareModalOpen(false)} className="executive-button focus-ring border border-stone-200 px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-50">{t('share.modal.close')}</button>
             </div>
-            <p className="mt-3 text-sm leading-7 text-stone-600">Your ready-to-share message has been prepared. Pick the channel that best fits your post.</p>
+            <p id="share-modal-description" className="mt-3 text-sm leading-7 text-stone-600">{t('share.modal.description')}</p>
             <div className="mt-5 space-y-2">
-              <button type="button" onClick={() => { setShareModalOpen(false); void handleSocialShare('linkedin') }} className="flex w-full items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-left text-sm font-semibold text-stone-800 transition hover:bg-stone-100">Share on LinkedIn <span aria-hidden="true">↗</span></button>
-              <button type="button" onClick={() => { setShareModalOpen(false); void handleSocialShare('twitter') }} className="flex w-full items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-left text-sm font-semibold text-stone-800 transition hover:bg-stone-100">Share on X <span aria-hidden="true">↗</span></button>
-              <button type="button" onClick={() => { setShareModalOpen(false); void handleSocialShare('email') }} className="flex w-full items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-left text-sm font-semibold text-stone-800 transition hover:bg-stone-100">Share by email <span aria-hidden="true">↗</span></button>
+              <button type="button" onClick={() => { setShareModalOpen(false); void handleSocialShare('linkedin') }} className="focus-ring flex min-h-12 w-full items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-left text-sm font-semibold text-stone-800 transition hover:border-stone-300 hover:bg-white">{t('share.buttonLinkedIn')} <span aria-hidden="true">↗</span></button>
+              <button type="button" onClick={() => { setShareModalOpen(false); void handleSocialShare('twitter') }} className="focus-ring flex min-h-12 w-full items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-left text-sm font-semibold text-stone-800 transition hover:border-stone-300 hover:bg-white">{t('share.buttonX')} <span aria-hidden="true">↗</span></button>
+              <button type="button" onClick={() => { setShareModalOpen(false); void handleSocialShare('email') }} className="focus-ring flex min-h-12 w-full items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-left text-sm font-semibold text-stone-800 transition hover:border-stone-300 hover:bg-white">{t('share.buttonEmail')} <span aria-hidden="true">↗</span></button>
             </div>
           </div>
         </div>
       ) : null}
-      <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+      <main className="page-shell flex min-h-screen flex-col py-4 sm:py-6">
         <header className="mb-4 flex flex-col gap-3 rounded-[2rem] border border-stone-200/70 bg-white/70 px-4 py-3 shadow-[0_18px_45px_-24px_rgba(84,56,45,0.3)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-stone-200 bg-white/95 p-1 shadow-sm">
@@ -908,6 +949,27 @@ function App() {
                   />
                 </Suspense>
 
+                <section className="print-hide mt-5 rounded-[2rem] border border-[#dcc9b7] bg-[linear-gradient(135deg,_#fffaf5,_#f1e2d3)] p-5 shadow-[0_20px_50px_-30px_rgba(84,56,45,0.35)] sm:p-6">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.24em] text-stone-500">{t('pdfReport.eyebrow')}</p>
+                      <h3 className="mt-2 text-xl font-semibold text-stone-800">{t('pdfReport.title')}</h3>
+                      <p className="mt-2 max-w-2xl text-sm leading-7 text-stone-600">{t('pdfReport.description')}</p>
+                    </div>
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-72">
+                      <input value={reportName} onChange={(event) => setReportName(event.target.value)} placeholder={t('pdfReport.namePlaceholder')} className="rounded-xl border border-stone-200 bg-white/85 px-3 py-2 text-sm text-stone-700" />
+                      <button type="button" onClick={handleExecutivePdfDownload} disabled={isExecutivePdfGenerating || !profile} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
+                        {isExecutivePdfGenerating ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" /> : null}
+                        {isExecutivePdfGenerating ? t('pdfReport.generating') : t('pdfReport.download')}
+                      </button>
+                    </div>
+                  </div>
+                </section>
+
+                <Suspense fallback={<div className="mt-5 h-64 animate-pulse rounded-[2rem] bg-stone-100" aria-label="Loading team dashboard" />}>
+                  <TeamDashboard currentProfile={profile} />
+                </Suspense>
+
                 <div ref={shareCardRef}>
                   <ShareableResultsCard
                     profile={profile}
@@ -1042,7 +1104,7 @@ function App() {
                 className="rounded-[2rem] border border-stone-200/80 bg-white/80 p-5 shadow-[0_20px_60px_-25px_rgba(84,56,45,0.35)] sm:p-6"
               >
                 <div className="grid gap-4 md:grid-cols-2">
-                  {landingVariants.map((variant) => (
+                  {audienceCards.map((variant) => (
                     <div key={variant.title} className="rounded-[1.5rem] border border-stone-200 bg-stone-50 p-4">
                       <p className="text-xs uppercase tracking-[0.24em] text-stone-500">{variant.title}</p>
                       <p className="mt-3 text-sm leading-7 text-stone-700">{variant.body}</p>

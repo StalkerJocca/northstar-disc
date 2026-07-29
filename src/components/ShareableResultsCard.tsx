@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import type { DiscScoreResponse } from '../types/disc'
 import { getSignatureLeadershipStyle } from '../lib/share'
@@ -19,17 +19,20 @@ const traitColors = {
 
 export default function ShareableResultsCard({ profile, primaryTrait, secondaryTrait }: ShareableResultsCardProps) {
   const { t } = useTranslation()
+  const prefersReducedMotion = useReducedMotion()
   const signature = getSignatureLeadershipStyle(primaryTrait, secondaryTrait)
   const topTraits = (profile?.scores ?? []).slice(0, 3)
+  const localizedHighlights = t(`traitMeta.${primaryTrait}.strengths`, { returnObjects: true }) as string[]
+  const localizedNarrative = t(`traitMeta.${primaryTrait}.summary`)
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28 }}
-      className="w-full overflow-hidden rounded-[2rem] border border-stone-200 bg-[linear-gradient(135deg,_#fffaf4,_#f5eadf)] p-4 shadow-[0_22px_60px_-28px_rgba(84,56,45,0.3)] sm:p-5"
+      transition={{ duration: prefersReducedMotion ? 0.01 : 0.28 }}
+      className="executive-card w-full overflow-hidden bg-[linear-gradient(135deg,_#fffdf9,_#f5eadf)] p-4 sm:p-5"
     >
-      <div className="rounded-[1.5rem] border border-stone-200/80 bg-white/80 p-4 sm:p-5">
+      <div className="executive-panel bg-white/80 p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <img src="/NorthStar.png" alt="Northstar DISC Logo" className="h-10 w-auto rounded-2xl object-contain" />
@@ -43,13 +46,13 @@ export default function ShareableResultsCard({ profile, primaryTrait, secondaryT
           </div>
         </div>
 
-        <div className="mt-4 rounded-[1.25rem] border border-stone-200 bg-[linear-gradient(135deg,_#f9f3eb,_#f1e5d8)] p-4">
+        <div className="executive-panel mt-4 bg-[linear-gradient(135deg,_#f9f3eb,_#f1e5d8)] p-4">
           <p className="text-sm font-medium text-stone-700">{signature.headline}</p>
-          <p className="mt-2 text-sm leading-7 text-stone-600">{profile?.narrative ?? signature.summary}</p>
+          <p className="mt-2 text-sm leading-7 text-stone-600">{localizedNarrative}</p>
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[1.25rem] border border-stone-200 bg-stone-50 p-4">
+          <div className="executive-panel bg-stone-50 p-4">
             <p className="text-xs uppercase tracking-[0.24em] text-stone-500">{t('share.topTraits')}</p>
             <div className="mt-3 space-y-2">
               {topTraits.map((item) => (
@@ -64,10 +67,10 @@ export default function ShareableResultsCard({ profile, primaryTrait, secondaryT
             </div>
           </div>
 
-          <div className="rounded-[1.25rem] border border-stone-200 bg-stone-50 p-4">
+          <div className="executive-panel bg-stone-50 p-4">
             <p className="text-xs uppercase tracking-[0.24em] text-stone-500">{t('share.whyItResonates')}</p>
             <ul className="mt-3 space-y-2 text-sm leading-7 text-stone-700">
-              {(profile?.highlights ?? []).slice(0, 3).map((item) => (
+              {localizedHighlights.slice(0, 3).map((item) => (
                 <li key={item} className="flex items-start gap-2">
                   <span className="mt-1.5 h-2 w-2 rounded-full bg-stone-400" />
                   <span>{item}</span>

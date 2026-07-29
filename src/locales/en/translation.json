@@ -5,7 +5,7 @@
     "description": "A premium, practical DISC reflection designed for leaders, teams, and thoughtful professionals."
   },
   "header": {
-    "questionsInfo": "50 Questions • ~5 min",
+    "questionsInfo": "50 Questions • ~10–15 min",
     "statusLaunch": "Launch",
     "statusResults": "Results",
     "statusStep": "Step {{current}} of {{total}}",
@@ -22,7 +22,7 @@
   },
   "landing": {
     "headline": "Transform self-awareness into action.",
-    "subheadline": "Map your leadership, communication, and decision-making style in under five minutes.",
+    "subheadline": "Map your leadership, communication, and decision-making style in 10 to 15 minutes.",
     "intro": "A refined, premium assessment built for busy leaders and teams who want clear, practical insight.",
     "badges": {
       "free": "✦ 100% Free",
@@ -55,7 +55,7 @@
     "steps": [
       {
         "title": "Answer 50 brief scenarios",
-        "description": "Complete the assessment in about 5 minutes."
+        "description": "Complete the assessment in about 10 to 15 minutes."
       },
       {
         "title": "Uncover your DISC profile",
@@ -189,7 +189,13 @@
     "copy": "I just mapped my leadership and behavioral profile with Northstar DISC! My primary style is {{badge}}. Check out your own profile for free here: {{url}} #DISC #Leadership #PersonalGrowth #NorthstarDISC",
     "toastShareSuccess": "✨ Image downloaded & message copied to clipboard! Paste it directly into your post.",
     "toastShareDownload": "✨ Image downloaded! Copy the post text below and paste it into your share.",
-    "toastShareError": "Something went wrong while preparing your share card. Please try again."
+    "toastShareError": "Something went wrong while preparing your share card. Please try again.",
+    "modal": {
+      "eyebrow": "Share options",
+      "title": "Choose where to share",
+      "description": "Your share-ready message is prepared. Choose the channel that best fits your audience.",
+      "close": "Close"
+    }
   },
   "export": {
     "title": "Results card ready",
@@ -203,6 +209,23 @@
     "preparingExport": "Preparing export…",
     "shareReady": "Share-ready",
     "primaryStyle": "Primary style · {{style}}"
+  },
+  "pdfReport": {
+    "eyebrow": "Executive export",
+    "title": "Executive PDF report",
+    "description": "Download a high-fidelity four-page profile for coaching conversations, development planning, and printing.",
+    "namePlaceholder": "Your name (optional)",
+    "defaultName": "Northstar DISC Candidate",
+    "download": "Download Executive PDF Report",
+    "generating": "Generating your report…",
+    "error": "We could not generate the executive PDF. Please try again.",
+    "executiveProfile": "Executive behavioural profile",
+    "generated": "Generated",
+    "scores": "DISC score distribution",
+    "behaviouralInsights": "Detailed behavioural insights",
+    "actionPlan": "Action plan & personal development notes",
+    "actionPlanIntro": "Use this page to turn self-awareness into a concrete development commitment. Capture one behaviour, one situation, and one person who can support your progress.",
+    "notes": "Development note"
   },
   "support": {
     "title": "Support this work",
@@ -309,7 +332,39 @@
       "nearly": "Nearly there—just one final stretch before results appear."
     }
   },
+  "profileGrowthPoints": {
+    "D": ["Pause long enough to hear the room.", "Consider the human impact of urgency.", "Invite others into the decision."],
+    "I": ["Leave space for quieter voices.", "Pair enthusiasm with follow-through.", "Ground big ideas in practical detail."],
+    "S": ["Practise speaking up sooner.", "Let your steady pace be a strength.", "Share your perspective with confidence."],
+    "C": ["Let go of perfection when momentum matters.", "Share early drafts rather than waiting for perfect.", "Trust that progress can be good enough."]
+  },
+  "profileDimensions": {
+    "D": { "work": "At work, you cut through ambiguity and move the team towards the next milestone. You thrive when you can set a clear direction and deliver at pace.", "team": "In teams, you create momentum. Make room for others to contribute so your decisiveness remains inclusive.", "leadership": "As a leader, you make clear calls and keep priorities moving. Your impact is strongest when drive is paired with thoughtful listening.", "life": "Outside work, you may prefer action to small talk. Practical outcomes and forward movement matter to you." },
+    "I": { "work": "At work, you are most effective when building alignment and energy around a shared idea. You shine in collaborative settings and presentations.", "team": "In teams, you draw people in and make group work more engaging through connection.", "leadership": "As a leader, you are persuasive and motivating. Vision and emotion help you bring people together around possibility.", "life": "Outside work, you cultivate warm relationships and lively environments. You naturally make gatherings feel inviting." },
+    "S": { "work": "At work, you are a steadying presence who keeps progress moving without unnecessary drama.", "team": "In teams, people value your dependability, reassurance, and follow-through.", "leadership": "As a leader, you create safety and predictability through calm, consistent guidance.", "life": "Outside work, you value routine, harmony, and meaningful connection." },
+    "C": { "work": "At work, you refine detail, design systems, and protect quality. People trust you to keep standards high.", "team": "In teams, you turn good ideas into reliable plans and reduce avoidable risk.", "leadership": "As a leader, you bring discipline and clarity through standards, systems, and thoughtful accountability.", "life": "Outside work, you value order, precision, and well-considered solutions." }
+  },
+  "resultsAudience": {
+    "cards": [
+      { "title": "Leaders", "body": "Make clear decisions while keeping people engaged and aligned." },
+      { "title": "Teams", "body": "Build a shared language for working preferences, with less friction and more trust." },
+      { "title": "Coaches", "body": "Turn behavioural insight into practical strengths, development areas, and next steps." },
+      { "title": "HR", "body": "Support development and culture conversations with a clear, shareable profile." }
+    ],
+    "testimonials": [
+      { "quote": "This reflection made our leadership conversations more practical and grounded.", "author": "Mariana, Executive Coach" },
+      { "quote": "The profile gave our team a clear way to discuss expectations and communication styles.", "author": "Lucas, HR Business Partner" }
+    ],
+    "caseStudies": [
+      { "headline": "Leaders move faster with confidence", "body": "A leadership team used the profile to align priorities and turn a one-hour meeting into a decisive action session." },
+      { "headline": "Coaches gain insight faster", "body": "Coaches used the profile as a structured reflection that helped clients identify one practical next step." }
+    ]
+  },
   "dashboard": {
+    "work": "Work",
+    "team": "Team",
+    "leadership": "Leadership",
+    "life": "Life",
     "leaderProfile": "Leader profile",
     "profileLine": "{{primary}} with a {{secondary}} undercurrent",
     "radarChartLabel": "DISC profile radar chart",
@@ -323,7 +378,85 @@
     "percentileContext": "Compared with other leadership profiles, this {{primary}} and {{secondary}} blend sits in the {{percentile}} percentile for clear, balanced behavioral presence.",
     "communicationUnderPressure": "Communication style under pressure",
     "idealWorkEnvironment": "Ideal work environment",
-    "leadershipSuperpowers": "Leadership superpowers"
+    "leadershipSuperpowers": "Leadership superpowers",
+    "dynamics": {
+      "eyebrow": "Workplace guide",
+      "title": "Workplace dynamics",
+      "description": "A practical guide for your {{primary}} style, shaped by your {{secondary}} secondary preference.",
+      "communication": "Communication playbook",
+      "environment": "Ideal work environment",
+      "leadership": "Leadership & management",
+      "growth": "Blind spots & growth",
+      "talkToMe": "How to talk to me",
+      "stressTriggers": "What triggers stress",
+      "productivityFactor": "Productivity factor",
+      "decisionMaking": "How I make decisions",
+      "delegation": "How I delegate",
+      "growthAction": "Development action"
+    },
+    "simulator": {
+      "eyebrow": "Scenario simulator",
+      "title": "Practise the moment before it happens",
+      "description": "Choose a common workplace situation for guidance tailored to your profile blend.",
+      "secondaryCue": "Your {{secondary}} side adds: {{tip}}",
+      "scenarios": { "feedback": "Giving feedback", "conflict": "Resolving conflict", "pitch": "Pitching an idea" }
+    }
+  },
+  "workplaceDynamics": {
+    "traits": {
+      "D": {
+        "communication": "Lead with the outcome, the decision needed, and the shortest credible route forward.",
+        "stress": "Slow progress, vague ownership, and repeated debate can feel like unnecessary friction.",
+        "environment": ["Autonomy to act", "Visible goals and measures", "Fast access to decisions"],
+        "decisions": "You decide quickly when the goal and stakes are clear; bring only the evidence that changes the choice.",
+        "delegation": "Delegate outcomes and decision rights, then agree a concise check-in rhythm rather than controlling every step.",
+        "growth": ["Ask one clarifying question before proposing the answer.", "Name the people impact alongside the business outcome.", "Invite dissent early, before momentum makes it harder to change course."],
+        "scenarios": { "feedback": "Be direct about the gap, anchor it to the outcome, and finish with a clear next move.", "conflict": "State the shared objective first, separate facts from assumptions, then agree who owns the next action.", "pitch": "Open with the opportunity, the commercial or strategic upside, and the decision you need today." },
+        "scenarioCues": { "feedback": "make room for the other person to respond before closing the conversation.", "conflict": "protect trust as well as speed.", "pitch": "show enough evidence to make the ambition credible." }
+      },
+      "I": {
+        "communication": "Begin with the human context and possibility, then make the ask and next step unmistakably clear.",
+        "stress": "Cold delivery, isolation, and having your enthusiasm dismissed or tightly constrained can drain energy.",
+        "environment": ["Collaboration and connection", "Room to influence", "Variety and visible momentum"],
+        "decisions": "You spot potential through conversation and buy-in; pause to test the practical implications before committing.",
+        "delegation": "Delegate with an energising purpose, public encouragement, and a concrete definition of done.",
+        "growth": ["Turn verbal commitments into a written next step and owner.", "Make deliberate space for quieter contributors.", "Pressure-test a promising idea with data, cost, and delivery detail."],
+        "scenarios": { "feedback": "Start with genuine recognition, describe the specific behaviour to change, and co-create an upbeat next step.", "conflict": "Reconnect around intent, let each person feel heard, then turn the conversation into one practical agreement.", "pitch": "Make the audience feel the future state, tell a concise story, and land on a specific ask." },
+        "scenarioCues": { "feedback": "be concise enough that the core message is not lost.", "conflict": "do not smooth over the issue before it is understood.", "pitch": "bring a simple proof point that grounds the story." }
+      },
+      "S": {
+        "communication": "Offer context, a calm pace, and time to process; show how the change supports people and continuity.",
+        "stress": "Abrupt change, public pressure, and unresolved tension can make it harder to contribute openly.",
+        "environment": ["Predictable priorities", "Supportive collaboration", "Time for steady follow-through"],
+        "decisions": "You weigh the impact on people and stability; define a decision deadline so care does not become delay.",
+        "delegation": "Delegate with clear support, realistic capacity, and reassurance that questions are welcome.",
+        "growth": ["State your view before the group settles on an answer.", "Set a boundary when a request threatens capacity.", "Experiment with one small change before waiting for perfect certainty."],
+        "scenarios": { "feedback": "Choose a private, calm setting, explain the impact with care, and agree support for the next step.", "conflict": "Slow the temperature, surface each need, and build a fair agreement that both people can sustain.", "pitch": "Show how the idea protects continuity, improves the team experience, and can be introduced safely." },
+        "scenarioCues": { "feedback": "state the standard clearly, not only the support.", "conflict": "say what you need directly instead of accommodating too quickly.", "pitch": "name the decision and timeline so the idea can move." }
+      },
+      "C": {
+        "communication": "Be precise about the problem, evidence, quality bar, and constraints; allow space for thoughtful questions.",
+        "stress": "Unclear standards, preventable errors, and pressure to decide without enough evidence can erode trust.",
+        "environment": ["Clear standards and roles", "Time for analysis", "Reliable systems and quality controls"],
+        "decisions": "You evaluate evidence and risk carefully; agree what 'enough information' means to avoid analysis becoming a bottleneck.",
+        "delegation": "Delegate with standards, context, and decision boundaries—then avoid redoing work that meets the agreed bar.",
+        "growth": ["Share an early version before every detail is resolved.", "Match the depth of analysis to the decision's actual risk.", "Explain the 'why' behind a correction so others can learn, not just comply."],
+        "scenarios": { "feedback": "Prepare specific examples, describe the standard and impact, and agree a measurable improvement step.", "conflict": "Clarify the facts and criteria first, then focus the conversation on a workable, evidence-based resolution.", "pitch": "Frame the problem, show the evidence and risk controls, then make a focused recommendation." },
+        "scenarioCues": { "feedback": "balance accuracy with recognition of effort.", "conflict": "leave room for feelings as well as facts.", "pitch": "make the recommendation easy to understand, not just rigorous." }
+      }
+    }
+  },
+  "teamDashboard": {
+    "eyebrow": "Team collaboration", "title": "Team dynamics dashboard", "description": "Bring DISC profiles together to spot balance, communication needs, and practical team risks. Profiles are saved only in this browser.",
+    "export": "Download team PDF", "namePlaceholder": "Member name (optional)", "addCurrent": "Add current profile", "import": "Import JSON", "importError": "We could not find valid DISC profiles in that JSON file.", "memberNumber": "Team member {{number}}", "currentProfile": "Current profile", "empty": "Add the current result or import one or more profile JSON files to build a team view.",
+    "heatmap": "Team heatmap", "balanceTitle": "Team balance", "balanceSummary": "{{primaryValue}}% {{primary}} / {{secondaryValue}}% {{secondary}} — this is the strongest current balance.", "riskSummary": "Risk: {{risk}}", "members": "Team members", "matrix": "Team communication matrix", "remove": "Remove {{name}}", "pdfTitle": "Northstar DISC Team Summary", "pdfSubtitle": "Combined DISC distribution for {{count}} team members",
+    "risks": { "D": "Lower urgency and ownership may slow decisions.", "I": "Lower connection and advocacy may reduce buy-in.", "S": "Lower patience for change may create unnecessary friction.", "C": "Low attention to detail and process may increase avoidable risk." },
+    "matrixTips": {
+      "D": { "D": "When {{from}} presents to {{to}}, lead with the decision, ownership, and a short path to results.", "I": "When {{from}} presents to {{to}}, pair the headline outcome with an energising story and room for dialogue.", "S": "When {{from}} presents to {{to}}, explain the result clearly while showing how people and continuity will be supported.", "C": "When {{from}} presents to {{to}}, focus on bottom-line results, clear milestones, and the evidence behind the recommendation." },
+      "I": { "D": "When {{from}} presents to {{to}}, make the opportunity vivid, then state the decisive action needed.", "I": "When {{from}} presents to {{to}}, use a concise story, visible enthusiasm, and a concrete next step.", "S": "When {{from}} presents to {{to}}, create connection first and avoid rushing agreement before concerns are heard.", "C": "When {{from}} presents to {{to}}, bring the human case together with facts, scope, and delivery detail." },
+      "S": { "D": "When {{from}} presents to {{to}}, be calm and brief: clarify the outcome, owner, and timing.", "I": "When {{from}} presents to {{to}}, connect the idea to people and invite visible participation.", "S": "When {{from}} presents to {{to}}, provide context, a steady pace, and reassurance about what will remain stable.", "C": "When {{from}} presents to {{to}}, prepare the facts, process, and time needed for a considered response." },
+      "C": { "D": "When {{from}} presents to {{to}}, lead with the recommendation and decision, keeping analysis in reserve.", "I": "When {{from}} presents to {{to}}, translate detail into an engaging narrative and practical benefit.", "S": "When {{from}} presents to {{to}}, explain the reasoning patiently and show how the plan protects the team.", "C": "When {{from}} presents to {{to}}, share evidence, standards, and the decision criteria in a structured format." }
+    }
   },
   "insight": {
     "environmentD": "High-autonomy spaces where decisions can move quickly and goals stay sharp.",

@@ -5,7 +5,7 @@
     "description": "Uma reflexão DISC prática e premium para líderes, equipes e profissionais conscientes."
   },
   "header": {
-    "questionsInfo": "50 perguntas • ~5 min",
+    "questionsInfo": "50 perguntas • ~10–15 min",
     "statusLaunch": "Início",
     "statusResults": "Resultados",
     "statusStep": "Passo {{current}} de {{total}}",
@@ -22,7 +22,7 @@
   },
   "landing": {
     "headline": "Transforme autoconsciência em ação.",
-    "subheadline": "Mapeie seu estilo de liderança, comunicação e tomada de decisão em menos de cinco minutos.",
+    "subheadline": "Mapeie o seu estilo de liderança, comunicação e tomada de decisão em 10 a 15 minutos.",
     "intro": "Uma avaliação refinada e premium feita para líderes ocupados e equipes que querem insights claros e práticos.",
     "badges": {
       "free": "✦ 100% Grátis",
@@ -55,7 +55,7 @@
     "steps": [
       {
         "title": "Responda 50 cenários breves",
-        "description": "Complete a avaliação em cerca de 5 minutos."
+        "description": "Complete a avaliação em cerca de 10 a 15 minutos."
       },
       {
         "title": "Descubra seu perfil DISC",
@@ -172,12 +172,12 @@
     ]
   },
   "share": {
-    "sectionTitle": "Compartilhe seu perfil",
+    "sectionTitle": "Partilhe o seu perfil",
     "sectionSubtitle": "Torne sua reflexão fácil de repassar.",
     "badgeReady": "Badge de assinatura pronto",
-    "buttonLinkedIn": "Compartilhar no LinkedIn",
-    "buttonX": "Compartilhar no X",
-    "buttonEmail": "Compartilhar por email",
+    "buttonLinkedIn": "Partilhar no LinkedIn",
+    "buttonX": "Partilhar no X",
+    "buttonEmail": "Partilhar por e-mail",
     "shareTitle": "Compartilhe sua reflexão DISC",
     "cardLabel": "Cartão de compartilhamento",
     "topTraits": "Principais traços",
@@ -189,7 +189,13 @@
     "copy": "Acabei de mapear o meu perfil de liderança e comunicação no Northstar DISC! O meu perfil primário é {{badge}}. Descobre o teu perfil gratuitamente aqui: {{url}} #DISC #Liderança #DesenvolvimentoPessoal #NorthstarDISC",
     "toastShareSuccess": "✨ Imagem gerada e texto copiado para a área de transferência! Cole diretamente na sua publicação.",
     "toastShareDownload": "✨ Imagem gerada! Copie o texto da publicação abaixo e cole na sua partilha.",
-    "toastShareError": "Algo correu mal ao preparar a sua partilha. Tente novamente."
+    "toastShareError": "Algo correu mal ao preparar a sua partilha. Tente novamente.",
+    "modal": {
+      "eyebrow": "Opções de partilha",
+      "title": "Escolha onde pretende partilhar",
+      "description": "A sua mensagem está pronta. Escolha o canal mais adequado ao seu público.",
+      "close": "Fechar"
+    }
   },
   "export": {
     "title": "Cartão de resultados pronto",
@@ -203,6 +209,23 @@
     "preparingExport": "Preparando exportação…",
     "shareReady": "Pronto para compartilhar",
     "primaryStyle": "Estilo primário · {{style}}"
+  },
+  "pdfReport": {
+    "eyebrow": "Exportação executiva",
+    "title": "Relatório PDF executivo",
+    "description": "Transfira um perfil de quatro páginas em alta fidelidade para conversas de coaching, planeamento de desenvolvimento e impressão.",
+    "namePlaceholder": "O seu nome (opcional)",
+    "defaultName": "Candidato Northstar DISC",
+    "download": "Transferir relatório PDF executivo",
+    "generating": "A gerar o seu relatório…",
+    "error": "Não foi possível gerar o PDF executivo. Tente novamente.",
+    "executiveProfile": "Perfil comportamental executivo",
+    "generated": "Gerado",
+    "scores": "Distribuição das pontuações DISC",
+    "behaviouralInsights": "Insights comportamentais detalhados",
+    "actionPlan": "Plano de ação e notas de desenvolvimento pessoal",
+    "actionPlanIntro": "Use esta página para transformar a autoconsciência num compromisso concreto de desenvolvimento. Registe um comportamento, uma situação e uma pessoa que possa apoiar o seu progresso.",
+    "notes": "Nota de desenvolvimento"
   },
   "support": {
     "title": "Apoie este trabalho",
@@ -309,7 +332,39 @@
       "nearly": "Quase lá — falta pouco para ver seus resultados."
     }
   },
+  "profileGrowthPoints": {
+    "D": ["Pare o tempo suficiente para escutar quem está à sua volta.", "Considere o impacto humano da urgência.", "Convide os outros a participar na decisão."],
+    "I": ["Dê espaço às vozes mais reservadas.", "Alie o entusiasmo à execução consistente.", "Apoie as ideias ambiciosas em detalhe prático."],
+    "S": ["Pratique expressar a sua opinião mais cedo.", "Reconheça o seu ritmo constante como uma força.", "Partilhe a sua perspetiva com confiança."],
+    "C": ["Deixe a perfeição de lado quando o ritmo for importante.", "Partilhe versões iniciais em vez de esperar pelo perfeito.", "Confie que o progresso pode ser suficientemente bom."]
+  },
+  "profileDimensions": {
+    "D": { "work": "No trabalho, elimina a ambiguidade e ajuda a equipa a avançar para o próximo marco. Destaca-se quando pode definir uma direção clara e executar com ritmo.", "team": "Nas equipas, cria impulso. Dar espaço aos outros para contribuírem mantém a sua assertividade inclusiva.", "leadership": "Como líder, toma decisões claras e mantém as prioridades em movimento. O seu impacto é mais forte quando alia determinação a escuta atenta.", "life": "Fora do trabalho, pode preferir a ação à conversa superficial. Valoriza resultados práticos e progresso." },
+    "I": { "work": "No trabalho, é mais eficaz quando cria alinhamento e energia em torno de uma ideia partilhada. Destaca-se em contextos colaborativos e apresentações.", "team": "Nas equipas, aproxima as pessoas e torna o trabalho de grupo mais envolvente através da ligação humana.", "leadership": "Como líder, é persuasivo e motivador. A visão e a emoção ajudam-no a unir pessoas em torno de uma possibilidade.", "life": "Fora do trabalho, cultiva relações calorosas e ambientes vivos. Tem facilidade em tornar os encontros acolhedores." },
+    "S": { "work": "No trabalho, é uma presença estabilizadora que mantém o progresso sem dramatismo desnecessário.", "team": "Nas equipas, as pessoas valorizam a sua fiabilidade, tranquilidade e capacidade de acompanhamento.", "leadership": "Como líder, cria segurança e previsibilidade através de orientação calma e consistente.", "life": "Fora do trabalho, valoriza rotinas, harmonia e relações com significado." },
+    "C": { "work": "No trabalho, aperfeiçoa os detalhes, cria sistemas e protege a qualidade. As pessoas confiam em si para manter padrões elevados.", "team": "Nas equipas, transforma boas ideias em planos fiáveis e reduz riscos evitáveis.", "leadership": "Como líder, traz disciplina e clareza através de padrões, sistemas e responsabilização ponderada.", "life": "Fora do trabalho, valoriza ordem, precisão e soluções bem pensadas." }
+  },
+  "resultsAudience": {
+    "cards": [
+      { "title": "Líderes", "body": "Tomem decisões claras, mantendo as pessoas envolvidas e alinhadas." },
+      { "title": "Equipas", "body": "Criem uma linguagem comum sobre preferências de trabalho, com menos fricção e mais confiança." },
+      { "title": "Coaches", "body": "Transformem a compreensão comportamental em pontos fortes, áreas de desenvolvimento e próximos passos práticos." },
+      { "title": "Recursos Humanos", "body": "Apoiem conversas sobre desenvolvimento e cultura com um perfil claro e fácil de partilhar." }
+    ],
+    "testimonials": [
+      { "quote": "Esta reflexão tornou as nossas conversas de liderança mais práticas e fundamentadas.", "author": "Mariana, Coach Executiva" },
+      { "quote": "O perfil deu à nossa equipa uma forma clara de falar sobre expectativas e estilos de comunicação.", "author": "Lucas, Parceiro de Negócio de RH" }
+    ],
+    "caseStudies": [
+      { "headline": "Líderes avançam com mais confiança", "body": "Uma equipa de liderança utilizou o perfil para alinhar prioridades e transformar uma reunião de uma hora numa sessão de ação decisiva." },
+      { "headline": "Coaches obtêm insights mais rapidamente", "body": "Os coaches utilizaram o perfil como reflexão estruturada para ajudar clientes a identificar um próximo passo prático." }
+    ]
+  },
   "dashboard": {
+    "work": "Trabalho",
+    "team": "Equipa",
+    "leadership": "Liderança",
+    "life": "Vida pessoal",
     "leaderProfile": "Perfil do líder",
     "profileLine": "{{primary}} com uma camada de {{secondary}}",
     "radarChartLabel": "Gráfico radar do perfil DISC",
@@ -323,7 +378,60 @@
     "percentileContext": "Em comparação com outros perfis de liderança, esta combinação de {{primary}} e {{secondary}} fica no percentil {{percentile}} para presença comportamental clara e equilibrada.",
     "communicationUnderPressure": "Estilo de comunicação sob pressão",
     "idealWorkEnvironment": "Ambiente de trabalho ideal",
-    "leadershipSuperpowers": "Superpoderes de liderança"
+    "leadershipSuperpowers": "Superpoderes de liderança",
+    "dynamics": {
+      "eyebrow": "Guia para o trabalho", "title": "Dinâmicas no trabalho", "description": "Um guia prático para o seu estilo {{primary}}, moldado pela sua preferência secundária {{secondary}}.",
+      "communication": "Guia de comunicação", "environment": "Ambiente de trabalho ideal", "leadership": "Liderança e gestão", "growth": "Pontos cegos e crescimento",
+      "talkToMe": "Como falar comigo", "stressTriggers": "O que desencadeia stress", "productivityFactor": "Fator de produtividade", "decisionMaking": "Como tomo decisões", "delegation": "Como delego", "growthAction": "Ação de desenvolvimento"
+    },
+    "simulator": {
+      "eyebrow": "Simulador de cenários", "title": "Prepare o momento antes de ele acontecer", "description": "Escolha uma situação comum no trabalho para receber orientações adaptadas ao seu perfil.",
+      "secondaryCue": "O seu lado {{secondary}} acrescenta: {{tip}}", "scenarios": { "feedback": "Dar feedback", "conflict": "Resolver um conflito", "pitch": "Apresentar uma ideia" }
+    }
+  },
+  "workplaceDynamics": {
+    "traits": {
+      "D": {
+        "communication": "Comece pelo resultado, pela decisão necessária e pelo caminho mais curto e credível para avançar.", "stress": "O progresso lento, a responsabilidade pouco clara e o debate repetido podem parecer fricção desnecessária.",
+        "environment": ["Autonomia para agir", "Objetivos e métricas visíveis", "Acesso rápido a decisões"], "decisions": "Decide depressa quando o objetivo e as consequências são claros; apresente apenas a evidência que altera a escolha.", "delegation": "Delegue resultados e autonomia de decisão; depois, combine pontos de situação breves em vez de controlar cada passo.",
+        "growth": ["Faça uma pergunta de clarificação antes de propor a resposta.", "Nomeie o impacto nas pessoas além do resultado de negócio.", "Convide opiniões divergentes cedo, antes de o ritmo tornar mais difícil mudar de rumo."],
+        "scenarios": { "feedback": "Seja direto sobre a lacuna, relacione-a com o resultado e termine com um próximo passo claro.", "conflict": "Comece pelo objetivo comum, separe factos de pressupostos e acordem quem assume a próxima ação.", "pitch": "Abra com a oportunidade, o ganho estratégico e a decisão de que precisa hoje." },
+        "scenarioCues": { "feedback": "dê espaço à outra pessoa para responder antes de encerrar a conversa.", "conflict": "proteja a confiança, além da rapidez.", "pitch": "mostre evidência suficiente para tornar a ambição credível." }
+      },
+      "I": {
+        "communication": "Comece pelo contexto humano e pela possibilidade; depois, torne o pedido e o próximo passo muito claros.", "stress": "Uma comunicação fria, o isolamento e ver o seu entusiasmo desvalorizado ou excessivamente limitado pode retirar-lhe energia.",
+        "environment": ["Colaboração e ligação", "Espaço para influenciar", "Variedade e ritmo visível"], "decisions": "Deteta potencial através da conversa e do envolvimento; pare para testar as implicações práticas antes de se comprometer.", "delegation": "Delegue com um propósito mobilizador, reconhecimento visível e uma definição concreta de conclusão.",
+        "growth": ["Transforme compromissos verbais num próximo passo escrito e com responsável.", "Crie deliberadamente espaço para pessoas mais reservadas.", "Teste uma ideia promissora com dados, custo e detalhe de execução."],
+        "scenarios": { "feedback": "Comece com reconhecimento genuíno, descreva o comportamento específico a mudar e construam um próximo passo positivo.", "conflict": "Reconecte através da intenção, deixe cada pessoa sentir-se ouvida e transforme a conversa num acordo prático.", "pitch": "Ajude a audiência a imaginar o futuro, conte uma história concisa e termine com um pedido específico." },
+        "scenarioCues": { "feedback": "seja conciso para que a mensagem principal não se perca.", "conflict": "não disfarce o problema antes de ele ser compreendido.", "pitch": "traga uma prova simples que sustente a história." }
+      },
+      "S": {
+        "communication": "Ofereça contexto, um ritmo calmo e tempo para processar; mostre como a mudança apoia as pessoas e a continuidade.", "stress": "A mudança abrupta, a pressão pública e a tensão por resolver podem dificultar uma contribuição aberta.",
+        "environment": ["Prioridades previsíveis", "Colaboração de apoio", "Tempo para acompanhamento constante"], "decisions": "Pondera o impacto nas pessoas e na estabilidade; defina um prazo de decisão para que o cuidado não se transforme em atraso.", "delegation": "Delegue com apoio claro, capacidade realista e a segurança de que as perguntas são bem-vindas.",
+        "growth": ["Expresse a sua opinião antes de o grupo se fixar numa resposta.", "Defina um limite quando um pedido ameaça a sua capacidade.", "Experimente uma pequena mudança antes de esperar pela certeza perfeita."],
+        "scenarios": { "feedback": "Escolha um contexto privado e calmo, explique o impacto com cuidado e acordem apoio para o próximo passo.", "conflict": "Baixe a tensão, explore a necessidade de cada pessoa e construa um acordo justo que ambos consigam manter.", "pitch": "Mostre como a ideia protege a continuidade, melhora a experiência da equipa e pode ser introduzida em segurança." },
+        "scenarioCues": { "feedback": "declare o padrão com clareza, não apenas o apoio.", "conflict": "diga diretamente o que precisa em vez de ceder demasiado depressa.", "pitch": "indique a decisão e o prazo para a ideia poder avançar." }
+      },
+      "C": {
+        "communication": "Seja preciso quanto ao problema, à evidência, ao padrão de qualidade e às limitações; deixe espaço para perguntas ponderadas.", "stress": "Padrões pouco claros, erros evitáveis e a pressão para decidir sem evidência suficiente podem reduzir a confiança.",
+        "environment": ["Padrões e papéis claros", "Tempo para análise", "Sistemas fiáveis e controlo de qualidade"], "decisions": "Avalia cuidadosamente evidência e risco; acordem o que significa ter «informação suficiente» para evitar que a análise bloqueie o avanço.", "delegation": "Delegue com padrões, contexto e limites de decisão — e evite refazer trabalho que cumpre o nível acordado.",
+        "growth": ["Partilhe uma versão inicial antes de todos os detalhes estarem resolvidos.", "Ajuste a profundidade da análise ao risco real da decisão.", "Explique o «porquê» de uma correção para que os outros aprendam, e não apenas cumpram."],
+        "scenarios": { "feedback": "Prepare exemplos específicos, descreva o padrão e o impacto, e acordem um passo de melhoria mensurável.", "conflict": "Esclareça primeiro os factos e os critérios e centre a conversa numa resolução prática baseada em evidência.", "pitch": "Enquadre o problema, apresente a evidência e os controlos de risco e faça uma recomendação objetiva." },
+        "scenarioCues": { "feedback": "equilibre o rigor com o reconhecimento do esforço.", "conflict": "deixe espaço para sentimentos, além dos factos.", "pitch": "torne a recomendação fácil de compreender, não apenas rigorosa." }
+      }
+    }
+  },
+  "teamDashboard": {
+    "eyebrow": "Colaboração de equipa", "title": "Painel de dinâmicas de equipa", "description": "Reúna perfis DISC para identificar equilíbrio, necessidades de comunicação e riscos práticos da equipa. Os perfis são guardados apenas neste navegador.",
+    "export": "Transferir PDF da equipa", "namePlaceholder": "Nome do membro (opcional)", "addCurrent": "Adicionar perfil atual", "import": "Importar JSON", "importError": "Não foi possível encontrar perfis DISC válidos nesse ficheiro JSON.", "memberNumber": "Membro da equipa {{number}}", "currentProfile": "Perfil atual", "empty": "Adicione o resultado atual ou importe um ou mais ficheiros JSON de perfis para criar uma vista da equipa.",
+    "heatmap": "Mapa de calor da equipa", "balanceTitle": "Equilíbrio da equipa", "balanceSummary": "{{primaryValue}}% {{primary}} / {{secondaryValue}}% {{secondary}} — este é o equilíbrio atualmente mais forte.", "riskSummary": "Risco: {{risk}}", "members": "Membros da equipa", "matrix": "Matriz de comunicação da equipa", "remove": "Remover {{name}}", "pdfTitle": "Resumo de equipa Northstar DISC", "pdfSubtitle": "Distribuição DISC combinada de {{count}} membros da equipa",
+    "risks": { "D": "Menos urgência e sentido de responsabilidade podem atrasar decisões.", "I": "Menos ligação e capacidade de influência podem reduzir o envolvimento.", "S": "Menor paciência perante a mudança pode criar fricção desnecessária.", "C": "Pouca atenção ao detalhe e aos processos pode aumentar riscos evitáveis." },
+    "matrixTips": {
+      "D": { "D": "Quando {{from}} apresenta a {{to}}, comece pela decisão, responsabilidade e um caminho curto para resultados.", "I": "Quando {{from}} apresenta a {{to}}, combine o resultado principal com uma história mobilizadora e espaço para diálogo.", "S": "Quando {{from}} apresenta a {{to}}, explique o resultado claramente, mostrando como as pessoas e a continuidade serão apoiadas.", "C": "Quando {{from}} apresenta a {{to}}, foque-se nos resultados, em marcos claros e na evidência por trás da recomendação." },
+      "I": { "D": "Quando {{from}} apresenta a {{to}}, torne a oportunidade concreta e indique depois a ação decisiva necessária.", "I": "Quando {{from}} apresenta a {{to}}, use uma história concisa, entusiasmo visível e um próximo passo concreto.", "S": "Quando {{from}} apresenta a {{to}}, crie primeiro ligação e evite apressar o acordo antes de ouvir as preocupações.", "C": "Quando {{from}} apresenta a {{to}}, una o argumento humano a factos, âmbito e detalhe de execução." },
+      "S": { "D": "Quando {{from}} apresenta a {{to}}, seja calmo e breve: clarifique o resultado, o responsável e o prazo.", "I": "Quando {{from}} apresenta a {{to}}, ligue a ideia às pessoas e convide à participação visível.", "S": "Quando {{from}} apresenta a {{to}}, forneça contexto, um ritmo estável e segurança sobre o que se manterá.", "C": "Quando {{from}} apresenta a {{to}}, prepare os factos, o processo e o tempo necessário para uma resposta ponderada." },
+      "C": { "D": "Quando {{from}} apresenta a {{to}}, comece pela recomendação e decisão, mantendo a análise em reserva.", "I": "Quando {{from}} apresenta a {{to}}, traduza o detalhe numa narrativa envolvente e num benefício prático.", "S": "Quando {{from}} apresenta a {{to}}, explique o raciocínio com paciência e mostre como o plano protege a equipa.", "C": "Quando {{from}} apresenta a {{to}}, partilhe evidência, padrões e critérios de decisão num formato estruturado." }
+    }
   },
   "insight": {
     "environmentD": "Espaços de alta autonomia onde decisões podem avançar rapidamente e metas permanecem claras.",
@@ -340,10 +448,10 @@
     "communicationC": "Preciso, reflexivo e baseado em evidências; profundidade e confiabilidade criam confiança."
   },
   "traits": {
-    "D": "Drive",
-    "I": "Influence",
-    "S": "Steadiness",
-    "C": "Conscientiousness"
+    "D": "Dominância",
+    "I": "Influência",
+    "S": "Estabilidade",
+    "C": "Conformidade"
   },
   "traitMeta": {
     "D": {

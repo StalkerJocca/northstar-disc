@@ -44,7 +44,9 @@ export default function ExecutiveReportDocument({
 }: ExecutiveReportDocumentProps) {
   const { t } = useTranslation()
   const primaryMeta = traitMeta[primaryTrait]
-  const secondaryMeta = traitMeta[secondaryTrait]
+  const localizedNarrative = t(`traitMeta.${primaryTrait}.summary`)
+  const localizedHighlights = t(`traitMeta.${primaryTrait}.strengths`, { returnObjects: true }) as string[]
+  const localizedGrowthPoints = t(`profileGrowthPoints.${primaryTrait}`, { returnObjects: true, defaultValue: primaryMeta.stretch }) as string[]
   const scores = profile?.scores ?? []
   const radarPoints = buildRadarPolygon(scores)
   const insightPanels = t('report.insightPanels', { returnObjects: true }) as Array<{ title: string; body: string }>
@@ -115,7 +117,7 @@ export default function ExecutiveReportDocument({
             </h1>
 
             <div style={{ marginTop: '12px', fontSize: '14px', lineHeight: 1.7, color: '#5f4c3d', fontFamily: 'Arial, sans-serif' }}>
-              {profile?.narrative ?? primaryMeta.summary}
+              {localizedNarrative}
             </div>
 
             <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -181,7 +183,7 @@ export default function ExecutiveReportDocument({
               </div>
             </div>
             <div style={{ marginTop: '10px', fontSize: '18px', lineHeight: 1.4, fontWeight: 700, color: '#2f241d' }}>
-              {t('report.badgeSummary', { primary: primaryMeta.label, secondary: secondaryMeta.label })}
+              {t('report.badgeSummary', { primary: t(`traits.${primaryTrait}`), secondary: t(`traits.${secondaryTrait}`) })}
             </div>
             <div style={{ marginTop: '8px', fontSize: '13px', lineHeight: 1.6, color: '#5f4c3d', fontFamily: 'Arial, sans-serif' }}>
               {t('report.badgeBody')}
@@ -203,20 +205,19 @@ export default function ExecutiveReportDocument({
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px', marginTop: '14px' }}>
               {scores.map((item) => {
-                const meta = traitMeta[item.trait as TraitKey]
                 return (
                   <div key={item.trait} style={{ background: '#f8efe7', borderRadius: '14px', padding: '10px 12px', border: '1px solid #ece0d2' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ width: '10px', height: '10px', borderRadius: '999px', background: traitColors[item.trait as TraitKey] }} />
-                        <span style={{ fontWeight: 700, color: '#2f241d', fontFamily: 'Arial, sans-serif' }}>{meta.label}</span>
+                        <span style={{ fontWeight: 700, color: '#2f241d', fontFamily: 'Arial, sans-serif' }}>{t(`traits.${item.trait}`)}</span>
                       </div>
                       <span style={{ fontSize: '12px', color: '#6b584d', fontFamily: 'Arial, sans-serif' }}>{item.percentage}%</span>
                     </div>
                     <div style={{ height: '8px', borderRadius: '999px', background: '#efe0ce', marginTop: '8px' }}>
                       <div style={{ width: `${Math.max(8, item.percentage)}%`, height: '100%', borderRadius: '999px', background: traitColors[item.trait as TraitKey] }} />
                     </div>
-                    <div style={{ fontSize: '12px', color: '#6b584d', marginTop: '8px', fontFamily: 'Arial, sans-serif' }}>Raw score: {item.score}</div>
+                    <div style={{ fontSize: '12px', color: '#6b584d', marginTop: '8px', fontFamily: 'Arial, sans-serif' }}>{t('report.rawScore', { score: item.score })}</div>
                   </div>
                 )
               })}
@@ -233,7 +234,7 @@ export default function ExecutiveReportDocument({
                   const radius = (item.percentage / 100) * 86
                   const x = 108 + Math.cos(angle) * radius
                   const y = 112 + Math.sin(angle) * radius
-                  const label = traitMeta[item.trait as TraitKey].label
+                  const label = t(`traits.${item.trait}`)
                   return (
                     <g key={item.trait}>
                       <circle cx={x} cy={y} r="3.8" fill={traitColors[item.trait as TraitKey]} stroke="#fffaf5" strokeWidth="1.4" />
@@ -244,7 +245,7 @@ export default function ExecutiveReportDocument({
               </svg>
             </div>
             <div style={{ marginTop: '10px', borderRadius: '12px', background: '#f7efe6', padding: '10px 12px', fontSize: '12px', color: '#5f4c3d', fontFamily: 'Arial, sans-serif' }}>
-              {t('report.interpretation', { primary: primaryMeta.label, secondary: secondaryMeta.label.toLowerCase() })}
+              {t('report.interpretation', { primary: t(`traits.${primaryTrait}`), secondary: t(`traits.${secondaryTrait}`).toLowerCase() })}
             </div>
           </div>
         </section>
@@ -262,14 +263,14 @@ export default function ExecutiveReportDocument({
           <div data-export-section="core-strengths" style={{ border: '1px solid #e8dfd6', borderRadius: '16px', background: '#f7efe6', padding: '14px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', color: '#2f241d' }}>{t('report.coreStrengths')}</h3>
             <ul style={{ margin: '10px 0 0 0', paddingLeft: '18px', color: '#5f4c3d', lineHeight: 1.7, fontFamily: 'Arial, sans-serif' }}>
-              {(profile?.highlights ?? primaryMeta.strengths).map((item) => <li key={item}>{item}</li>)}
+              {localizedHighlights.map((item) => <li key={item}>{item}</li>)}
             </ul>
           </div>
 
           <div data-export-section="development-focus" className="report-note" style={{ border: '1px solid #e8dfd6', borderRadius: '16px', background: '#f7efe6', padding: '14px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', color: '#2f241d' }}>{t('report.developmentFocus')}</h3>
             <ul style={{ margin: '10px 0 0 0', paddingLeft: '18px', color: '#5f4c3d', lineHeight: 1.7, fontFamily: 'Arial, sans-serif' }}>
-              {(profile?.growthPoints ?? primaryMeta.stretch).map((item) => <li key={item}>{item}</li>)}
+              {localizedGrowthPoints.map((item) => <li key={item}>{item}</li>)}
             </ul>
           </div>
         </section>
