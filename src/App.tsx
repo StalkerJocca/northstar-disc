@@ -7,6 +7,7 @@ import ShareableResultsCard from './components/ShareableResultsCard'
 import SocialShareButtons from './components/SocialShareButtons'
 import ConsentBanner from './components/ConsentBanner'
 import PrivacyModal from './components/PrivacyModal'
+import ExecutivePaywallModal from './components/ExecutivePaywallModal'
 import { useExportReport } from './hooks/useExportReport'
 import { submitDiscScore } from './lib/discApi'
 import {
@@ -21,6 +22,8 @@ import {
 } from './lib/share'
 import { generateSocialCardImage } from './services/export'
 import { downloadExecutivePdf } from './services/export/executivePdf'
+import { downloadFreePdf } from './services/export/freePdf'
+import { getStoredExecutivePurchase, startExecutiveCheckout, verifyExecutivePurchase } from './lib/payments'
 import { defaultPageTitle, defaultPageDescription, defaultOgImage, parseProfileCode } from './lib/seo'
 import type { DiscScoreResponse, TraitKey } from './types/disc'
 
@@ -155,6 +158,11 @@ function App() {
   const [isShareLoading, setIsShareLoading] = useState(false)
   const [isExecutivePdfGenerating, setIsExecutivePdfGenerating] = useState(false)
   const [reportName, setReportName] = useState('')
+  const [executivePaywallOpen, setExecutivePaywallOpen] = useState(false)
+  const [isStartingCheckout, setIsStartingCheckout] = useState(false)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
+  const [executiveUnlocked, setExecutiveUnlocked] = useState(false)
+  const [pendingExecutiveDownload, setPendingExecutiveDownload] = useState(false)
   const [consent, setConsent] = useState<'undecided' | 'essential' | 'all'>(readStoredConsent)
   const [privacyModalOpen, setPrivacyModalOpen] = useState(false)
   const shareCardRef = useRef<HTMLDivElement | null>(null)
@@ -182,7 +190,7 @@ function App() {
   const hasSavedProgress = Boolean(started || answers.length > 0 || showResults || profile !== null || apiError !== null || step > 0 || selected !== null || isScoring)
   const primaryTrait = profile?.primaryTrait ?? 'D'
 
-  const handleExecutivePdfDownload = async () => {
+  const generateExecutivePdf = async () => {
     if (!profile) return
     setIsExecutivePdfGenerating(true)
     try {
@@ -195,7 +203,7 @@ function App() {
         labels: {
           brand: t('app.name'), reportTitle: t('pdfReport.title'), executiveProfile: t('pdfReport.executiveProfile'), generated: t('pdfReport.generated'), primary: t('report.primary'), secondary: t('report.secondary'), profileOverview: t('report.profileOverview'), narrative: t('report.executiveSummary'), narrativeText: t(`traitMeta.${primaryTrait}.summary`), scores: t('pdfReport.scores'), behaviouralInsights: t('pdfReport.behaviouralInsights'), communication: t('dashboard.communicationStyle'), workStyle: t('dashboard.work'), stressTriggers: t('dashboard.underPressure'), growthAreas: t('report.developmentFocus'), actionPlan: t('pdfReport.actionPlan'), actionPlanIntro: t('pdfReport.actionPlanIntro'), notes: t('pdfReport.notes'),
           traitNames: { D: t('traits.D'), I: t('traits.I'), S: t('traits.S'), C: t('traits.C') },
-          communicationText: t(`insight.communication${primaryTrait}`), workStyleText: t(`insight.environment${primaryTrait}`), stressText: t(`insight.pressure${primaryTrait}`), growthPoints: t(`profileGrowthPoints.${primaryTrait}`, { returnObjects: true }) as string[],
+          communicationText: t(`insight.communication${primaryTrait}`), workStyleText: t(`insight.environment${primaryTrait}`), stressText: t(`insight.pressure${primaryTrait}`), growthPoints: t(`profileGrowthPoints.${primaryTrait}`, { returnObjects: true }) as string[], conflictManagement: t('pdfReport.conflictManagement'), coachingRecommendations: t('pdfReport.coachingRecommendations'), conflictText: t(`pdfReport.conflictText.${primaryTrait}`), coachingPoints: t(`pdfReport.coachingPoints.${primaryTrait}`, { returnObjects: true }) as string[],
         },
       })
     } catch (error) {
@@ -204,6 +212,48 @@ function App() {
       setIsExecutivePdfGenerating(false)
     }
   }
+
+  const handleExecutivePdfDownload = () => {
+    if (executiveUnlocked) {
+      void generateExecutivePdf()
+      return
+    }
+    setCheckoutError(null)
+    setExecutivePaywallOpen(true)
+  }
+
+  const handleExecutiveCheckout = async () => {
+    setIsStartingCheckout(true)
+    setCheckoutError(null)
+    try {
+      await startExecutiveCheckout(primaryTrait as TraitKey, (profile?.secondaryTrait ?? 'C') as TraitKey)
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : t('paywall.checkoutError'))
+      setIsStartingCheckout(false)
+    }
+  }
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const returnedSession = params.get('pro_session_id')
+    const sessionId = returnedSession ?? getStoredExecutivePurchase()
+    if (!sessionId) return
+    void verifyExecutivePurchase(sessionId).then((paid) => {
+      if (!paid) return
+      setExecutiveUnlocked(true)
+      if (returnedSession) {
+        params.delete('pro_session_id')
+        window.history.replaceState({}, '', `${window.location.pathname}${params.size ? `?${params.toString()}` : ''}${window.location.hash}`)
+        setPendingExecutiveDownload(true)
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!pendingExecutiveDownload || !executiveUnlocked || !profile) return
+    setPendingExecutiveDownload(false)
+    void generateExecutivePdf()
+  }, [executiveUnlocked, pendingExecutiveDownload, profile, generateExecutivePdf])
 
   const submitAssessment = async (finalAnswers: string[]) => {
     setIsScoring(true)
@@ -457,13 +507,28 @@ function App() {
   }
 
   const handleDownloadCard = async (format: 'png' | 'pdf' = 'png') => {
+    if (format === 'pdf') {
+      if (!profile) return
+      try {
+        await downloadFreePdf({
+          profile,
+          primaryTrait: primaryTrait as TraitKey,
+          secondaryTrait: (profile.secondaryTrait ?? 'C') as TraitKey,
+          generatedAt,
+          labels: { brand: t('app.name'), title: t('freePdf.title'), summary: t('freePdf.summary'), strengths: t('dashboard.coreStrengths'), generated: t('pdfReport.generated'), traitNames: { D: t('traits.D'), I: t('traits.I'), S: t('traits.S'), C: t('traits.C') }, narrative: t(`traitMeta.${primaryTrait}.summary`), highlights: t(`traitMeta.${primaryTrait}.strengths`, { returnObjects: true }) as string[] },
+        })
+      } catch (error) {
+        setShareStatus(error instanceof Error ? error.message : t('freePdf.error'))
+      }
+      return
+    }
     if (!reportExportRef.current) {
       return
     }
 
     const result = await exportReport(format, reportExportRef.current)
     if (result.ok) {
-      trackShareEvent({ platform: format === 'pdf' ? 'linkedin' : 'twitter', referralCode, profileSignature: profile ? signature : undefined })
+      trackShareEvent({ platform: 'twitter', referralCode, profileSignature: profile ? signature : undefined })
     }
   }
 
@@ -659,6 +724,7 @@ function App() {
     <div className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top,_#f8efe9,_#fcfaf7_60%,_#f4ebe3)] text-stone-700">
       <ConsentBanner consent={consent} onAcceptAll={() => handleConsentChoice('all')} onEssentialOnly={() => handleConsentChoice('essential')} />
       <PrivacyModal open={privacyModalOpen} onClose={() => setPrivacyModalOpen(false)} consent={consent} onConsentChange={handleConsentChoice} onClearData={handleClearAssessmentData} onExportData={handleExportRawData} />
+      <ExecutivePaywallModal open={executivePaywallOpen} onClose={() => setExecutivePaywallOpen(false)} onCheckout={handleExecutiveCheckout} isStartingCheckout={isStartingCheckout} error={checkoutError} />
       {shareModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-stone-950/60 px-3 py-4 backdrop-blur-sm sm:px-6" role="dialog" aria-modal="true" aria-labelledby="share-modal-title" aria-describedby="share-modal-description">
           <div className="executive-card my-auto w-full max-w-md p-5 sm:p-6">
@@ -952,7 +1018,7 @@ function App() {
                 <section className="print-hide mt-5 rounded-[2rem] border border-[#dcc9b7] bg-[linear-gradient(135deg,_#fffaf5,_#f1e2d3)] p-5 shadow-[0_20px_50px_-30px_rgba(84,56,45,0.35)] sm:p-6">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.24em] text-stone-500">{t('pdfReport.eyebrow')}</p>
+                      <p className="text-xs uppercase tracking-[0.24em] text-stone-500"><span className="mr-2 rounded-full bg-stone-900 px-2 py-1 text-[10px] text-white">{t('paywall.badge')}</span>{t('pdfReport.eyebrow')}</p>
                       <h3 className="mt-2 text-xl font-semibold text-stone-800">{t('pdfReport.title')}</h3>
                       <p className="mt-2 max-w-2xl text-sm leading-7 text-stone-600">{t('pdfReport.description')}</p>
                     </div>
@@ -960,7 +1026,7 @@ function App() {
                       <input value={reportName} onChange={(event) => setReportName(event.target.value)} placeholder={t('pdfReport.namePlaceholder')} className="rounded-xl border border-stone-200 bg-white/85 px-3 py-2 text-sm text-stone-700" />
                       <button type="button" onClick={handleExecutivePdfDownload} disabled={isExecutivePdfGenerating || !profile} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
                         {isExecutivePdfGenerating ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" /> : null}
-                        {isExecutivePdfGenerating ? t('pdfReport.generating') : t('pdfReport.download')}
+                        {isExecutivePdfGenerating ? t('pdfReport.generating') : executiveUnlocked ? t('pdfReport.downloadUnlocked') : t('pdfReport.download')}
                       </button>
                     </div>
                   </div>
@@ -1059,7 +1125,7 @@ function App() {
                         disabled={isExporting}
                         className="rounded-full border border-stone-300 bg-white px-5 py-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
                       >
-                        {isExporting ? t('export.preparingExport') : t('export.downloadPdf')}
+                        {isExporting ? t('export.preparingExport') : <><span className="mr-2 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">{t('freePdf.badge')}</span>{t('freePdf.download')}</>}
                       </motion.button>
                     </div>
                     <motion.p

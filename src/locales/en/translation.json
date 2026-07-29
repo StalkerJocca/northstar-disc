@@ -216,7 +216,8 @@
     "description": "Download a high-fidelity four-page profile for coaching conversations, development planning, and printing.",
     "namePlaceholder": "Your name (optional)",
     "defaultName": "Northstar DISC Candidate",
-    "download": "Download Executive PDF Report",
+    "download": "Unlock Executive PDF Report",
+    "downloadUnlocked": "Download Executive PDF Report",
     "generating": "Generating your report…",
     "error": "We could not generate the executive PDF. Please try again.",
     "executiveProfile": "Executive behavioural profile",
@@ -225,7 +226,35 @@
     "behaviouralInsights": "Detailed behavioural insights",
     "actionPlan": "Action plan & personal development notes",
     "actionPlanIntro": "Use this page to turn self-awareness into a concrete development commitment. Capture one behaviour, one situation, and one person who can support your progress.",
-    "notes": "Development note"
+    "notes": "Development note",
+    "conflictManagement": "Conflict management",
+    "coachingRecommendations": "Coaching recommendations",
+    "conflictText": {
+      "D": "In conflict, name the outcome and decision required, then make room for the other perspective before moving to action.",
+      "I": "In conflict, preserve connection while naming the real issue; move from discussion to a clear shared commitment.",
+      "S": "In conflict, create a calm, private space and state your own needs as clearly as you support the other person.",
+      "C": "In conflict, clarify facts and standards without losing sight of the relationship and practical resolution."
+    },
+    "coachingPoints": {
+      "D": ["Practise asking before directing.", "Measure success through both outcomes and commitment."],
+      "I": ["Turn energy into owned next steps.", "Invite quieter evidence before deciding."],
+      "S": ["Name your view and boundary early.", "Build confidence through small experiments."],
+      "C": ["Define an adequate evidence threshold.", "Share an early recommendation, not only finished analysis."]
+    }
+  },
+  "freePdf": {
+    "badge": "FREE",
+    "title": "DISC profile snapshot",
+    "summary": "Your personal DISC summary",
+    "download": "Download free PDF",
+    "error": "We could not generate the free PDF. Please try again."
+  },
+  "paywall": {
+    "badge": "PRO / EXECUTIVE",
+    "title": "Turn your profile into an executive dossier",
+    "description": "Unlock a premium five-page report designed for deeper coaching, development planning, and leadership conversations.",
+    "benefits": ["Communication playbook and stress triggers", "Conflict-management and coaching recommendations", "Personal development worksheet with notes space", "High-resolution, watermarked executive PDF"],
+    "purchase": "Unlock executive report", "redirecting": "Opening secure checkout…", "secure": "Secure one-time payment powered by Stripe.", "close": "Close", "checkoutError": "Checkout is unavailable. Please try again."
   },
   "support": {
     "title": "Support this work",

@@ -17,6 +17,10 @@ export type ExecutivePdfLabels = {
   workStyle: string
   stressTriggers: string
   growthAreas: string
+  conflictManagement: string
+  coachingRecommendations: string
+  conflictText: string
+  coachingPoints: string[]
   actionPlan: string
   actionPlanIntro: string
   notes: string
@@ -90,6 +94,12 @@ export default function ExecutivePdfReport({ profile, primaryTrait, secondaryTra
         {[[labels.communication, labels.communicationText], [labels.workStyle, labels.workStyleText], [labels.stressTriggers, labels.stressText]].map(([title, body]) => <View key={title} style={[styles.card, styles.half]}><Text style={styles.cardTitle}>{title}</Text><Text style={styles.body}>{body}</Text></View>)}
         <View style={[styles.card, styles.half]}><Text style={styles.cardTitle}>{labels.growthAreas}</Text>{labels.growthPoints.map((point) => <View key={point} style={styles.bullet}><Text style={styles.bulletDot}>•</Text><Text style={styles.body}>{point}</Text></View>)}</View>
       </View>
+    </Page>
+
+    <Page size="A4" style={styles.page}>
+      <Text style={styles.eyebrow}>{labels.brand}</Text><Text style={styles.sectionTitle}>{labels.conflictManagement}</Text>
+      <View style={styles.card}><Text style={styles.cardTitle}>{labels.conflictManagement}</Text><Text style={styles.body}>{labels.conflictText}</Text></View>
+      <View style={styles.card}><Text style={styles.cardTitle}>{labels.coachingRecommendations}</Text>{labels.coachingPoints.map((point) => <View key={point} style={styles.bullet}><Text style={styles.bulletDot}>•</Text><Text style={styles.body}>{point}</Text></View>)}</View>
     </Page>
 
     <Page size="A4" style={styles.page}>

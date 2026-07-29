@@ -216,7 +216,8 @@
     "description": "Transfira um perfil de quatro páginas em alta fidelidade para conversas de coaching, planeamento de desenvolvimento e impressão.",
     "namePlaceholder": "O seu nome (opcional)",
     "defaultName": "Candidato Northstar DISC",
-    "download": "Transferir relatório PDF executivo",
+    "download": "Desbloquear relatório PDF executivo",
+    "downloadUnlocked": "Transferir relatório PDF executivo",
     "generating": "A gerar o seu relatório…",
     "error": "Não foi possível gerar o PDF executivo. Tente novamente.",
     "executiveProfile": "Perfil comportamental executivo",
@@ -225,7 +226,35 @@
     "behaviouralInsights": "Insights comportamentais detalhados",
     "actionPlan": "Plano de ação e notas de desenvolvimento pessoal",
     "actionPlanIntro": "Use esta página para transformar a autoconsciência num compromisso concreto de desenvolvimento. Registe um comportamento, uma situação e uma pessoa que possa apoiar o seu progresso.",
-    "notes": "Nota de desenvolvimento"
+    "notes": "Nota de desenvolvimento",
+    "conflictManagement": "Gestão de conflitos",
+    "coachingRecommendations": "Recomendações de coaching",
+    "conflictText": {
+      "D": "Num conflito, indique o resultado e a decisão necessária e deixe espaço para a perspetiva da outra pessoa antes de avançar.",
+      "I": "Num conflito, preserve a ligação enquanto nomeia a questão real; passe da conversa para um compromisso comum claro.",
+      "S": "Num conflito, crie um espaço calmo e privado e declare as suas próprias necessidades com a mesma clareza com que apoia a outra pessoa.",
+      "C": "Num conflito, esclareça factos e padrões sem perder de vista a relação e uma resolução prática."
+    },
+    "coachingPoints": {
+      "D": ["Pratique perguntar antes de orientar.", "Meça o sucesso através dos resultados e do compromisso."],
+      "I": ["Transforme energia em próximos passos com responsável.", "Convide evidência mais reservada antes de decidir."],
+      "S": ["Expresse cedo a sua opinião e o seu limite.", "Construa confiança através de pequenas experiências."],
+      "C": ["Defina um limiar de evidência adequado.", "Partilhe uma recomendação inicial, não apenas a análise concluída."]
+    }
+  },
+  "freePdf": {
+    "badge": "GRÁTIS",
+    "title": "Resumo do perfil DISC",
+    "summary": "O seu resumo DISC pessoal",
+    "download": "Transferir PDF grátis",
+    "error": "Não foi possível gerar o PDF grátis. Tente novamente."
+  },
+  "paywall": {
+    "badge": "PRO / EXECUTIVE",
+    "title": "Transforme o seu perfil num dossiê executivo",
+    "description": "Desbloqueie um relatório premium de cinco páginas criado para coaching aprofundado, planeamento de desenvolvimento e conversas de liderança.",
+    "benefits": ["Guia de comunicação e fatores de stress", "Gestão de conflitos e recomendações de coaching", "Folha de desenvolvimento pessoal com espaço para notas", "PDF executivo em alta resolução com marca de água"],
+    "purchase": "Desbloquear relatório executivo", "redirecting": "A abrir checkout seguro…", "secure": "Pagamento único e seguro processado pela Stripe.", "close": "Fechar", "checkoutError": "O checkout não está disponível. Tente novamente."
   },
   "support": {
     "title": "Apoie este trabalho",
