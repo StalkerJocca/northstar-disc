@@ -1,14 +1,12 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import DiscProfileDashboard from './components/DiscProfileDashboard'
 import LandingPage from './components/LandingPage'
 import ProgressBadge from './components/ProgressBadge'
 import ShareableResultsCard from './components/ShareableResultsCard'
 import SocialShareButtons from './components/SocialShareButtons'
 import ConsentBanner from './components/ConsentBanner'
 import PrivacyModal from './components/PrivacyModal'
-import ExecutiveReportDocument from './components/exports/ExecutiveReportDocument'
 import { useExportReport } from './hooks/useExportReport'
 import { submitDiscScore } from './lib/discApi'
 import {
@@ -18,13 +16,16 @@ import {
   buildShareUrl,
   buildShareText,
   buildSocialShareCopy,
-  generateSocialShareCardImage,
   trackShareEvent,
   getSignatureLeadershipStyle,
 } from './lib/share'
+import { generateSocialCardImage } from './services/export'
 import { defaultPageTitle, defaultPageDescription, defaultOgImage, parseProfileCode } from './lib/seo'
 import { landingVariants, testimonials, caseStudies } from './lib/content'
 import type { DiscScoreResponse, TraitKey } from './types/disc'
+
+const DiscProfileDashboard = lazy(() => import('./components/DiscProfileDashboard'))
+const ExecutiveReportDocument = lazy(() => import('./components/exports/ExecutiveReportDocument'))
 
 const languages = [
   { code: 'en', label: 'English' },
@@ -527,7 +528,7 @@ function App() {
     }
 
     try {
-      const imageBlob = await generateSocialShareCardImage({
+      const imageBlob = await generateSocialCardImage({
         primaryTrait: (profile.primaryTrait ?? 'D') as TraitKey,
         secondaryTrait: (profile.secondaryTrait ?? 'C') as TraitKey,
         profile,
@@ -898,12 +899,14 @@ function App() {
                   </div>
                 </div>
 
-                <DiscProfileDashboard
-                  profile={profile}
-                  completionScore={completionScore}
-                  primaryTrait={primaryTrait as 'D' | 'I' | 'S' | 'C'}
-                  secondaryTrait={(profile?.secondaryTrait ?? 'C') as 'D' | 'I' | 'S' | 'C'}
-                />
+                <Suspense fallback={<div className="h-80 animate-pulse rounded-[2rem] bg-stone-100" aria-label="Loading profile dashboard" />}>
+                  <DiscProfileDashboard
+                    profile={profile}
+                    completionScore={completionScore}
+                    primaryTrait={primaryTrait as 'D' | 'I' | 'S' | 'C'}
+                    secondaryTrait={(profile?.secondaryTrait ?? 'C') as 'D' | 'I' | 'S' | 'C'}
+                  />
+                </Suspense>
 
                 <div ref={shareCardRef}>
                   <ShareableResultsCard
@@ -914,13 +917,15 @@ function App() {
                 </div>
 
                 <div ref={reportExportRef} className="fixed left-[-9999px] top-0 z-[-1] w-[900px] bg-transparent" aria-hidden="true">
-                  <ExecutiveReportDocument
-                    profile={profile}
-                    primaryTrait={(profile?.primaryTrait ?? 'D') as TraitKey}
-                    secondaryTrait={(profile?.secondaryTrait ?? 'C') as TraitKey}
-                    completionScore={completionScore}
-                    generatedAt={generatedAt}
-                  />
+                  <Suspense fallback={null}>
+                    <ExecutiveReportDocument
+                      profile={profile}
+                      primaryTrait={(profile?.primaryTrait ?? 'D') as TraitKey}
+                      secondaryTrait={(profile?.secondaryTrait ?? 'C') as TraitKey}
+                      completionScore={completionScore}
+                      generatedAt={generatedAt}
+                    />
+                  </Suspense>
                 </div>
               </div>
 

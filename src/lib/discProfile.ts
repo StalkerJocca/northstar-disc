@@ -1,4 +1,6 @@
-export type TraitKey = 'D' | 'I' | 'S' | 'C'
+import { isTraitKey, type TraitKey } from '../types/disc'
+
+export type { TraitKey } from '../types/disc'
 
 export type TraitMeta = {
   label: string
@@ -80,11 +82,13 @@ export type ProfileSummary = {
   supportLabel: string
 }
 
-export function buildProfile(answers: string[]): ProfileSummary {
+export function buildProfile(answers: readonly TraitKey[]): ProfileSummary {
   const totals: Record<TraitKey, number> = { D: 0, I: 0, S: 0, C: 0 }
 
   answers.forEach((trait) => {
-    totals[trait as TraitKey] += 1
+    if (isTraitKey(trait)) {
+      totals[trait] += 1
+    }
   })
 
   const ranked = Object.entries(totals).sort(([, a], [, b]) => b - a) as Array<[TraitKey, number]>

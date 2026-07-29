@@ -1,10 +1,23 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
+import i18n from './i18n'
 import App from './App'
 
 describe('DISC experience', () => {
   beforeEach(() => {
     window.localStorage.clear()
+    void i18n.changeLanguage('en')
+  })
+
+  it('switches the experience language from the header control', async () => {
+    render(<App />)
+
+    fireEvent.change(screen.getByRole('combobox', { name: /language/i }), { target: { value: 'pt' } })
+
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: /idioma/i })).toHaveValue('pt')
+      expect(screen.getAllByText(/transforme autoconsci/i).length).toBeGreaterThan(0)
+    })
   })
 
   it('restores the current quiz progress from localStorage', () => {

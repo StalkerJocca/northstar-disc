@@ -1,4 +1,14 @@
 {
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/(LOGO.png|NorthStar.png|og-preview.png|og-image.svg|favicon.svg|icons.svg)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, must-revalidate" }]
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",

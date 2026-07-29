@@ -1,4 +1,4 @@
-import type { DiscAnswer, DiscScoreRequest, DiscScoreResponse, TraitKey } from '../types/disc'
+import { isTraitKey, traitKeys, type DiscAnswer, type DiscScoreRequest, type DiscScoreResponse, type TraitKey } from '../types/disc'
 
 const traitMeta: Record<TraitKey, { label: string; summary: string; strengths: string[]; stretch: string[]; shareLine: string }> = {
   D: {
@@ -31,20 +31,18 @@ const traitMeta: Record<TraitKey, { label: string; summary: string; strengths: s
   },
 }
 
-const traitOrder: TraitKey[] = ['D', 'I', 'S', 'C']
-
 export function buildDiscScoreResult(request: DiscScoreRequest): DiscScoreResponse {
   if (!Array.isArray(request.answers) || request.answers.length === 0) {
     throw new Error('At least one answer is required.')
   }
 
-  const validAnswers = request.answers.filter((answer): answer is DiscAnswer => Boolean(answer && answer.trait && traitOrder.includes(answer.trait)))
+  const validAnswers = request.answers.filter((answer): answer is DiscAnswer => Boolean(answer && isTraitKey(answer.trait)))
 
   if (validAnswers.length !== request.answers.length) {
     throw new Error('Some answers are invalid.')
   }
 
-  const totals = traitOrder.reduce<Record<TraitKey, number>>((acc, trait) => {
+  const totals = traitKeys.reduce<Record<TraitKey, number>>((acc, trait) => {
     acc[trait] = 0
     return acc
   }, { D: 0, I: 0, S: 0, C: 0 })
@@ -54,7 +52,7 @@ export function buildDiscScoreResult(request: DiscScoreRequest): DiscScoreRespon
   })
 
   const maxValue = Math.max(...Object.values(totals))
-  const scores = (traitOrder as TraitKey[]).map((trait) => ({
+  const scores = traitKeys.map((trait) => ({
     trait,
     score: totals[trait],
     percentage: Math.round((totals[trait] / Math.max(1, maxValue)) * 100),

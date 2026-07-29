@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from 'react'
-import { exportShareCard } from '../lib/share'
-import type { DiscScoreResponse, TraitKey } from '../types/disc'
+import { exportReportDocument, type ExportFormat } from '../services/export'
+import type { DiscProfile, TraitKey } from '../types/disc'
 
 type useExportReportProps = {
-  profile: DiscScoreResponse['profile'] | null
+  profile: DiscProfile | null
   primaryTrait: TraitKey
   secondaryTrait: TraitKey
   completionScore: number
@@ -17,7 +17,7 @@ export function useExportReport({ profile, primaryTrait, secondaryTrait, complet
 
   const generatedAt = useMemo(() => new Date().toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' }), [])
 
-  const exportReport = useCallback(async (format: 'png' | 'pdf' = 'png', target: HTMLElement | null) => {
+  const exportReport = useCallback(async (format: ExportFormat = 'png', target: HTMLElement | null) => {
     if (!target) {
       setExportError('No report content available for export.')
       return { ok: false, error: 'No report content available for export.' }
@@ -27,7 +27,7 @@ export function useExportReport({ profile, primaryTrait, secondaryTrait, complet
     setExportError(null)
 
     try {
-      const result = await exportShareCard(target, {
+      const result = await exportReportDocument(target, {
         fileName,
         format,
         profile,

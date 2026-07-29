@@ -1,9 +1,18 @@
-import html2canvas from 'html2canvas'
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import type { DiscScoreResponse, TraitKey } from '../types/disc'
 import type { TFunction } from 'i18next'
 import i18n from '../i18n'
 import { traitMeta } from './discProfile'
+
+type Html2Canvas = typeof import('html2canvas').default
+type PdfColor = typeof import('pdf-lib').rgb
+
+let html2canvas: Html2Canvas | undefined
+let rgb: PdfColor
+
+async function loadHtml2Canvas(): Promise<Html2Canvas> {
+  html2canvas ??= (await import('html2canvas')).default
+  return html2canvas
+}
 
 export type SharePayload = {
   primaryTrait: TraitKey
@@ -144,7 +153,8 @@ export async function generateSocialShareCardImage(options: {
   document.body.appendChild(element)
 
   try {
-    const canvas = await html2canvas(element, {
+    const renderCanvas = await loadHtml2Canvas()
+    const canvas = await renderCanvas(element, {
       width: 1200,
       height: 627,
       backgroundColor: null,
@@ -535,6 +545,8 @@ async function buildPdfReportPdfBytes(
     language?: string
   },
 ) {
+  const { PDFDocument, StandardFonts, rgb: createRgb } = await import('pdf-lib')
+  rgb = createRgb
   const pdfDoc = await PDFDocument.create()
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
@@ -656,7 +668,7 @@ function collectPdfReportSections(element: HTMLElement, t: TFunction): PdfReport
 }
 
 function addPdfCoverPage(
-  pdfDoc: Awaited<ReturnType<typeof PDFDocument.create>>,
+  pdfDoc: any,
   font: any,
   boldFont: any,
   pageWidth: number,
@@ -856,7 +868,7 @@ function getTraitColor(trait: TraitKey) {
 }
 
 function addPdfDetailPages(
-  pdfDoc: Awaited<ReturnType<typeof PDFDocument.create>>,
+  pdfDoc: any,
   font: any,
   boldFont: any,
   pageWidth: number,
@@ -941,7 +953,7 @@ function addPdfDetailPages(
 }
 
 function drawNarrativePanelGrid(
-  pdfDoc: Awaited<ReturnType<typeof PDFDocument.create>>,
+  pdfDoc: any,
   page: any,
   panels: PdfReportSection[],
   cursorY: number,
@@ -1322,7 +1334,8 @@ async function renderCanvasForExport(element: HTMLElement, options?: {
   language?: string
 }): Promise<HTMLCanvasElement> {
   try {
-    const canvas = await html2canvas(element, {
+    const renderCanvas = await loadHtml2Canvas()
+    const canvas = await renderCanvas(element, {
       backgroundColor: '#fffaf4',
       scale: 2,
       logging: false,
