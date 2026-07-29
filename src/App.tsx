@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import DiscProfileDashboard from './components/DiscProfileDashboard'
 import LandingPage from './components/LandingPage'
@@ -18,7 +18,6 @@ import {
   buildShareUrl,
   buildShareText,
   buildSocialShareCopy,
-  buildSocialIntentUrl,
   generateSocialShareCardImage,
   trackShareEvent,
   getSignatureLeadershipStyle,
@@ -173,15 +172,6 @@ function App() {
 
   const currentQuestion = questions[step]
   const hasSavedProgress = Boolean(started || answers.length > 0 || showResults || profile !== null || apiError !== null || step > 0 || selected !== null || isScoring)
-  const reviewSummary = useMemo(() => {
-    const counts = answers.reduce<Record<TraitKey, number>>((acc, trait) => {
-      acc[trait as TraitKey] = (acc[trait as TraitKey] ?? 0) + 1
-      return acc
-    }, { D: 0, I: 0, S: 0, C: 0 })
-
-    return (Object.entries(counts) as Array<[TraitKey, number]>).sort(([, a], [, b]) => b - a).slice(0, 3).map(([trait, count]) => ({ trait, count }))
-  }, [answers])
-
   const primaryTrait = profile?.primaryTrait ?? 'D'
 
   const submitAssessment = async (finalAnswers: string[]) => {

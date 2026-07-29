@@ -78,8 +78,6 @@ export function buildShareText({
   copyTemplate,
   platform = 'linkedin',
 }: SharePayload) {
-  const signature = getSignatureLeadershipStyle(primaryTrait, secondaryTrait)
-  const destinationUrl = buildShareUrl(url, referralCode, profileCode)
   if (copyTemplate) {
     return copyTemplate
   }
