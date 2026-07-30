@@ -20,6 +20,7 @@ export interface CustomReportContent {
   executive_commentary: string;
   footer_text: string;
   disclaimer: string;
+  section_headers?: Partial<Record<keyof ReportSectionConfig, string>>;
 }
 
 export interface ReportTemplate {
@@ -61,4 +62,5 @@ export const defaultCustomReportContent: CustomReportContent = {
   executive_commentary: "",
   footer_text: "",
   disclaimer: "",
+  section_headers: {},
 };

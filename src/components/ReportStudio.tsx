@@ -206,6 +206,14 @@ export default function ReportStudio({ onBack }: { onBack: () => void }) {
         [key]: !draft.section_config[key],
       },
     });
+  const updateSectionHeader = (key: keyof ReportSectionConfig, value: string) =>
+    setDraft({
+      ...draft,
+      custom_content: {
+        ...draft.custom_content,
+        section_headers: { ...draft.custom_content.section_headers, [key]: value },
+      },
+    });
   return (
     <section className="mt-5 rounded-[2rem] border bg-white p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -423,6 +431,18 @@ export default function ReportStudio({ onBack }: { onBack: () => void }) {
               placeholder="Disclaimer"
               className="mt-3 w-full rounded-xl border p-2"
             />
+            <p className="mt-4 text-xs font-medium uppercase tracking-[.14em] text-stone-500">Custom section headings</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              {(["executive_summary", "behavioral_matrix", "stress_profile", "team_communication", "custom_notes"] as Array<keyof ReportSectionConfig>).map((key) => (
+                <input
+                  key={key}
+                  value={draft.custom_content.section_headers?.[key] ?? ""}
+                  onChange={(event) => updateSectionHeader(key, event.target.value)}
+                  placeholder={key.replace(/_/g, " ")}
+                  className="rounded-xl border p-2 text-sm"
+                />
+              ))}
+            </div>
           </fieldset>
           <div className="flex flex-wrap gap-2">
             <button
@@ -475,6 +495,8 @@ export default function ReportStudio({ onBack }: { onBack: () => void }) {
 
 function ReportPreview({ draft }: { draft: Draft }) {
   const { branding, section_config: sections, custom_content: content } = draft;
+  const headerFor = (key: keyof ReportSectionConfig, fallback: string) =>
+    content.section_headers?.[key]?.trim() || fallback;
   const fontFamily =
     branding.typography === "serif"
       ? "Georgia, serif"
@@ -517,35 +539,35 @@ function ReportPreview({ draft }: { draft: Draft }) {
       <div className="mt-5 space-y-3">
         {sections.executive_summary ? (
           <PreviewSection
-            title="Executive summary"
+            title={headerFor("executive_summary", "Executive summary")}
             text="A decisive, people-aware profile with practical leadership range."
             color={branding.primary_color}
           />
         ) : null}
         {sections.behavioral_matrix ? (
           <PreviewSection
-            title="Behavioral matrix"
+            title={headerFor("behavioral_matrix", "Behavioral matrix")}
             text="Dominance 76% · Influence 64% · Steadiness 42% · Conscientiousness 58%"
             color={branding.accent_color}
           />
         ) : null}
         {sections.stress_profile ? (
           <PreviewSection
-            title="Stress profile"
+            title={headerFor("stress_profile", "Stress profile")}
             text="Under pressure, clarify priorities and allow time for considered responses."
             color={branding.primary_color}
           />
         ) : null}
         {sections.team_communication ? (
           <PreviewSection
-            title="Team communication"
+            title={headerFor("team_communication", "Team communication")}
             text="Use direct goals, visible ownership, and concise feedback loops."
             color={branding.accent_color}
           />
         ) : null}
         {sections.custom_notes && content.executive_commentary ? (
           <PreviewSection
-            title="Executive commentary"
+            title={headerFor("custom_notes", "Executive commentary")}
             text={content.executive_commentary}
             color={branding.primary_color}
           />

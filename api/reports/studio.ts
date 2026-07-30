@@ -292,11 +292,20 @@ function sanitizeSections(value: Record<string, unknown>) {
   );
 }
 function sanitizeContent(value: Record<string, unknown>) {
-  return Object.fromEntries(
+  const content = Object.fromEntries(
     ["intro_notes", "executive_commentary", "footer_text", "disclaimer"].map(
       (key) => [key, string(value[key]).slice(0, 5000)],
     ),
   );
+  const headers = object(value.section_headers);
+  return {
+    ...content,
+    section_headers: Object.fromEntries(
+      ["executive_summary", "behavioral_matrix", "stress_profile", "team_communication", "custom_notes"].map(
+        (key) => [key, string(headers[key]).slice(0, 120)],
+      ),
+    ),
+  };
 }
 async function renderPreviewPdf(
   template: Record<string, unknown>,
@@ -304,6 +313,7 @@ async function renderPreviewPdf(
 ) {
   const branding = object(template.branding);
   const content = object(template.custom_content);
+  const customHeaders = object(content.section_headers);
   const sections = object(template.section_config);
   const scores = object(report?.disc_scores);
   const scoreRows = Array.isArray(scores.scores) ? scores.scores : [];
@@ -324,7 +334,6 @@ async function renderPreviewPdf(
   );
   const primary = toRgb(string(branding.primary_color));
   const accent = toRgb(string(branding.accent_color));
-  const ink = rgb(0.22, 0.2, 0.18);
   const muted = rgb(0.35, 0.33, 0.3);
   const cardFill = rgb(0.975, 0.97, 0.955);
 
@@ -344,17 +353,16 @@ async function renderPreviewPdf(
   const intro = string(content.intro_notes);
   if (intro) {
     const introLines = wrapLines(intro, font, 10, 490).slice(0, 3);
-    const height = 18 + introLines.length * 13;
-    drawRoundedRectangle(page, 42, y - height, 528, height, 12, withOpacity(accent, 0.14));
-    drawLines(page, introLines, 56, y - 14, font, 10, accent, 13);
+    const height = 50 + introLines.length * 13;
+    drawReportCard(page, "INTRODUCTION", "Executive introduction", introLines, y, height, font, bold, accent, muted, withOpacity(accent, 0.14));
     y -= height + 14;
   }
   const reportSections: Array<[string, string, boolean]> = [
-    ["Executive summary", "A decisive, people-aware profile with practical leadership range.", sections.executive_summary === true],
-    ["Behavioral matrix", report ? scoreText : "Dominance 76% | Influence 64% | Steadiness 42% | Conscientiousness 58%", sections.behavioral_matrix === true],
-    ["Stress profile", "Under pressure, clarify priorities and allow time for considered responses.", sections.stress_profile === true],
-    ["Team communication", "Use direct goals, visible ownership, and concise feedback loops.", sections.team_communication === true],
-    ["Executive commentary", string(content.executive_commentary), sections.custom_notes === true],
+    [string(customHeaders.executive_summary) || "Executive summary", "A decisive, people-aware profile with practical leadership range.", sections.executive_summary === true],
+    [string(customHeaders.behavioral_matrix) || "Behavioral matrix", report ? scoreText : "Dominance 76% | Influence 64% | Steadiness 42% | Conscientiousness 58%", sections.behavioral_matrix === true],
+    [string(customHeaders.stress_profile) || "Stress profile", "Under pressure, clarify priorities and allow time for considered responses.", sections.stress_profile === true],
+    [string(customHeaders.team_communication) || "Team communication", "Use direct goals, visible ownership, and concise feedback loops.", sections.team_communication === true],
+    [string(customHeaders.custom_notes) || "Executive commentary", string(content.executive_commentary), sections.custom_notes === true],
   ];
   for (const [title, text, enabled] of reportSections) {
     if (!enabled) continue;
@@ -364,19 +372,7 @@ async function renderPreviewPdf(
     if (y - height < 105) break;
     const indicator = title === "Behavioral matrix" || title === "Team communication" ? accent : primary;
     const fill = title === "Executive commentary" ? withOpacity(accent, 0.12) : cardFill;
-    drawRoundedRectangle(page, 42, y - height, 528, height, 12, fill, withOpacity(indicator, 0.42));
-    drawRoundedRectangle(
-      page,
-      42,
-      y - height,
-      5,
-      height,
-      3,
-      indicator,
-    );
-    page.drawText("EXECUTIVE INSIGHT", { x: 58, y: y - 14, size: 7, font: bold, color: indicator });
-    page.drawText(title, { x: 58, y: y - 29, size: 12, font: bold, color: ink });
-    drawLines(page, lines, 58, y - 46, font, 10, muted, 13);
+    drawReportCard(page, "EXECUTIVE INSIGHT", title, lines, y, height, font, bold, indicator, muted, fill);
     y -= height + 12;
   }
   const footer = string(content.footer_text) || "Prepared with Northstar DISC";
@@ -427,11 +423,7 @@ function drawExpandedInsightsPage(
   for (const [title, text, color] of insights) {
     const lines = wrapLines(text, font, 10, 470).slice(0, 4);
     const height = 52 + lines.length * 13;
-    drawRoundedRectangle(page, 42, y - height, 528, height, 12, cardFill, withOpacity(color, 0.42));
-    drawRoundedRectangle(page, 42, y - height, 5, height, 3, color);
-    page.drawText("DEEP INSIGHT", { x: 58, y: y - 14, size: 7, font: bold, color });
-    page.drawText(title, { x: 58, y: y - 29, size: 12, font: bold, color: primary });
-    drawLines(page, lines, 58, y - 46, font, 10, muted, 13);
+    drawReportCard(page, "DEEP INSIGHT", title, lines, y, height, font, bold, color, muted, cardFill);
     y -= height + 14;
   }
   page.drawLine({ start: { x: 42, y: 78 }, end: { x: 570, y: 78 }, thickness: 0.75, color: rgb(0.83, 0.81, 0.77) });
@@ -453,6 +445,25 @@ function wrapLines(text: string, font: PDFFont, size: number, width: number) {
 }
 function drawLines(page: PDFPage, lines: string[], x: number, y: number, font: PDFFont, size: number, color: ReturnType<typeof rgb>, leading: number) {
   lines.forEach((line, index) => page.drawText(line, { x, y: y - index * leading, size, font, color }));
+}
+function drawReportCard(
+  page: PDFPage,
+  eyebrow: string,
+  title: string,
+  lines: string[],
+  top: number,
+  height: number,
+  font: PDFFont,
+  bold: PDFFont,
+  accent: ReturnType<typeof rgb>,
+  bodyColor: ReturnType<typeof rgb>,
+  fill: ReturnType<typeof rgb>,
+) {
+  drawRoundedRectangle(page, 42, top - height, 528, height, 12, fill, withOpacity(accent, 0.42));
+  drawRoundedRectangle(page, 42, top - height, 5, height, 3, accent);
+  page.drawText(eyebrow, { x: 58, y: top - 14, size: 7, font: bold, color: accent });
+  page.drawText(title, { x: 58, y: top - 29, size: 12, font: bold, color: rgb(0.22, 0.2, 0.18) });
+  drawLines(page, lines, 58, top - 46, font, 10, bodyColor, 13);
 }
 function drawRoundedRectangle(
   page: PDFPage,
