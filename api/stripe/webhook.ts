@@ -29,7 +29,16 @@ export async function POST(request: Request) {
   try {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session; const userId = session.client_reference_id ?? session.metadata?.user_id
-      if (userId) await syncSubscription({ userId, customerId: typeof session.customer === 'string' ? session.customer : session.customer?.id ?? null, subscriptionId: typeof session.subscription === 'string' ? session.subscription : session.subscription?.id ?? null, sessionId: session.id, priceId: session.metadata?.price_id ?? null, status: session.mode === 'subscription' ? 'active' : 'paid' })
+      if (userId && session.metadata?.product === 'northstar_coach_credits' && session.payment_status === 'paid') {
+        const credits = Math.max(1, Number.parseInt(session.metadata.credits ?? '0', 10) || 1)
+        const admin = getSupabaseAdmin(); const { error: purchaseError } = await admin.from('coach_credit_purchases').insert({ user_id: userId, stripe_checkout_session_id: session.id, credits })
+        if (purchaseError?.code === '23505') return Response.json({ received: true })
+        if (purchaseError) throw purchaseError
+        const { data: account, error } = await admin.from('users').select('coach_invite_credits').eq('id', userId).single()
+        if (error || !account) throw new Error('Unable to find coach account for credit purchase.')
+        const { error: updateError } = await admin.from('users').update({ coach_invite_credits: account.coach_invite_credits + credits }).eq('id', userId)
+        if (updateError) throw updateError
+      } else if (userId) await syncSubscription({ userId, customerId: typeof session.customer === 'string' ? session.customer : session.customer?.id ?? null, subscriptionId: typeof session.subscription === 'string' ? session.subscription : session.subscription?.id ?? null, sessionId: session.id, priceId: session.metadata?.price_id ?? null, status: session.mode === 'subscription' ? 'active' : 'paid' })
     }
     if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object as Stripe.Subscription; const admin = getSupabaseAdmin(); const { data } = await admin.from('subscriptions').select('user_id').eq('stripe_subscription_id', subscription.id).maybeSingle()

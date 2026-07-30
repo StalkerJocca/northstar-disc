@@ -848,7 +848,7 @@ function AppContent() {
               {showResults ? t('header.statusResults') : started ? t('header.statusStep', { current: step + 1, total: questions.length }) : t('header.statusLaunch')}
             </div>
             <LanguageSwitcher current={language} onChange={(value) => i18n.changeLanguage(value)} ariaLabel={t('header.languageLabel')} />
-            {!authLoading ? user ? <button type="button" onClick={() => setAccountOpen(true)} className="rounded-full bg-stone-900 px-3 py-2 text-sm font-medium text-white">My account</button> : <button type="button" onClick={() => setAuthModalOpen(true)} className="rounded-full border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700">Sign in / Register</button> : null}
+            {!authLoading ? user ? <><a href="/workspace" className="rounded-full border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700">Workspace</a><button type="button" onClick={() => setAccountOpen(true)} className="rounded-full bg-stone-900 px-3 py-2 text-sm font-medium text-white">My account</button></> : <button type="button" onClick={() => setAuthModalOpen(true)} className="rounded-full border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700">Sign in / Register</button> : null}
           </div>
         </header>
         {accountOpen && user ? <AccountView onClose={() => setAccountOpen(false)} /> : <>
