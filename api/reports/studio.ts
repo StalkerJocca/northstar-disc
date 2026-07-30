@@ -392,7 +392,45 @@ async function renderPreviewPdf(
       font,
       color: muted,
     });
+  drawExpandedInsightsPage(document, font, bold, primary, accent, report, content, string(branding.typography) === "serif");
   return await document.save();
+}
+function drawExpandedInsightsPage(
+  document: PDFDocument,
+  font: PDFFont,
+  bold: PDFFont,
+  primary: ReturnType<typeof rgb>,
+  accent: ReturnType<typeof rgb>,
+  report: Record<string, unknown> | null,
+  content: Record<string, unknown>,
+  serif: boolean,
+) {
+  const page = document.addPage([612, 792]);
+  const muted = rgb(0.35, 0.33, 0.3);
+  const cardFill = rgb(0.975, 0.97, 0.955);
+  page.drawRectangle({ x: 42, y: 744, width: 528, height: 7, color: primary });
+  page.drawText("NORTHSTAR DISC", { x: 42, y: 715, size: 10, font: bold, color: primary });
+  page.drawText("Deep leadership insights", { x: 42, y: 678, size: 22, font: bold, color: primary });
+  const profile = object(report?.disc_scores);
+  const primaryTrait = string(profile.primaryTrait) || "your primary DISC style";
+  const insights: Array<[string, string, ReturnType<typeof rgb>]> = [
+    ["Leadership style", `${primaryTrait} tendencies are strongest when priorities are clear, ownership is visible, and decisions balance pace with input from others.`, primary],
+    ["Ideal work environment", "The most effective environment combines clear outcomes, room for focused execution, and communication norms that make expectations explicit.", accent],
+    ["Motivators & triggers", "Meaningful progress, clarity, and recognition tend to energize performance. Ambiguity, prolonged friction, or unclear standards can create avoidable strain.", primary],
+    ["Actionable growth areas", string(content.executive_commentary) || "Use one deliberate pause before key decisions, ask for a complementary perspective, and turn insight into a specific weekly practice.", accent],
+  ];
+  let y = 642;
+  for (const [title, text, color] of insights) {
+    const lines = wrapLines(text, font, 10, 470).slice(0, 4);
+    const height = 38 + lines.length * 13;
+    drawRoundedRectangle(page, 42, y - height, 528, height, 12, cardFill);
+    drawRoundedRectangle(page, 42, y - height, 5, height, 3, color);
+    page.drawText(title, { x: 58, y: y - 18, size: 12, font: bold, color: primary });
+    drawLines(page, lines, 58, y - 36, font, 10, muted, 13);
+    y -= height + 14;
+  }
+  page.drawLine({ start: { x: 42, y: 78 }, end: { x: 570, y: 78 }, thickness: 0.75, color: rgb(0.83, 0.81, 0.77) });
+  page.drawText(serif ? "Executive serif edition · Prepared with Northstar DISC" : "Modern sans edition · Prepared with Northstar DISC", { x: 42, y: 58, size: 9, font, color: muted });
 }
 function wrapLines(text: string, font: PDFFont, size: number, width: number) {
   const words = text.replace(/\s+/g, " ").trim().split(" ");

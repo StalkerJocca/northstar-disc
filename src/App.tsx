@@ -15,6 +15,7 @@ import ExecutivePaywallModal from './components/ExecutivePaywallModal'
 import TeamDynamicsHub from './components/TeamDynamicsHub'
 import { useExportReport } from './hooks/useExportReport'
 import { submitDiscScore } from './lib/discApi'
+import { shuffleQuestionOptions } from './lib/questionShuffle'
 import {
   buildEmailShareBody,
   buildEmailShareSubject,
@@ -207,6 +208,7 @@ function AppContent() {
   })
 
   const currentQuestion = questions[step]
+  const currentQuestionOptions = shuffleQuestionOptions(currentQuestion?.options ?? [], step)
   const hasSavedProgress = Boolean(started || answers.length > 0 || showResults || profile !== null || apiError !== null || step > 0 || selected !== null || isScoring)
   const primaryTrait = profile?.primaryTrait ?? 'D'
 
@@ -912,7 +914,7 @@ function AppContent() {
                       transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
                       className="grid gap-3"
                     >
-                      {currentQuestion.options.map((option) => (
+                      {currentQuestionOptions.map((option) => (
                         <motion.button
                           key={option.label}
                           type="button"
@@ -940,7 +942,7 @@ function AppContent() {
                       transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
                       className="grid gap-3"
                     >
-                      {currentQuestion.options.map((option) => (
+                      {currentQuestionOptions.map((option) => (
                         <motion.button
                           key={option.label}
                           type="button"
