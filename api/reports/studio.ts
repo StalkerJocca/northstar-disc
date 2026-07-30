@@ -3,7 +3,7 @@ import {
   getSupabaseAdmin,
 } from "../../server/supabase.js";
 import { createNodeHandler } from "../../server/vercel.js";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 
 type Action = "list" | "save" | "default" | "exports";
 const hexColor = /^#[0-9a-fA-F]{6}$/;
@@ -315,14 +315,46 @@ async function renderPreviewPdf(
     .join(" | ");
   const document = await PDFDocument.create();
   const page = document.addPage([612, 792]);
-  const font = await document.embedFont(StandardFonts.Helvetica);
-  const bold = await document.embedFont(StandardFonts.HelveticaBold);
+  const serif = string(branding.typography) === "serif";
+  const font = await document.embedFont(
+    serif ? StandardFonts.TimesRoman : StandardFonts.Helvetica,
+  );
+  const bold = await document.embedFont(
+    serif ? StandardFonts.TimesRomanBold : StandardFonts.HelveticaBold,
+  );
   const primary = toRgb(string(branding.primary_color));
   const accent = toRgb(string(branding.accent_color));
+  const ink = rgb(0.22, 0.2, 0.18);
+  const muted = rgb(0.35, 0.33, 0.3);
+  const cardFill = rgb(0.975, 0.97, 0.955);
+
   page.drawRectangle({ x: 42, y: 744, width: 528, height: 7, color: primary });
   page.drawText("NORTHSTAR DISC", { x: 42, y: 715, size: 10, font: bold, color: primary });
-  page.drawText(report ? "Executive DISC Report" : "Executive DISC Report Preview", { x: 42, y: 682, size: 22, font: bold, color: primary });
-  let y = drawText(page, string(content.intro_notes), 42, 645, font, 11, accent) - 16;
+  page.drawText("Executive DISC Report", {
+    x: 42,
+    y: 682,
+    size: 22,
+    font: bold,
+    color: primary,
+  });
+  await drawLogo(document, page, string(branding.logo_url));
+
+  let y = 652;
+  const intro = string(content.intro_notes);
+  if (intro) {
+    const introLines = wrapLines(intro, font, 10, 490).slice(0, 3);
+    const height = 18 + introLines.length * 13;
+    page.drawRoundedRectangle({
+      x: 42,
+      y: y - height,
+      width: 528,
+      height,
+      borderRadius: 12,
+      color: withOpacity(accent, 0.14),
+    });
+    drawLines(page, introLines, 56, y - 14, font, 10, accent, 13);
+    y -= height + 14;
+  }
   const reportSections: Array<[string, string, boolean]> = [
     ["Executive summary", "A decisive, people-aware profile with practical leadership range.", sections.executive_summary === true],
     ["Behavioral matrix", report ? scoreText : "Dominance 76% | Influence 64% | Steadiness 42% | Conscientiousness 58%", sections.behavioral_matrix === true],
@@ -333,15 +365,86 @@ async function renderPreviewPdf(
   for (const [title, text, enabled] of reportSections) {
     if (!enabled) continue;
     if (!text) continue;
-    page.drawText(title, { x: 42, y, size: 13, font: bold, color: primary });
-    y = drawText(page, text, 42, y - 18, font, 10, rgb(0.22, 0.2, 0.18)) - 16;
+    const lines = wrapLines(text, font, 10, 470).slice(0, 3);
+    const height = 34 + lines.length * 13;
+    if (y - height < 105) break;
+    page.drawRoundedRectangle({
+      x: 42,
+      y: y - height,
+      width: 528,
+      height,
+      borderRadius: 12,
+      color: cardFill,
+    });
+    page.drawRoundedRectangle({
+      x: 42,
+      y: y - height,
+      width: 5,
+      height,
+      borderRadius: 3,
+      color: title === "Behavioral matrix" || title === "Team communication" ? accent : primary,
+    });
+    page.drawText(title, { x: 58, y: y - 18, size: 12, font: bold, color: ink });
+    drawLines(page, lines, 58, y - 35, font, 10, muted, 13);
+    y -= height + 12;
   }
   const footer = string(content.footer_text) || "Prepared with Northstar DISC";
-  page.drawText(footer.slice(0, 110), { x: 42, y: 45, size: 9, font, color: accent });
+  page.drawLine({
+    start: { x: 42, y: 78 },
+    end: { x: 570, y: 78 },
+    thickness: 0.75,
+    color: rgb(0.83, 0.81, 0.77),
+  });
+  page.drawText(footer.slice(0, 110), { x: 42, y: 58, size: 9, font, color: muted });
   const disclaimer = string(content.disclaimer);
-  if (disclaimer) page.drawText(disclaimer.slice(0, 110), { x: 42, y: 30, size: 7, font, color: rgb(0.35, 0.33, 0.3) });
+  if (disclaimer)
+    page.drawText(disclaimer.slice(0, 110), {
+      x: 42,
+      y: 42,
+      size: 7,
+      font,
+      color: muted,
+    });
   return await document.save();
 }
-function drawText(page: Awaited<ReturnType<PDFDocument["addPage"]>>, text: string, x: number, startY: number, font: Awaited<ReturnType<PDFDocument["embedFont"]>>, size: number, color: ReturnType<typeof rgb>) { const words = text.replace(/\s+/g, " ").split(" "); let line = ""; let y = startY; for (const word of words) { const next = line ? `${line} ${word}` : word; if (font.widthOfTextAtSize(next, size) > 520) { page.drawText(line, { x, y, size, font, color }); y -= size + 5; line = word } else line = next } if (line) { page.drawText(line, { x, y, size, font, color }); y -= size + 5 } return y }
+function wrapLines(text: string, font: PDFFont, size: number, width: number) {
+  const words = text.replace(/\s+/g, " ").trim().split(" ");
+  const lines: string[] = [];
+  let line = "";
+  for (const word of words) {
+    const next = line ? `${line} ${word}` : word;
+    if (line && font.widthOfTextAtSize(next, size) > width) {
+      lines.push(line);
+      line = word;
+    } else line = next;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+function drawLines(page: PDFPage, lines: string[], x: number, y: number, font: PDFFont, size: number, color: ReturnType<typeof rgb>, leading: number) {
+  lines.forEach((line, index) => page.drawText(line, { x, y: y - index * leading, size, font, color }));
+}
+function withOpacity(color: ReturnType<typeof rgb>, opacity: number) {
+  return rgb(
+    1 - (1 - color.red) * opacity,
+    1 - (1 - color.green) * opacity,
+    1 - (1 - color.blue) * opacity,
+  );
+}
+async function drawLogo(document: PDFDocument, page: PDFPage, url: string) {
+  if (!url || !/^https?:\/\//i.test(url)) return;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return;
+    const bytes = await response.arrayBuffer();
+    const image = /image\/png/i.test(response.headers.get("content-type") ?? "")
+      ? await document.embedPng(bytes)
+      : await document.embedJpg(bytes);
+    const dimensions = image.scaleToFit(100, 42);
+    page.drawImage(image, { x: 570 - dimensions.width, y: 674, ...dimensions });
+  } catch {
+    // A logo must never prevent a report from being generated.
+  }
+}
 function toRgb(value: string) { const hex = /^#([0-9a-f]{6})$/i.exec(value)?.[1] ?? "8b5e3c"; return rgb(Number.parseInt(hex.slice(0, 2), 16) / 255, Number.parseInt(hex.slice(2, 4), 16) / 255, Number.parseInt(hex.slice(4, 6), 16) / 255) }
 export default createNodeHandler(handleRequest);

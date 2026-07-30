@@ -149,8 +149,8 @@ export default function ReportStudio({ onBack }: { onBack: () => void }) {
   };
   const uploadLogo = async (file: File | undefined) => {
     if (!file || !supabase || !user) return;
-    if (!file.type.startsWith("image/") || file.size > 2_000_000) {
-      setMessage("Choose an image smaller than 2 MB.");
+    if (!["image/png", "image/jpeg"].includes(file.type) || file.size > 2_000_000) {
+      setMessage("Choose a PNG or JPEG logo smaller than 2 MB.");
       return;
     }
     try {
@@ -329,13 +329,18 @@ export default function ReportStudio({ onBack }: { onBack: () => void }) {
               </select>
             </label>
             <label className="mt-3 block text-sm">
-              Logo upload
+              Logo upload (PNG or JPEG, max. 2 MB)
               <input
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg"
                 onChange={(event) => void uploadLogo(event.target.files?.[0])}
                 className="mt-1 block text-sm"
               />
+              {draft.branding.logo_url ? (
+                <span className="mt-1 block text-xs text-stone-500">
+                  Logo uploaded — it appears in the live preview and exported PDF.
+                </span>
+              ) : null}
             </label>
           </fieldset>
           <fieldset className="rounded-2xl border p-4">
