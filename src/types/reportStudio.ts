@@ -41,6 +41,7 @@ export interface ReportExportRecord {
   report_id: string | null;
   template_id: string | null;
   file_path: string | null;
+  file_size?: number | null;
   created_at: string;
 }
 

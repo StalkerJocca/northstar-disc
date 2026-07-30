@@ -38,6 +38,7 @@ export default function ReportStudio({ onBack }: { onBack: () => void }) {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [exports, setExports] = useState<ReportExportRecord[]>([]);
+  const [historyBusyId, setHistoryBusyId] = useState<string | null>(null);
   const [logoFileName, setLogoFileName] = useState("");
   const logoInputRef = useRef<HTMLInputElement>(null);
   const headers = async () => {
@@ -89,6 +90,10 @@ export default function ReportStudio({ onBack }: { onBack: () => void }) {
       );
     }
   };
+  const loadExports = async (templateId: string) => {
+    const result = await api(`exports&templateId=${encodeURIComponent(templateId)}`, undefined, "GET") as { exports: ReportExportRecord[] };
+    setExports(result.exports);
+  };
   useEffect(() => {
     if (!supabase || !user) return;
     void supabase
@@ -111,8 +116,7 @@ export default function ReportStudio({ onBack }: { onBack: () => void }) {
       setExports([]);
       return;
     }
-    void api(`exports&templateId=${encodeURIComponent(draft.id)}`, undefined, "GET")
-      .then((result) => setExports((result as { exports: ReportExportRecord[] }).exports))
+    void loadExports(draft.id)
       .catch(() => setExports([]));
   }, [draft.id]);
   const select = (template: ReportTemplate) =>
@@ -198,6 +202,7 @@ export default function ReportStudio({ onBack }: { onBack: () => void }) {
         recordExport: true,
       })) as { downloadUrl?: string };
       if (result.downloadUrl) window.open(result.downloadUrl, "_blank", "noopener,noreferrer");
+      await loadExports(draft.id);
       setMessage("Preview PDF was generated server-side and recorded in download history.");
     } catch (error) {
       setMessage(
@@ -205,6 +210,30 @@ export default function ReportStudio({ onBack }: { onBack: () => void }) {
       );
     } finally {
       setBusy(false);
+    }
+  };
+  const downloadExport = async (record: ReportExportRecord) => {
+    try {
+      setHistoryBusyId(record.id);
+      const result = await api(`download-export&exportId=${encodeURIComponent(record.id)}`, undefined, "GET") as { downloadUrl?: string };
+      if (result.downloadUrl) window.open(result.downloadUrl, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to download export.");
+    } finally {
+      setHistoryBusyId(null);
+    }
+  };
+  const deleteExport = async (record: ReportExportRecord) => {
+    if (!window.confirm("Delete this PDF export permanently?")) return;
+    try {
+      setHistoryBusyId(record.id);
+      await api("delete-export", { exportId: record.id });
+      setExports((current) => current.filter((item) => item.id !== record.id));
+      setMessage("PDF export deleted.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to delete export.");
+    } finally {
+      setHistoryBusyId(null);
     }
   };
   const updateSections = (key: keyof ReportSectionConfig) =>
@@ -495,9 +524,15 @@ export default function ReportStudio({ onBack }: { onBack: () => void }) {
           <p className="mt-1 text-sm text-stone-600">
             Server-generated downloads for this template.
           </p>
-          <ul className="mt-3 space-y-2 text-sm">
+          <ul className="mt-3 space-y-2">
             {exports.map((item) => (
-              <li key={item.id} className="rounded-xl bg-stone-50 p-2">
+              <li key={item.id} className="flex flex-wrap items-center gap-3 rounded-xl border bg-stone-50 p-3 text-[0px]">
+                <div className="min-w-48 flex-1 text-sm">
+                  <p className="font-medium text-stone-800">PDF Export — {new Date(item.created_at).toLocaleString()}</p>
+                  <p className="mt-1 text-xs text-stone-500">{item.file_size ? `${Math.max(1, Math.round(item.file_size / 1024))} KB` : "PDF document"}</p>
+                </div>
+                <button type="button" disabled={historyBusyId === item.id} onClick={() => void downloadExport(item)} className="rounded-full bg-stone-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50">Download</button>
+                <button type="button" disabled={historyBusyId === item.id} onClick={() => void deleteExport(item)} className="rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 disabled:opacity-50">Delete</button>
                 {new Date(item.created_at).toLocaleString()} — {item.file_path ?? "PDF export"}
               </li>
             ))}

@@ -5,7 +5,7 @@ import {
 import { createNodeHandler } from "../../server/vercel.js";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 
-type Action = "list" | "save" | "default" | "exports";
+type Action = "list" | "save" | "default" | "exports" | "download-export" | "delete-export";
 const hexColor = /^#[0-9a-fA-F]{6}$/;
 
 async function handleRequest(request: Request): Promise<Response> {
@@ -32,6 +32,12 @@ async function handleRequest(request: Request): Promise<Response> {
         user.id,
         new URL(request.url).searchParams.get("templateId"),
       );
+    if (request.method === "GET" && action === "download-export")
+      return await downloadExport(
+        admin,
+        user.id,
+        new URL(request.url).searchParams.get("exportId"),
+      );
     if (request.method !== "POST")
       return Response.json({ error: "Method not allowed." }, { status: 405 });
     const body = (await request.json().catch(() => ({}))) as Record<
@@ -41,6 +47,8 @@ async function handleRequest(request: Request): Promise<Response> {
     if (action === "save") return await saveTemplate(admin, user.id, body);
     if (action === "default")
       return await setDefaultAndLogExport(admin, user.id, body);
+    if (action === "delete-export")
+      return await deleteExport(admin, user.id, string(body.exportId));
     return Response.json(
       { error: "Unknown report studio action." },
       { status: 400 },
@@ -91,7 +99,32 @@ async function listExports(
     .order("created_at", { ascending: false })
     .limit(50);
   if (error) throw error;
-  return Response.json({ exports: data ?? [] });
+  return Response.json({ exports: await withFileSizes(admin, data ?? []) });
+}
+async function downloadExport(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  userId: string,
+  exportId: string | null,
+) {
+  const record = await assertExportAccess(admin, userId, exportId ?? "");
+  if (!record.file_path) return Response.json({ error: "Export file is unavailable." }, { status: 404 });
+  const { data, error } = await admin.storage.from("report-assets").createSignedUrl(record.file_path, 60 * 10);
+  if (error) throw error;
+  return Response.json({ downloadUrl: data.signedUrl });
+}
+async function deleteExport(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  userId: string,
+  exportId: string,
+) {
+  const record = await assertExportAccess(admin, userId, exportId);
+  if (record.file_path) {
+    const { error } = await admin.storage.from("report-assets").remove([record.file_path]);
+    if (error) throw error;
+  }
+  const { error } = await admin.from("report_exports").delete().eq("id", record.id);
+  if (error) throw error;
+  return Response.json({ ok: true });
 }
 async function saveTemplate(
   admin: ReturnType<typeof getSupabaseAdmin>,
@@ -148,6 +181,27 @@ async function saveTemplate(
   if (error) throw error;
   return Response.json({ template: data }, { status: 201 });
 }
+async function pruneTemplateExports(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  templateId: string,
+) {
+  const { data, error } = await admin
+    .from("report_exports")
+    .select("id, file_path")
+    .eq("template_id", templateId)
+    .order("created_at", { ascending: false })
+    .range(10, 100);
+  if (error) throw error;
+  const stale = data ?? [];
+  if (!stale.length) return;
+  const paths = stale.map((item) => item.file_path).filter((path): path is string => Boolean(path));
+  if (paths.length) {
+    const { error: storageError } = await admin.storage.from("report-assets").remove(paths);
+    if (storageError) throw storageError;
+  }
+  const { error: deleteError } = await admin.from("report_exports").delete().in("id", stale.map((item) => item.id));
+  if (deleteError) throw deleteError;
+}
 async function setDefaultAndLogExport(
   admin: ReturnType<typeof getSupabaseAdmin>,
   userId: string,
@@ -202,6 +256,7 @@ async function setDefaultAndLogExport(
       .select("*")
       .single();
     if (error) throw error;
+    await pruneTemplateExports(admin, templateId);
     const { data: signed, error: signedError } = await admin.storage
       .from("report-assets")
       .createSignedUrl(filePath, 60 * 10);
@@ -227,6 +282,27 @@ async function assertTemplateAccess(
     return data;
   }
   throw new Error("Template access is not allowed.");
+}
+async function assertExportAccess(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  userId: string,
+  exportId: string,
+) {
+  if (!exportId) throw new Error("exportId is required.");
+  const { data, error } = await admin.from("report_exports").select("*").eq("id", exportId).single();
+  if (error || !data) throw new Error("Report export not found.");
+  await assertTemplateAccess(admin, userId, string(data.template_id));
+  return data;
+}
+async function withFileSizes(admin: ReturnType<typeof getSupabaseAdmin>, records: Array<Record<string, unknown>>) {
+  return await Promise.all(records.map(async (record) => {
+    const path = string(record.file_path);
+    const slash = path.lastIndexOf("/");
+    if (slash < 0) return record;
+    const { data } = await admin.storage.from("report-assets").list(path.slice(0, slash), { search: path.slice(slash + 1) });
+    const file = data?.find((item) => item.name === path.slice(slash + 1));
+    return { ...record, file_size: typeof file?.metadata?.size === "number" ? file.metadata.size : null };
+  }));
 }
 async function assertOrganizationAccess(
   admin: ReturnType<typeof getSupabaseAdmin>,
