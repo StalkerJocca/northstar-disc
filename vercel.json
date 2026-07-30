@@ -17,10 +17,6 @@
     {
       "source": "/workspace",
       "destination": "/index.html"
-    },
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
     }
   ]
 }
