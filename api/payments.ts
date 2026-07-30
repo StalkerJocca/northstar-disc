@@ -6,6 +6,8 @@ type PaymentPayload = { action?: unknown; product?: unknown; profileCode?: unkno
 type CheckoutConfiguration =
   | { error: Response }
   | { product: Product; config: { priceEnvironment: string; metadataProduct: string; mode: 'payment' | 'subscription' }; secretKey: string; priceId: string }
+type VercelRequest = { method?: string; url?: string; headers: Record<string, string | string[] | undefined>; body?: unknown }
+type VercelResponse = { status: (statusCode: number) => VercelResponse; setHeader: (name: string, value: string) => void; end: (body?: string) => void }
 
 const products: Record<Product, { priceEnvironment: string; metadataProduct: string; mode: 'payment' | 'subscription' }> = {
   executive: { priceEnvironment: 'STRIPE_EXECUTIVE_REPORT_PRICE_ID', metadataProduct: 'northstar_executive_report', mode: 'payment' },
@@ -15,7 +17,19 @@ const products: Record<Product, { priceEnvironment: string; metadataProduct: str
 
 const jsonError = (error: string, status: number, code?: string, details?: string) => Response.json({ error, ...(details ? { details } : {}), ...(code ? { code } : {}) }, { status })
 
-export default async function handler(request: Request): Promise<Response> {
+export default async function handler(request: VercelRequest, response: VercelResponse): Promise<void> {
+  try {
+    const webRequest = toWebRequest(request)
+    const webResponse = await handleRequest(webRequest)
+    await sendResponse(response, webResponse)
+  } catch (error) {
+    console.error('[Checkout API Error]:', error)
+    response.setHeader('content-type', 'application/json; charset=utf-8')
+    response.status(500).end(JSON.stringify({ error: 'Checkout configuration error', details: 'The payment handler could not process this request.' }))
+  }
+}
+
+export async function handleRequest(request: Request): Promise<Response> {
   try {
     const url = new URL(request.url)
     const body = request.method === 'POST' ? await parseJsonBody(request) : {}
@@ -31,6 +45,26 @@ export default async function handler(request: Request): Promise<Response> {
     console.error('[Checkout API Error]:', error)
     return jsonError('Checkout configuration error', 500, 'PAYMENTS_HANDLER_FAILED', 'The payment handler could not be initialized. Check Vercel Function Logs.')
   }
+}
+
+function toWebRequest(request: VercelRequest): Request {
+  const headers = new Headers()
+  for (const [name, value] of Object.entries(request.headers)) {
+    if (typeof value === 'string') headers.set(name, value)
+    else if (Array.isArray(value)) headers.set(name, value.join(', '))
+  }
+  const forwardedHost = headers.get('x-forwarded-host') ?? headers.get('host')
+  const forwardedProtocol = headers.get('x-forwarded-proto')?.split(',')[0] ?? 'https'
+  const host = forwardedHost ?? process.env.VERCEL_URL ?? 'localhost'
+  const baseUrl = `${forwardedProtocol}://${host}`
+  const body = request.method === 'GET' || request.method === 'HEAD' || request.body === undefined ? undefined : typeof request.body === 'string' ? request.body : JSON.stringify(request.body)
+  if (body && !headers.has('content-type')) headers.set('content-type', 'application/json')
+  return new Request(new URL(request.url ?? '/', baseUrl), { method: request.method ?? 'GET', headers, body })
+}
+
+async function sendResponse(response: VercelResponse, webResponse: Response): Promise<void> {
+  webResponse.headers.forEach((value, name) => response.setHeader(name, value))
+  response.status(webResponse.status).end(await webResponse.text())
 }
 
 async function authenticate(request: Request) {
