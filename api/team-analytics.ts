@@ -3,11 +3,28 @@ import { createNodeHandler } from '../server/vercel.js'
 
 const traits = ['D', 'I', 'S', 'C'] as const
 type Trait = typeof traits[number]
-type Profile = { primaryTrait: Trait; secondaryTrait: Trait; scores: Array<{ trait: Trait; percentage: number }> }
+type Profile = { primaryTrait: Trait; secondaryTrait: Trait; scores: Array<{ trait: Trait; score: number; percentage: number }> }
+type ScoreMap = Record<Trait, number>
 
-function isProfile(value: unknown): value is Profile {
-  const profile = value as Partial<Profile>
-  return Boolean(profile && traits.includes(profile.primaryTrait as Trait) && traits.includes(profile.secondaryTrait as Trait) && Array.isArray(profile.scores) && profile.scores.length === 4)
+function profileFromDiscScores(value: unknown): Profile | null {
+  if (!value || typeof value !== 'object') return null
+  const raw = value as { primaryTrait?: unknown; secondaryTrait?: unknown; scores?: unknown } & Partial<ScoreMap>
+  let scores: Array<{ trait: Trait; score: number; percentage: number }>
+  if (Array.isArray(raw.scores) && raw.scores.length === traits.length && raw.scores.every((item) => {
+    const score = item as { trait?: unknown; score?: unknown; percentage?: unknown }
+    return traits.includes(score.trait as Trait) && typeof score.score === 'number' && typeof score.percentage === 'number'
+  })) {
+    scores = raw.scores.map((item) => item as { trait: Trait; score: number; percentage: number })
+  } else if (traits.every((trait) => typeof raw[trait] === 'number' && Number.isFinite(raw[trait]))) {
+    const scoreMap = raw as ScoreMap; const total = traits.reduce((sum, trait) => sum + scoreMap[trait], 0)
+    if (total <= 0) return null
+    scores = traits.map((trait) => ({ trait, score: scoreMap[trait], percentage: Math.round((scoreMap[trait] / total) * 100) }))
+  } else return null
+
+  const ranked = [...scores].sort((left, right) => right.percentage - left.percentage)
+  const primaryTrait = traits.includes(raw.primaryTrait as Trait) ? raw.primaryTrait as Trait : ranked[0]?.trait
+  const secondaryTrait = traits.includes(raw.secondaryTrait as Trait) ? raw.secondaryTrait as Trait : ranked[1]?.trait
+  return primaryTrait && secondaryTrait ? { primaryTrait, secondaryTrait, scores } : null
 }
 
 async function handleRequest(request: Request): Promise<Response> {
@@ -24,11 +41,14 @@ async function handleRequest(request: Request): Promise<Response> {
     const { data: invitation, error: invitationError } = await admin.from('team_invitations').select('id').eq('team_id', teamId).eq('accepted_by', user.id).not('accepted_at', 'is', null).maybeSingle()
     if (invitationError) throw invitationError
     if (team.owner_id !== user.id && !invitation) return Response.json({ error: 'You do not have access to this team.' }, { status: 403 })
+    // team_members.assessment_id is the durable report reference. display_name is
+    // saved with the team, so historical client-name changes do not break exports.
     const { data: rows, error } = await admin.from('team_members').select('id, display_name, assessment_id, reports!inner(disc_scores)').eq('team_id', teamId).order('created_at')
     if (error) throw error
     const members = (rows ?? []).flatMap((row) => {
       const report = Array.isArray(row.reports) ? row.reports[0] : row.reports
-      return isProfile(report?.disc_scores) ? [{ id: row.id, name: row.display_name, assessmentId: row.assessment_id, profile: report.disc_scores }] : []
+      const profile = profileFromDiscScores(report?.disc_scores)
+      return profile ? [{ id: row.id, name: row.display_name, assessmentId: row.assessment_id, profile }] : []
     })
     const distribution = Object.fromEntries(traits.map((trait) => [trait, members.filter((member) => member.profile.primaryTrait === trait).length])) as Record<Trait, number>
     const averages = Object.fromEntries(traits.map((trait) => [trait, members.length ? Math.round(members.reduce((sum, member) => sum + (member.profile.scores.find((score) => score.trait === trait)?.percentage ?? 0), 0) / members.length) : 0])) as Record<Trait, number>
