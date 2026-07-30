@@ -344,14 +344,7 @@ async function renderPreviewPdf(
   if (intro) {
     const introLines = wrapLines(intro, font, 10, 490).slice(0, 3);
     const height = 18 + introLines.length * 13;
-    page.drawRoundedRectangle({
-      x: 42,
-      y: y - height,
-      width: 528,
-      height,
-      borderRadius: 12,
-      color: withOpacity(accent, 0.14),
-    });
+    drawRoundedRectangle(page, 42, y - height, 528, height, 12, withOpacity(accent, 0.14));
     drawLines(page, introLines, 56, y - 14, font, 10, accent, 13);
     y -= height + 14;
   }
@@ -368,22 +361,16 @@ async function renderPreviewPdf(
     const lines = wrapLines(text, font, 10, 470).slice(0, 3);
     const height = 34 + lines.length * 13;
     if (y - height < 105) break;
-    page.drawRoundedRectangle({
-      x: 42,
-      y: y - height,
-      width: 528,
+    drawRoundedRectangle(page, 42, y - height, 528, height, 12, cardFill);
+    drawRoundedRectangle(
+      page,
+      42,
+      y - height,
+      5,
       height,
-      borderRadius: 12,
-      color: cardFill,
-    });
-    page.drawRoundedRectangle({
-      x: 42,
-      y: y - height,
-      width: 5,
-      height,
-      borderRadius: 3,
-      color: title === "Behavioral matrix" || title === "Team communication" ? accent : primary,
-    });
+      3,
+      title === "Behavioral matrix" || title === "Team communication" ? accent : primary,
+    );
     page.drawText(title, { x: 58, y: y - 18, size: 12, font: bold, color: ink });
     drawLines(page, lines, 58, y - 35, font, 10, muted, 13);
     y -= height + 12;
@@ -423,6 +410,30 @@ function wrapLines(text: string, font: PDFFont, size: number, width: number) {
 }
 function drawLines(page: PDFPage, lines: string[], x: number, y: number, font: PDFFont, size: number, color: ReturnType<typeof rgb>, leading: number) {
   lines.forEach((line, index) => page.drawText(line, { x, y: y - index * leading, size, font, color }));
+}
+function drawRoundedRectangle(
+  page: PDFPage,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+  color: ReturnType<typeof rgb>,
+) {
+  const r = Math.min(radius, width / 2, height / 2);
+  const curve = r * 0.55228475;
+  const path = [
+    `M ${r} 0`,
+    `L ${width - r} 0`,
+    `C ${width - r + curve} 0 ${width} ${r - curve} ${width} ${r}`,
+    `L ${width} ${height - r}`,
+    `C ${width} ${height - r + curve} ${width - r + curve} ${height} ${width - r} ${height}`,
+    `L ${r} ${height}`,
+    `C ${r - curve} ${height} 0 ${height - r + curve} 0 ${height - r}`,
+    `L 0 ${r}`,
+    `C 0 ${r - curve} ${r - curve} 0 ${r} 0 Z`,
+  ].join(" ");
+  page.drawSvgPath(path, { x, y, color });
 }
 function withOpacity(color: ReturnType<typeof rgb>, opacity: number) {
   return rgb(
