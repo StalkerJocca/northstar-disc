@@ -428,9 +428,9 @@ async function renderPreviewPdf(
   let y = 634;
   const intro = string(content.intro_notes);
   if (intro) {
-    const introLines = wrapLines(intro, font, 10, 490).slice(0, 3);
+    const introLines = wrapLines(intro, font, 10, 470, 2);
     const height = 50 + introLines.length * 13;
-    drawReportCard(page, "INTRODUCTION", "Executive introduction", introLines, y, height, font, bold, accent, muted, withOpacity(accent, 0.14));
+    drawReportCard(page, "INTRODUCTION", "Executive introduction", introLines, y, height, font, bold, accent, muted, cardFill);
     y -= height + 14;
   }
   const reportSections: Array<[string, string, boolean]> = [
@@ -443,12 +443,11 @@ async function renderPreviewPdf(
   for (const [title, text, enabled] of reportSections) {
     if (!enabled) continue;
     if (!text) continue;
-    const lines = wrapLines(text, font, 10, 470).slice(0, 3);
+    const lines = wrapLines(text, font, 10, 470, 2);
     const height = 50 + lines.length * 13;
     if (y - height < 105) break;
     const indicator = title === "Behavioral matrix" || title === "Team communication" ? accent : primary;
-    const fill = title === "Executive commentary" ? withOpacity(accent, 0.12) : cardFill;
-    drawReportCard(page, "EXECUTIVE INSIGHT", title, lines, y, height, font, bold, indicator, muted, fill);
+    drawReportCard(page, "EXECUTIVE INSIGHT", title, lines, y, height, font, bold, indicator, muted, cardFill);
     y -= height + 12;
   }
   const footer = string(content.footer_text) || "Prepared with Northstar DISC";
@@ -500,7 +499,7 @@ async function drawExpandedInsightsPage(
   let y = 642;
   for (const [title, text, color] of insights) {
     if (!title.trim() || !text.trim()) continue;
-    const lines = wrapLines(text, font, 10, 470).slice(0, 4);
+    const lines = wrapLines(text, font, 10, 470, 3);
     const height = 52 + lines.length * 13;
     drawReportCard(page, "DEEP INSIGHT", title, lines, y, height, font, bold, color, muted, cardFill);
     y -= height + 14;
@@ -508,19 +507,32 @@ async function drawExpandedInsightsPage(
   page.drawLine({ start: { x: 42, y: 78 }, end: { x: 570, y: 78 }, thickness: 0.75, color: rgb(0.83, 0.81, 0.77) });
   page.drawText(serif ? "Executive serif edition · Prepared with Northstar DISC" : "Modern sans edition · Prepared with Northstar DISC", { x: 42, y: 58, size: 9, font, color: muted });
 }
-function wrapLines(text: string, font: PDFFont, size: number, width: number) {
+function wrapLines(text: string, font: PDFFont, size: number, width: number, maxLines: number) {
   const words = text.replace(/\s+/g, " ").trim().split(" ");
   const lines: string[] = [];
   let line = "";
   for (const word of words) {
-    const next = line ? `${line} ${word}` : word;
+    const safeWord = splitLongWord(word, font, size, width);
+    const next = line ? `${line} ${safeWord}` : safeWord;
     if (line && font.widthOfTextAtSize(next, size) > width) {
       lines.push(line);
-      line = word;
+      line = safeWord;
+      if (lines.length === maxLines) break;
     } else line = next;
   }
-  if (line) lines.push(line);
+  if (line && lines.length < maxLines) lines.push(line);
+  const truncated = lines.length === maxLines && words.join(" ") !== lines.join(" ");
+  if (truncated) lines[maxLines - 1] = `${lines[maxLines - 1].replace(/[.…]+$/, "")}…`;
   return lines;
+}
+function splitLongWord(word: string, font: PDFFont, size: number, width: number) {
+  if (font.widthOfTextAtSize(word, size) <= width) return word;
+  let output = "";
+  for (const character of word) {
+    if (font.widthOfTextAtSize(`${output}${character}…`, size) > width) break;
+    output += character;
+  }
+  return `${output}…`;
 }
 function drawLines(page: PDFPage, lines: string[], x: number, y: number, font: PDFFont, size: number, color: ReturnType<typeof rgb>, leading: number) {
   lines.forEach((line, index) => page.drawText(line, { x, y: y - index * leading, size, font, color }));
@@ -584,8 +596,8 @@ async function drawLogo(document: PDFDocument, page: PDFPage, url: string) {
     const image = source.mime === "image/png"
       ? await document.embedPng(source.bytes)
       : await document.embedJpg(source.bytes);
-    const dimensions = image.scaleToFit(100, 42);
-    page.drawImage(image, { x: 570 - dimensions.width, y: 674, ...dimensions });
+    const dimensions = image.scaleToFit(112, 40);
+    page.drawImage(image, { x: 570 - dimensions.width, y: 682, ...dimensions });
   } catch {
     // A logo must never prevent a report from being generated.
   }
@@ -594,14 +606,21 @@ async function fetchRemoteImage(url: string) {
   if (!/^https?:\/\//i.test(url)) return null;
   const response = await fetch(url);
   if (!response.ok) return null;
-  const mime = response.headers.get("content-type")?.split(";")[0].toLowerCase();
-  if (mime !== "image/png" && mime !== "image/jpeg") return null;
-  return { mime, bytes: await response.arrayBuffer() };
+  const bytes = await response.arrayBuffer();
+  const mime = detectImageMime(new Uint8Array(bytes));
+  return mime ? { mime, bytes } : null;
 }
 function decodeDataImage(url: string) {
-  const match = /^data:(image\/(?:png|jpeg));base64,([a-z0-9+/=]+)$/i.exec(url);
+  const match = /^data:(image\/(?:png|jpeg));base64,([a-z0-9+/=\s]+)$/i.exec(url);
   if (!match) return null;
-  return { mime: match[1].toLowerCase(), bytes: Uint8Array.from(Buffer.from(match[2], "base64")) };
+  const bytes = Uint8Array.from(Buffer.from(match[2].replace(/\s/g, ""), "base64"));
+  const mime = detectImageMime(bytes);
+  return mime ? { mime, bytes } : null;
+}
+function detectImageMime(bytes: Uint8Array): "image/png" | "image/jpeg" | null {
+  if (bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return "image/png";
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
+  return null;
 }
 function toRgb(value: string) { const hex = /^#([0-9a-f]{6})$/i.exec(value)?.[1] ?? "8b5e3c"; return rgb(Number.parseInt(hex.slice(0, 2), 16) / 255, Number.parseInt(hex.slice(2, 4), 16) / 255, Number.parseInt(hex.slice(4, 6), 16) / 255) }
 export default createNodeHandler(handleRequest);
