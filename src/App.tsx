@@ -37,6 +37,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import AuthModal from './components/AuthModal'
 import AccountView from './components/AccountView'
 import { saveReport } from './lib/reportStore'
+import { supabase } from './lib/supabase'
 
 const DiscProfileDashboard = lazy(() => import('./components/DiscProfileDashboard'))
 const TeamDashboard = lazy(() => import('./components/TeamDashboard'))
@@ -776,7 +777,18 @@ function AppContent() {
   useEffect(() => {
     if (!user || !showResults || !profile || savedReportProfile.current === profile) return
     savedReportProfile.current = profile
-    void saveReport(profile).catch((error) => console.warn('Unable to save report:', error))
+    void (async () => {
+      try {
+        const reportId = await saveReport(profile)
+        const inviteToken = new URLSearchParams(window.location.search).get('coach_invite')
+        if (!reportId || !inviteToken) return
+        const { data: { session } } = await supabase!.auth.getSession()
+        const response = await fetch('/api/complete-coach-invite', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token ?? ''}` }, body: JSON.stringify({ inviteToken, assessmentId: reportId }) })
+        if (!response.ok) console.warn('Unable to link coach invitation:', await response.text())
+      } catch (error) {
+        console.warn('Unable to save report:', error)
+      }
+    })()
   }, [profile, showResults, user])
 
   useEffect(() => {
