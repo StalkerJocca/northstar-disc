@@ -29,7 +29,6 @@ import { generateSocialCardImage } from './services/export'
 import { downloadExecutivePdf } from './services/export/executivePdf'
 import { downloadFreePdf } from './services/export/freePdf'
 import { downloadProfileJson } from './services/export/profileJson'
-import { memberReturnUrl, readInvite } from './lib/teamInvite'
 import { getEntitlement, startEnterpriseCheckout, startExecutiveCheckout } from './lib/payments'
 import { defaultPageTitle, defaultPageDescription, defaultOgImage, parseProfileCode } from './lib/seo'
 import type { DiscScoreResponse, TraitKey } from './types/disc'
@@ -183,9 +182,7 @@ function AppContent() {
   const [enterprisePaywallOpen, setEnterprisePaywallOpen] = useState(false)
   const [isStartingEnterpriseCheckout, setIsStartingEnterpriseCheckout] = useState(false)
   const [enterpriseCheckoutError, setEnterpriseCheckoutError] = useState<string | null>(null)
-  const [teamHubOpen, setTeamHubOpen] = useState(false)
-  const [teamInvite] = useState(() => typeof window !== 'undefined' ? readInvite() : null)
-  const [teamResponseUrl, setTeamResponseUrl] = useState<string | null>(null)
+  const [teamHubOpen, setTeamHubOpen] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('team_hub') === '1')
   const [consent, setConsent] = useState<'undecided' | 'essential' | 'all'>(readStoredConsent)
   const [privacyModalOpen, setPrivacyModalOpen] = useState(false)
   const reportExportRef = useRef<HTMLDivElement | null>(null)
@@ -292,12 +289,6 @@ function AppContent() {
 
       if (result.success) {
         setProfile(result.profile)
-        if (teamInvite) {
-          const responseUrl = memberReturnUrl(teamInvite, result.profile)
-          setTeamResponseUrl(responseUrl)
-          const responseLocation = new URL(responseUrl)
-          window.history.replaceState({}, '', `${responseLocation.pathname}${responseLocation.search}${responseLocation.hash}`)
-        }
         setShowResults(true)
         setReviewMode(false)
         setSubmissionAttempts(0)
@@ -821,8 +812,6 @@ function AppContent() {
           </div>
         </header>
         {accountOpen && user ? <AccountView onClose={() => setAccountOpen(false)} /> : <>
-        {teamInvite ? <div className="mb-4 rounded-2xl border border-[#dfcdbd] bg-[#fff7ef] px-4 py-3 text-sm text-stone-700">You are taking this assessment for the <strong>{teamInvite.name}</strong> workspace.</div> : null}
-        {teamResponseUrl && showResults ? <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"><span>Your profile is ready for the {teamInvite?.name} workspace.</span><button type="button" onClick={() => void navigator.clipboard.writeText(teamResponseUrl)} className="rounded-full bg-emerald-900 px-3 py-1.5 text-xs font-semibold text-white">Copy completed profile link</button></div> : null}
 
         <AnimatePresence mode="sync">
           {teamHubOpen ? (
