@@ -1,4 +1,5 @@
-import type Stripe from 'stripe'
+import Stripe from 'stripe'
+import { getAuthenticatedUser, getSupabaseAdmin } from '../server/supabase.js'
 
 type Product = 'executive' | 'team' | 'enterprise'
 type PaymentPayload = { action?: unknown; product?: unknown; profileCode?: unknown }
@@ -32,14 +33,8 @@ export default async function handler(request: Request): Promise<Response> {
   }
 }
 
-async function getStripeClient(secretKey: string): Promise<Stripe> {
-  const { default: StripeClient } = await import('stripe')
-  return new StripeClient(secretKey)
-}
-
 async function authenticate(request: Request) {
   try {
-    const { getAuthenticatedUser } = await import('../server/supabase.js')
     return await getAuthenticatedUser(request)
   } catch (error) {
     console.error('Unable to initialize Supabase authentication for payment request.', { error: error instanceof Error ? error.message : 'Unknown error' })
@@ -99,7 +94,7 @@ async function createCheckout(request: Request, url: URL, product: Product | nul
   if (product === 'executive') metadata.profileCode = typeof body.profileCode === 'string' && /^[DISC]{2}$/.test(body.profileCode) ? body.profileCode : ''
 
   try {
-    const stripe = await getStripeClient(secretKey)
+    const stripe = new Stripe(secretKey)
     const session = await stripe.checkout.sessions.create({
       mode: config.mode,
       line_items: [{ price: priceId, quantity: 1 }],
@@ -147,7 +142,7 @@ async function verifyPurchase(request: Request, url: URL, product: Product | nul
   const priceId = process.env[products[product].priceEnvironment]
   if (!priceId) return Response.json({ paid: false }, { status: 400 })
   try {
-    const stripe = await getStripeClient(secretKey)
+    const stripe = new Stripe(secretKey)
     const session = await stripe.checkout.sessions.retrieve(sessionId, { expand: product === 'enterprise' ? ['line_items', 'subscription'] : ['line_items'] })
     const hasExpectedPrice = session.line_items?.data.some((item) => item.price?.id === priceId) ?? false
     if (product !== 'enterprise') return Response.json({ paid: session.payment_status === 'paid' && hasExpectedPrice })
@@ -164,10 +159,9 @@ async function createCustomerPortal(request: Request): Promise<Response> {
   if (!user) return jsonError('Authentication is required.', 401, 'AUTHENTICATION_REQUIRED')
   if (!secretKey) return jsonError('Billing portal is not configured.', 503, 'STRIPE_CONFIGURATION_INVALID')
   try {
-    const { getSupabaseAdmin } = await import('../server/supabase.js')
     const { data } = await getSupabaseAdmin().from('subscriptions').select('stripe_customer_id').eq('user_id', user.id).not('stripe_customer_id', 'is', null).limit(1).maybeSingle()
     if (!data?.stripe_customer_id) return jsonError('No billing account was found.', 404)
-    const stripe = await getStripeClient(secretKey)
+    const stripe = new Stripe(secretKey)
     const session = await stripe.billingPortal.sessions.create({ customer: data.stripe_customer_id, return_url: new URL(request.url).origin })
     return Response.json({ url: session.url })
   } catch (error) {

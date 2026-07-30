@@ -10,7 +10,17 @@ type CheckoutResponse = { url?: string; error?: string }
 async function startCheckout(endpoint: string, body?: object) {
   const { data } = await supabase?.auth.getSession() ?? { data: { session: null } }
   if (!data.session?.access_token) throw new Error('Please sign in to purchase and save your entitlement.')
-  const response = await fetch(endpoint, { method: 'POST', headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), Authorization: `Bearer ${data.session.access_token}` }, body: body ? JSON.stringify(body) : undefined })
+  const controller = new AbortController()
+  const timeout = window.setTimeout(() => controller.abort(), 15_000)
+  let response: Response
+  try {
+    response = await fetch(endpoint, { method: 'POST', headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), Authorization: `Bearer ${data.session.access_token}` }, body: body ? JSON.stringify(body) : undefined, signal: controller.signal })
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') throw new Error('Checkout is taking too long. Please try again.')
+    throw error
+  } finally {
+    window.clearTimeout(timeout)
+  }
   const result = await response.json().catch(() => ({})) as CheckoutResponse
   if (!response.ok || !result.url) throw new Error(result.error ?? 'Checkout is unavailable. Please contact support if this persists.')
   return result.url
