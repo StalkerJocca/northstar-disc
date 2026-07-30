@@ -329,17 +329,18 @@ async function renderPreviewPdf(
   const cardFill = rgb(0.975, 0.97, 0.955);
 
   page.drawRectangle({ x: 42, y: 744, width: 528, height: 7, color: primary });
-  page.drawText("NORTHSTAR DISC", { x: 42, y: 715, size: 10, font: bold, color: primary });
+  page.drawText("NORTHSTAR DISC · CONFIDENTIAL LEADERSHIP PROFILE", { x: 42, y: 715, size: 8, font: bold, color: primary });
   page.drawText("Executive DISC Report", {
     x: 42,
-    y: 682,
-    size: 22,
+    y: 678,
+    size: 24,
     font: bold,
     color: primary,
   });
   await drawLogo(document, page, string(branding.logo_url));
 
-  let y = 652;
+  page.drawText("Executive edition · Behavioral strategy and coaching brief", { x: 42, y: 658, size: 9, font, color: muted });
+  let y = 634;
   const intro = string(content.intro_notes);
   if (intro) {
     const introLines = wrapLines(intro, font, 10, 490).slice(0, 3);
@@ -359,9 +360,11 @@ async function renderPreviewPdf(
     if (!enabled) continue;
     if (!text) continue;
     const lines = wrapLines(text, font, 10, 470).slice(0, 3);
-    const height = 34 + lines.length * 13;
+    const height = 50 + lines.length * 13;
     if (y - height < 105) break;
-    drawRoundedRectangle(page, 42, y - height, 528, height, 12, cardFill);
+    const indicator = title === "Behavioral matrix" || title === "Team communication" ? accent : primary;
+    const fill = title === "Executive commentary" ? withOpacity(accent, 0.12) : cardFill;
+    drawRoundedRectangle(page, 42, y - height, 528, height, 12, fill, withOpacity(indicator, 0.42));
     drawRoundedRectangle(
       page,
       42,
@@ -369,10 +372,11 @@ async function renderPreviewPdf(
       5,
       height,
       3,
-      title === "Behavioral matrix" || title === "Team communication" ? accent : primary,
+      indicator,
     );
-    page.drawText(title, { x: 58, y: y - 18, size: 12, font: bold, color: ink });
-    drawLines(page, lines, 58, y - 35, font, 10, muted, 13);
+    page.drawText("EXECUTIVE INSIGHT", { x: 58, y: y - 14, size: 7, font: bold, color: indicator });
+    page.drawText(title, { x: 58, y: y - 29, size: 12, font: bold, color: ink });
+    drawLines(page, lines, 58, y - 46, font, 10, muted, 13);
     y -= height + 12;
   }
   const footer = string(content.footer_text) || "Prepared with Northstar DISC";
@@ -422,11 +426,12 @@ function drawExpandedInsightsPage(
   let y = 642;
   for (const [title, text, color] of insights) {
     const lines = wrapLines(text, font, 10, 470).slice(0, 4);
-    const height = 38 + lines.length * 13;
-    drawRoundedRectangle(page, 42, y - height, 528, height, 12, cardFill);
+    const height = 52 + lines.length * 13;
+    drawRoundedRectangle(page, 42, y - height, 528, height, 12, cardFill, withOpacity(color, 0.42));
     drawRoundedRectangle(page, 42, y - height, 5, height, 3, color);
-    page.drawText(title, { x: 58, y: y - 18, size: 12, font: bold, color: primary });
-    drawLines(page, lines, 58, y - 36, font, 10, muted, 13);
+    page.drawText("DEEP INSIGHT", { x: 58, y: y - 14, size: 7, font: bold, color });
+    page.drawText(title, { x: 58, y: y - 29, size: 12, font: bold, color: primary });
+    drawLines(page, lines, 58, y - 46, font, 10, muted, 13);
     y -= height + 14;
   }
   page.drawLine({ start: { x: 42, y: 78 }, end: { x: 570, y: 78 }, thickness: 0.75, color: rgb(0.83, 0.81, 0.77) });
@@ -457,6 +462,7 @@ function drawRoundedRectangle(
   height: number,
   radius: number,
   color: ReturnType<typeof rgb>,
+  borderColor?: ReturnType<typeof rgb>,
 ) {
   const r = Math.min(radius, width / 2, height / 2);
   const curve = r * 0.55228475;
@@ -471,7 +477,7 @@ function drawRoundedRectangle(
     `L 0 ${r}`,
     `C 0 ${r - curve} ${r - curve} 0 ${r} 0 Z`,
   ].join(" ");
-  page.drawSvgPath(path, { x, y, color });
+  page.drawSvgPath(path, { x, y, color, borderColor, borderWidth: borderColor ? 0.7 : undefined });
 }
 function withOpacity(color: ReturnType<typeof rgb>, opacity: number) {
   return rgb(

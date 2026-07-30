@@ -483,18 +483,19 @@ function ReportPreview({ draft }: { draft: Draft }) {
         : "Arial, sans-serif";
   return (
     <article
-      className="min-h-[620px] rounded-2xl border p-6 shadow-sm"
-      style={{ fontFamily, borderTop: `8px solid ${branding.primary_color}` }}
+      className="min-h-[620px] overflow-hidden rounded-[1.5rem] border bg-[#fffdfa] shadow-[0_18px_45px_rgba(60,45,31,0.10)]"
+      style={{ fontFamily, borderColor: `${branding.primary_color}44`, borderTop: `8px solid ${branding.primary_color}` }}
     >
-      <header className="flex items-start justify-between gap-3">
-        <div>
+      <header className="flex items-start justify-between gap-4 border-b px-6 py-5" style={{ borderColor: `${branding.primary_color}22`, background: `linear-gradient(135deg, ${branding.primary_color}10, transparent 62%)` }}>
+        <div className="min-w-0">
           <p
-            className="text-xs uppercase tracking-[.2em]"
+            className="text-[10px] font-semibold uppercase tracking-[.28em]"
             style={{ color: branding.primary_color }}
           >
-            Northstar DISC
+            Northstar DISC · Confidential leadership profile
           </p>
-          <h3 className="mt-2 text-2xl font-semibold">Executive DISC Report</h3>
+          <h3 className="mt-2 text-3xl font-semibold leading-tight text-stone-900">Executive DISC Report</h3>
+          <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-medium uppercase tracking-[.12em] text-stone-500"><span className="rounded-full border bg-white px-2.5 py-1">DISC profile</span><span className="rounded-full border bg-white px-2.5 py-1" style={{ borderColor: `${branding.accent_color}66`, color: branding.accent_color }}>Executive edition</span></div>
         </div>
         {branding.logo_url ? (
           <img
@@ -504,10 +505,11 @@ function ReportPreview({ draft }: { draft: Draft }) {
           />
         ) : null}
       </header>
+      <div className="p-6">
       {content.intro_notes ? (
         <p
-          className="mt-5 rounded-xl p-3 text-sm"
-          style={{ backgroundColor: `${branding.accent_color}22` }}
+          className="rounded-r-xl border-l-4 p-4 text-sm leading-6 text-stone-700"
+          style={{ backgroundColor: `${branding.accent_color}18`, borderColor: branding.accent_color }}
         >
           {content.intro_notes}
         </p>
@@ -549,12 +551,13 @@ function ReportPreview({ draft }: { draft: Draft }) {
           />
         ) : null}
       </div>
-      <footer className="mt-8 border-t pt-3 text-xs text-stone-500">
+      <footer className="mt-8 border-t pt-4 text-xs leading-5 text-stone-500" style={{ borderColor: `${branding.primary_color}33` }}>
         {content.footer_text || "Prepared with Northstar DISC"}
         {content.disclaimer ? (
           <p className="mt-2">{content.disclaimer}</p>
         ) : null}
       </footer>
+      </div>
     </article>
   );
 }
@@ -569,11 +572,12 @@ function PreviewSection({
 }) {
   return (
     <section
-      className="rounded-xl border-l-4 bg-stone-50 p-3"
-      style={{ borderColor: color }}
+      className="rounded-xl border bg-stone-50 p-4 shadow-sm"
+      style={{ borderColor: `${color}55`, borderLeft: `5px solid ${color}`, background: `linear-gradient(90deg, ${color}0d, #fffdfa 38%)` }}
     >
-      <h4 className="font-semibold">{title}</h4>
-      <p className="mt-1 text-sm text-stone-600">{text}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[.18em]" style={{ color }}>Executive insight</p>
+      <h4 className="mt-1 text-base font-semibold text-stone-900">{title}</h4>
+      <p className="mt-2 text-sm leading-6 text-stone-600">{text}</p>
     </section>
   );
 }
