@@ -1,7 +1,8 @@
 import type { DiscScoreErrorResponse, DiscScoreRequest, DiscScoreResponse } from '../src/types/disc.js'
 import { buildDiscScoreResult } from '../src/lib/discScoring.js'
+import { createNodeHandler } from '../server/vercel.js'
 
-export default async function handler(request: Request): Promise<Response> {
+async function handleRequest(request: Request): Promise<Response> {
   try {
     if (request.method !== 'POST') {
       return jsonResponse({ success: false, error: 'Method not allowed.' }, 405)
@@ -21,6 +22,8 @@ export default async function handler(request: Request): Promise<Response> {
     return jsonResponse({ success: false, error: message }, 400)
   }
 }
+
+export default createNodeHandler(handleRequest)
 
 function jsonResponse(payload: DiscScoreResponse | DiscScoreErrorResponse, status: number) {
   return new Response(JSON.stringify(payload), {

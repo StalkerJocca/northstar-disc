@@ -1,7 +1,8 @@
 import Stripe from 'stripe'
 import { getAuthenticatedUser, getSupabaseAdmin } from '../server/supabase.js'
+import { createNodeHandler } from '../server/vercel.js'
 
-export default async function handler(request: Request): Promise<Response> {
+async function handleRequest(request: Request): Promise<Response> {
   if (request.method !== 'POST') return Response.json({ error: 'Method not allowed.' }, { status: 405 })
   const action = new URL(request.url).searchParams.get('action'); const user = await getAuthenticatedUser(request)
   if (!user) return Response.json({ error: 'Authentication is required.' }, { status: 401 })
@@ -40,3 +41,5 @@ export default async function handler(request: Request): Promise<Response> {
   }
   return Response.json({ error: 'Unknown coach action.' }, { status: 400 })
 }
+
+export default createNodeHandler(handleRequest)

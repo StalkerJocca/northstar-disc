@@ -30,7 +30,7 @@ import { downloadExecutivePdf } from './services/export/executivePdf'
 import { downloadFreePdf } from './services/export/freePdf'
 import { downloadProfileJson } from './services/export/profileJson'
 import { memberReturnUrl, readInvite } from './lib/teamInvite'
-import { getStoredEnterpriseLicense, getStoredExecutivePurchase, startEnterpriseCheckout, startExecutiveCheckout, verifyEnterpriseLicense, verifyExecutivePurchase } from './lib/payments'
+import { getEntitlement, startEnterpriseCheckout, startExecutiveCheckout } from './lib/payments'
 import { defaultPageTitle, defaultPageDescription, defaultOgImage, parseProfileCode } from './lib/seo'
 import type { DiscScoreResponse, TraitKey } from './types/disc'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
@@ -179,12 +179,11 @@ function AppContent() {
   const [isStartingCheckout, setIsStartingCheckout] = useState(false)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [executiveUnlocked, setExecutiveUnlocked] = useState(false)
-  const [pendingExecutiveDownload, setPendingExecutiveDownload] = useState(false)
   const [whiteLabelModalOpen, setWhiteLabelModalOpen] = useState(false)
   const [enterprisePaywallOpen, setEnterprisePaywallOpen] = useState(false)
   const [isStartingEnterpriseCheckout, setIsStartingEnterpriseCheckout] = useState(false)
   const [enterpriseCheckoutError, setEnterpriseCheckoutError] = useState<string | null>(null)
-  const [teamHubOpen, setTeamHubOpen] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('team_session_id'))
+  const [teamHubOpen, setTeamHubOpen] = useState(false)
   const [teamInvite] = useState(() => typeof window !== 'undefined' ? readInvite() : null)
   const [teamResponseUrl, setTeamResponseUrl] = useState<string | null>(null)
   const [consent, setConsent] = useState<'undecided' | 'essential' | 'all'>(readStoredConsent)
@@ -276,42 +275,12 @@ function AppContent() {
   }
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const returnedSession = params.get('pro_session_id')
-    const sessionId = returnedSession ?? getStoredExecutivePurchase()
-    if (!sessionId) return
-    void verifyExecutivePurchase(sessionId).then((paid) => {
-      if (!paid) return
-      setExecutiveUnlocked(true)
-      if (returnedSession) {
-        params.delete('pro_session_id')
-        window.history.replaceState({}, '', `${window.location.pathname}${params.size ? `?${params.toString()}` : ''}${window.location.hash}`)
-        setPendingExecutiveDownload(true)
-      }
-    })
-  }, [])
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const returnedSession = params.get('enterprise_session_id')
-    const sessionId = returnedSession ?? getStoredEnterpriseLicense()
-    if (!sessionId) return
-    void verifyEnterpriseLicense(sessionId).then((licensed) => {
-      if (!licensed) return
-      setEnterpriseLicensed(true)
-      if (returnedSession) {
-        params.delete('enterprise_session_id')
-        window.history.replaceState({}, '', `${window.location.pathname}${params.size ? `?${params.toString()}` : ''}${window.location.hash}`)
-        setWhiteLabelModalOpen(true)
-      }
-    })
-  }, [])
-
-  useEffect(() => {
-    if (!pendingExecutiveDownload || !executiveUnlocked || !profile) return
-    setPendingExecutiveDownload(false)
-    void generateExecutivePdf()
-  }, [executiveUnlocked, pendingExecutiveDownload, profile, generateExecutivePdf])
+    if (!user) return
+    void getEntitlement().then((plan) => {
+      setExecutiveUnlocked(plan === 'executive' || plan === 'team' || plan === 'enterprise')
+      setEnterpriseLicensed(plan === 'enterprise')
+    }).catch((error) => console.warn('Unable to retrieve billing entitlement:', error))
+  }, [user])
 
   const submitAssessment = async (finalAnswers: string[]) => {
     setIsScoring(true)

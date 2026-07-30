@@ -1,13 +1,12 @@
 import Stripe from 'stripe'
 import { getAuthenticatedUser, getSupabaseAdmin } from '../server/supabase.js'
+import { createNodeHandler } from '../server/vercel.js'
 
 type Product = 'executive' | 'team' | 'enterprise'
 type PaymentPayload = { action?: unknown; product?: unknown; profileCode?: unknown }
 type CheckoutConfiguration =
   | { error: Response }
   | { product: Product; config: { priceEnvironment: string; metadataProduct: string; mode: 'payment' | 'subscription' }; secretKey: string; priceId: string }
-type VercelRequest = { method?: string; url?: string; headers: Record<string, string | string[] | undefined>; body?: unknown }
-type VercelResponse = { status: (statusCode: number) => VercelResponse; setHeader: (name: string, value: string) => void; end: (body?: string) => void }
 
 const products: Record<Product, { priceEnvironment: string; metadataProduct: string; mode: 'payment' | 'subscription' }> = {
   executive: { priceEnvironment: 'STRIPE_EXECUTIVE_REPORT_PRICE_ID', metadataProduct: 'northstar_executive_report', mode: 'payment' },
@@ -17,18 +16,6 @@ const products: Record<Product, { priceEnvironment: string; metadataProduct: str
 
 const jsonError = (error: string, status: number, code?: string, details?: string) => Response.json({ error, ...(details ? { details } : {}), ...(code ? { code } : {}) }, { status })
 
-export default async function handler(request: VercelRequest, response: VercelResponse): Promise<void> {
-  try {
-    const webRequest = toWebRequest(request)
-    const webResponse = await handleRequest(webRequest)
-    await sendResponse(response, webResponse)
-  } catch (error) {
-    console.error('[Checkout API Error]:', error)
-    response.setHeader('content-type', 'application/json; charset=utf-8')
-    response.status(500).end(JSON.stringify({ error: 'Checkout configuration error', details: 'The payment handler could not process this request.' }))
-  }
-}
-
 export async function handleRequest(request: Request): Promise<Response> {
   try {
     const url = new URL(request.url)
@@ -37,6 +24,7 @@ export async function handleRequest(request: Request): Promise<Response> {
     const product = getProduct(stringParameter(url.searchParams.get('product')) ?? stringParameter(body.product))
 
     if (action === 'verify') return verifyPurchase(request, url, product)
+    if (action === 'entitlements') return getEntitlements(request)
     if (request.method !== 'POST') return jsonError('Method not allowed.', 405)
     if (action === 'checkout') return createCheckout(request, url, product, body)
     if (action === 'portal') return createCustomerPortal(request)
@@ -47,25 +35,7 @@ export async function handleRequest(request: Request): Promise<Response> {
   }
 }
 
-function toWebRequest(request: VercelRequest): Request {
-  const headers = new Headers()
-  for (const [name, value] of Object.entries(request.headers)) {
-    if (typeof value === 'string') headers.set(name, value)
-    else if (Array.isArray(value)) headers.set(name, value.join(', '))
-  }
-  const forwardedHost = headers.get('x-forwarded-host') ?? headers.get('host')
-  const forwardedProtocol = headers.get('x-forwarded-proto')?.split(',')[0] ?? 'https'
-  const host = forwardedHost ?? process.env.VERCEL_URL ?? 'localhost'
-  const baseUrl = `${forwardedProtocol}://${host}`
-  const body = request.method === 'GET' || request.method === 'HEAD' || request.body === undefined ? undefined : typeof request.body === 'string' ? request.body : JSON.stringify(request.body)
-  if (body && !headers.has('content-type')) headers.set('content-type', 'application/json')
-  return new Request(new URL(request.url ?? '/', baseUrl), { method: request.method ?? 'GET', headers, body })
-}
-
-async function sendResponse(response: VercelResponse, webResponse: Response): Promise<void> {
-  webResponse.headers.forEach((value, name) => response.setHeader(name, value))
-  response.status(webResponse.status).end(await webResponse.text())
-}
+export default createNodeHandler(handleRequest)
 
 async function authenticate(request: Request) {
   try {
@@ -173,18 +143,64 @@ async function verifyPurchase(request: Request, url: URL, product: Product | nul
   if (request.method !== 'GET') return Response.json({ paid: false }, { status: 405 })
   const sessionId = url.searchParams.get('session_id'); const secretKey = process.env.STRIPE_SECRET_KEY
   if (!product || !sessionId || !secretKey) return Response.json({ paid: false }, { status: 400 })
+  const user = await authenticate(request)
+  if (!user) return jsonError('Authentication is required to verify a purchase.', 401, 'AUTHENTICATION_REQUIRED')
   const priceId = process.env[products[product].priceEnvironment]
   if (!priceId) return Response.json({ paid: false }, { status: 400 })
   try {
     const stripe = new Stripe(secretKey)
     const session = await stripe.checkout.sessions.retrieve(sessionId, { expand: product === 'enterprise' ? ['line_items', 'subscription'] : ['line_items'] })
+    const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id
+    const ownsClientReference = session.client_reference_id === user.id
+    const ownsCustomer = customerId ? await userOwnsStripeCustomer(user.id, customerId) : false
+    if (!ownsClientReference && !ownsCustomer) {
+      console.error('Stripe purchase verification rejected due to user mismatch.', { product, sessionId, expectedUserId: user.id, sessionUserId: session.client_reference_id })
+      return jsonError('This checkout session does not belong to the signed-in account.', 403, 'CHECKOUT_SESSION_USER_MISMATCH')
+    }
     const hasExpectedPrice = session.line_items?.data.some((item) => item.price?.id === priceId) ?? false
-    if (product !== 'enterprise') return Response.json({ paid: session.payment_status === 'paid' && hasExpectedPrice })
+    if (product !== 'enterprise') {
+      const paid = session.payment_status === 'paid' && hasExpectedPrice && await hasConfirmedEntitlement(user.id, product, session.id)
+      return Response.json({ paid })
+    }
     const subscription = typeof session.subscription === 'object' && session.subscription ? session.subscription : null
-    return Response.json({ paid: hasExpectedPrice && subscription?.status === 'active' })
+    const paid = hasExpectedPrice && subscription?.status === 'active' && await hasConfirmedEntitlement(user.id, product, session.id)
+    return Response.json({ paid })
   } catch (error) {
     console.error('Stripe purchase verification failed.', { product, error: error instanceof Error ? error.message : 'Unknown error' })
     return Response.json({ paid: false }, { status: 500 })
+  }
+}
+
+async function userOwnsStripeCustomer(userId: string, customerId: string): Promise<boolean> {
+  const { data, error } = await getSupabaseAdmin().from('subscriptions').select('user_id').eq('user_id', userId).eq('stripe_customer_id', customerId).limit(1).maybeSingle()
+  if (error) throw error
+  return Boolean(data)
+}
+
+async function hasConfirmedEntitlement(userId: string, product: Product, sessionId: string): Promise<boolean> {
+  const { data, error } = await getSupabaseAdmin()
+    .from('subscriptions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('stripe_checkout_session_id', sessionId)
+    .eq('plan_type', product)
+    .in('status', product === 'enterprise' ? ['active', 'trialing'] : ['paid'])
+    .maybeSingle()
+  if (error) throw error
+  return Boolean(data)
+}
+
+async function getEntitlements(request: Request): Promise<Response> {
+  if (request.method !== 'GET') return jsonError('Method not allowed.', 405)
+  const user = await authenticate(request)
+  if (!user) return jsonError('Authentication is required.', 401, 'AUTHENTICATION_REQUIRED')
+  try {
+    const { data, error } = await getSupabaseAdmin().from('users').select('entitlement_plan, entitlement_status').eq('id', user.id).maybeSingle()
+    if (error) throw error
+    return Response.json({ plan: data?.entitlement_plan ?? 'free', status: data?.entitlement_status ?? 'inactive' })
+  } catch (error) {
+    console.error('Entitlement lookup failed.', { error: error instanceof Error ? error.message : 'Unknown error' })
+    return jsonError('Unable to retrieve entitlements.', 500, 'ENTITLEMENT_LOOKUP_FAILED')
   }
 }
 
