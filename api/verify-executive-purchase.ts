@@ -1,6 +1,7 @@
 import Stripe from 'stripe'
 
-export async function GET(request: Request) {
+export default async function handler(request: Request) {
+  if (request.method !== 'GET') return Response.json({ paid: false }, { status: 405 })
   const secretKey = process.env.STRIPE_SECRET_KEY
   const priceId = process.env.STRIPE_EXECUTIVE_REPORT_PRICE_ID
   const sessionId = new URL(request.url).searchParams.get('session_id')

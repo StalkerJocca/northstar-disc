@@ -21,7 +21,8 @@ async function syncSubscription(input: { userId: string; customerId: string | nu
   await refreshEntitlement(input.userId)
 }
 
-export async function POST(request: Request) {
+export default async function handler(request: Request) {
+  if (request.method !== 'POST') return Response.json({ error: 'Method not allowed.' }, { status: 405 })
   const secretKey = process.env.STRIPE_SECRET_KEY; const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET; const signature = request.headers.get('stripe-signature')
   if (!secretKey || !webhookSecret || !signature) return Response.json({ error: 'Webhook configuration is missing.' }, { status: 400 })
   let event: Stripe.Event

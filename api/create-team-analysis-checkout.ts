@@ -1,7 +1,8 @@
 import Stripe from 'stripe'
 import { getAuthenticatedUser } from './supabase.js'
 
-export async function POST(request: Request) {
+export default async function handler(request: Request) {
+  if (request.method !== 'POST') return Response.json({ error: 'Method not allowed.' }, { status: 405 })
   const secretKey = process.env.STRIPE_SECRET_KEY
   const priceId = process.env.STRIPE_TEAM_ANALYSIS_PRICE_ID
   if (!secretKey || !priceId) return Response.json({ error: 'Stripe team analysis checkout is not configured.' }, { status: 503 })
