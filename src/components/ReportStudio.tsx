@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import {
@@ -38,6 +38,8 @@ export default function ReportStudio({ onBack }: { onBack: () => void }) {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [exports, setExports] = useState<ReportExportRecord[]>([]);
+  const [logoFileName, setLogoFileName] = useState("");
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const headers = async () => {
     const {
       data: { session },
@@ -168,6 +170,7 @@ export default function ReportStudio({ onBack }: { onBack: () => void }) {
         ...draft,
         branding: { ...draft.branding, logo_url: data.signedUrl },
       });
+      setLogoFileName(file.name);
       setMessage("Logo uploaded. Save the template to keep it.");
     } catch (error) {
       setMessage(
@@ -176,6 +179,12 @@ export default function ReportStudio({ onBack }: { onBack: () => void }) {
     } finally {
       setBusy(false);
     }
+  };
+  const removeLogo = () => {
+    setDraft({ ...draft, branding: { ...draft.branding, logo_url: null } });
+    setLogoFileName("");
+    if (logoInputRef.current) logoInputRef.current.value = "";
+    setMessage("Logo removed. Save the template to keep this change.");
   };
   const queueExport = async () => {
     if (!draft.id) {
@@ -336,20 +345,27 @@ export default function ReportStudio({ onBack }: { onBack: () => void }) {
                 <option value="modern">Modern</option>
               </select>
             </label>
-            <label className="mt-3 block text-sm">
-              Logo upload (PNG or JPEG, max. 2 MB)
+            <div className="mt-4">
+              <p className="text-sm font-medium">Organization logo</p>
+              <p className="mt-1 text-xs text-stone-500">PNG or JPEG, max. 2 MB</p>
               <input
+                ref={logoInputRef}
                 type="file"
                 accept="image/png,image/jpeg"
                 onChange={(event) => void uploadLogo(event.target.files?.[0])}
-                className="mt-1 block text-sm"
+                className="hidden"
               />
               {draft.branding.logo_url ? (
-                <span className="mt-1 block text-xs text-stone-500">
-                  Logo uploaded — it appears in the live preview and exported PDF.
-                </span>
-              ) : null}
-            </label>
+                <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border bg-stone-50 p-3">
+                  <img src={draft.branding.logo_url} alt="Uploaded organization logo" className="h-11 w-16 rounded-lg bg-white object-contain p-1" />
+                  <span className="min-w-24 flex-1 truncate text-xs text-stone-600">{logoFileName || "Organization logo uploaded"}</span>
+                  <button type="button" onClick={() => logoInputRef.current?.click()} className="rounded-full border bg-white px-3 py-1.5 text-xs">Change Logo</button>
+                  <button type="button" onClick={removeLogo} className="rounded-full px-3 py-1.5 text-xs text-red-700">Remove</button>
+                </div>
+              ) : (
+                <button type="button" onClick={() => logoInputRef.current?.click()} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-stone-300 bg-stone-50 px-4 py-5 text-sm font-medium text-stone-700 hover:border-stone-400 hover:bg-white"><span aria-hidden="true" className="text-lg">↑</span> Upload Organization Logo</button>
+              )}
+            </div>
           </fieldset>
           <fieldset className="rounded-2xl border p-4">
             <legend className="px-2 font-medium">

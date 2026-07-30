@@ -392,10 +392,10 @@ async function renderPreviewPdf(
       font,
       color: muted,
     });
-  drawExpandedInsightsPage(document, font, bold, primary, accent, report, content, string(branding.typography) === "serif");
+  await drawExpandedInsightsPage(document, font, bold, primary, accent, report, content, string(branding.typography) === "serif", string(branding.logo_url));
   return await document.save();
 }
-function drawExpandedInsightsPage(
+async function drawExpandedInsightsPage(
   document: PDFDocument,
   font: PDFFont,
   bold: PDFFont,
@@ -404,6 +404,7 @@ function drawExpandedInsightsPage(
   report: Record<string, unknown> | null,
   content: Record<string, unknown>,
   serif: boolean,
+  logoUrl: string,
 ) {
   const page = document.addPage([612, 792]);
   const muted = rgb(0.35, 0.33, 0.3);
@@ -411,6 +412,7 @@ function drawExpandedInsightsPage(
   page.drawRectangle({ x: 42, y: 744, width: 528, height: 7, color: primary });
   page.drawText("NORTHSTAR DISC", { x: 42, y: 715, size: 10, font: bold, color: primary });
   page.drawText("Deep leadership insights", { x: 42, y: 678, size: 22, font: bold, color: primary });
+  await drawLogo(document, page, logoUrl);
   const profile = object(report?.disc_scores);
   const primaryTrait = string(profile.primaryTrait) || "your primary DISC style";
   const insights: Array<[string, string, ReturnType<typeof rgb>]> = [
@@ -421,6 +423,7 @@ function drawExpandedInsightsPage(
   ];
   let y = 642;
   for (const [title, text, color] of insights) {
+    if (!title.trim() || !text.trim()) continue;
     const lines = wrapLines(text, font, 10, 470).slice(0, 4);
     const height = 52 + lines.length * 13;
     drawReportCard(page, "DEEP INSIGHT", title, lines, y, height, font, bold, color, muted, cardFill);
@@ -498,19 +501,31 @@ function withOpacity(color: ReturnType<typeof rgb>, opacity: number) {
   );
 }
 async function drawLogo(document: PDFDocument, page: PDFPage, url: string) {
-  if (!url || !/^https?:\/\//i.test(url)) return;
+  if (!url) return;
   try {
-    const response = await fetch(url);
-    if (!response.ok) return;
-    const bytes = await response.arrayBuffer();
-    const image = /image\/png/i.test(response.headers.get("content-type") ?? "")
-      ? await document.embedPng(bytes)
-      : await document.embedJpg(bytes);
+    const source = url.startsWith("data:") ? decodeDataImage(url) : await fetchRemoteImage(url);
+    if (!source) return;
+    const image = source.mime === "image/png"
+      ? await document.embedPng(source.bytes)
+      : await document.embedJpg(source.bytes);
     const dimensions = image.scaleToFit(100, 42);
     page.drawImage(image, { x: 570 - dimensions.width, y: 674, ...dimensions });
   } catch {
     // A logo must never prevent a report from being generated.
   }
+}
+async function fetchRemoteImage(url: string) {
+  if (!/^https?:\/\//i.test(url)) return null;
+  const response = await fetch(url);
+  if (!response.ok) return null;
+  const mime = response.headers.get("content-type")?.split(";")[0].toLowerCase();
+  if (mime !== "image/png" && mime !== "image/jpeg") return null;
+  return { mime, bytes: await response.arrayBuffer() };
+}
+function decodeDataImage(url: string) {
+  const match = /^data:(image\/(?:png|jpeg));base64,([a-z0-9+/=]+)$/i.exec(url);
+  if (!match) return null;
+  return { mime: match[1].toLowerCase(), bytes: Uint8Array.from(Buffer.from(match[2], "base64")) };
 }
 function toRgb(value: string) { const hex = /^#([0-9a-f]{6})$/i.exec(value)?.[1] ?? "8b5e3c"; return rgb(Number.parseInt(hex.slice(0, 2), 16) / 255, Number.parseInt(hex.slice(2, 4), 16) / 255, Number.parseInt(hex.slice(4, 6), 16) / 255) }
 export default createNodeHandler(handleRequest);
