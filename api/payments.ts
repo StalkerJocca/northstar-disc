@@ -1,5 +1,4 @@
-import Stripe from 'stripe'
-import { getAuthenticatedUser, getSupabaseAdmin } from '../server/supabase.js'
+import type Stripe from 'stripe'
 
 type Product = 'executive' | 'team' | 'enterprise'
 type PaymentPayload = { action?: unknown; product?: unknown; profileCode?: unknown }
@@ -26,6 +25,21 @@ export default async function handler(request: Request): Promise<Response> {
   if (action === 'checkout') return createCheckout(request, url, product, body)
   if (action === 'portal') return createCustomerPortal(request)
   return jsonError('Unknown payment action.', 400, 'UNKNOWN_ACTION')
+}
+
+async function getStripeClient(secretKey: string): Promise<Stripe> {
+  const { default: StripeClient } = await import('stripe')
+  return new StripeClient(secretKey)
+}
+
+async function authenticate(request: Request) {
+  try {
+    const { getAuthenticatedUser } = await import('../server/supabase.js')
+    return await getAuthenticatedUser(request)
+  } catch (error) {
+    console.error('Unable to initialize Supabase authentication for payment request.', { error: error instanceof Error ? error.message : 'Unknown error' })
+    return null
+  }
 }
 
 async function parseJsonBody(request: Request): Promise<PaymentPayload> {
@@ -73,14 +87,15 @@ async function createCheckout(request: Request, url: URL, product: Product | nul
   if ('error' in configuration) return configuration.error
   const { config, priceId, secretKey } = configuration
 
-  const user = await getAuthenticatedUser(request)
+  const user = await authenticate(request)
   if (!user) return jsonError('Please sign in before checkout.', 401, 'AUTHENTICATION_REQUIRED')
 
   const metadata: Record<string, string> = { product: config.metadataProduct, user_id: user.id, price_id: priceId }
   if (product === 'executive') metadata.profileCode = typeof body.profileCode === 'string' && /^[DISC]{2}$/.test(body.profileCode) ? body.profileCode : ''
 
   try {
-    const session = await new Stripe(secretKey).checkout.sessions.create({
+    const stripe = await getStripeClient(secretKey)
+    const session = await stripe.checkout.sessions.create({
       mode: config.mode,
       line_items: [{ price: priceId, quantity: 1 }],
       client_reference_id: user.id,
@@ -94,7 +109,7 @@ async function createCheckout(request: Request, url: URL, product: Product | nul
     }
     return Response.json({ url: session.url })
   } catch (error) {
-    const stripeError = error instanceof Stripe.errors.StripeError ? error : null
+    const stripeError = error && typeof error === 'object' ? error as { type?: string; statusCode?: number; requestId?: string } : null
     console.error('Stripe checkout session creation failed.', {
       product,
       priceEnvironment: config.priceEnvironment,
@@ -115,21 +130,29 @@ async function verifyPurchase(request: Request, url: URL, product: Product | nul
   if (!product || !sessionId || !secretKey) return Response.json({ paid: false }, { status: 400 })
   const priceId = process.env[products[product].priceEnvironment]
   if (!priceId) return Response.json({ paid: false }, { status: 400 })
-  const session = await new Stripe(secretKey).checkout.sessions.retrieve(sessionId, { expand: product === 'enterprise' ? ['line_items', 'subscription'] : ['line_items'] })
-  const hasExpectedPrice = session.line_items?.data.some((item) => item.price?.id === priceId) ?? false
-  if (product !== 'enterprise') return Response.json({ paid: session.payment_status === 'paid' && hasExpectedPrice })
-  const subscription = typeof session.subscription === 'object' && session.subscription ? session.subscription : null
-  return Response.json({ paid: hasExpectedPrice && subscription?.status === 'active' })
+  try {
+    const stripe = await getStripeClient(secretKey)
+    const session = await stripe.checkout.sessions.retrieve(sessionId, { expand: product === 'enterprise' ? ['line_items', 'subscription'] : ['line_items'] })
+    const hasExpectedPrice = session.line_items?.data.some((item) => item.price?.id === priceId) ?? false
+    if (product !== 'enterprise') return Response.json({ paid: session.payment_status === 'paid' && hasExpectedPrice })
+    const subscription = typeof session.subscription === 'object' && session.subscription ? session.subscription : null
+    return Response.json({ paid: hasExpectedPrice && subscription?.status === 'active' })
+  } catch (error) {
+    console.error('Stripe purchase verification failed.', { product, error: error instanceof Error ? error.message : 'Unknown error' })
+    return Response.json({ paid: false }, { status: 500 })
+  }
 }
 
 async function createCustomerPortal(request: Request): Promise<Response> {
-  const user = await getAuthenticatedUser(request); const secretKey = process.env.STRIPE_SECRET_KEY
+  const user = await authenticate(request); const secretKey = process.env.STRIPE_SECRET_KEY
   if (!user) return jsonError('Authentication is required.', 401, 'AUTHENTICATION_REQUIRED')
   if (!secretKey) return jsonError('Billing portal is not configured.', 503, 'STRIPE_CONFIGURATION_INVALID')
-  const { data } = await getSupabaseAdmin().from('subscriptions').select('stripe_customer_id').eq('user_id', user.id).not('stripe_customer_id', 'is', null).limit(1).maybeSingle()
-  if (!data?.stripe_customer_id) return jsonError('No billing account was found.', 404)
   try {
-    const session = await new Stripe(secretKey).billingPortal.sessions.create({ customer: data.stripe_customer_id, return_url: new URL(request.url).origin })
+    const { getSupabaseAdmin } = await import('../server/supabase.js')
+    const { data } = await getSupabaseAdmin().from('subscriptions').select('stripe_customer_id').eq('user_id', user.id).not('stripe_customer_id', 'is', null).limit(1).maybeSingle()
+    if (!data?.stripe_customer_id) return jsonError('No billing account was found.', 404)
+    const stripe = await getStripeClient(secretKey)
+    const session = await stripe.billingPortal.sessions.create({ customer: data.stripe_customer_id, return_url: new URL(request.url).origin })
     return Response.json({ url: session.url })
   } catch (error) {
     console.error('Stripe billing portal creation failed.', { error: error instanceof Error ? error.message : 'Unknown error' })
