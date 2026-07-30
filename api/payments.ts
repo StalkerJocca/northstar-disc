@@ -12,19 +12,24 @@ const products: Record<Product, { priceEnvironment: string; metadataProduct: str
   enterprise: { priceEnvironment: 'STRIPE_ENTERPRISE_WHITE_LABEL_PRICE_ID', metadataProduct: 'northstar_enterprise_white_label', mode: 'subscription' },
 }
 
-const jsonError = (error: string, status: number, code?: string) => Response.json({ error, ...(code ? { code } : {}) }, { status })
+const jsonError = (error: string, status: number, code?: string, details?: string) => Response.json({ error, ...(details ? { details } : {}), ...(code ? { code } : {}) }, { status })
 
 export default async function handler(request: Request): Promise<Response> {
-  const url = new URL(request.url)
-  const body = request.method === 'POST' ? await parseJsonBody(request) : {}
-  const action = stringParameter(url.searchParams.get('action')) ?? stringParameter(body.action)
-  const product = getProduct(stringParameter(url.searchParams.get('product')) ?? stringParameter(body.product))
+  try {
+    const url = new URL(request.url)
+    const body = request.method === 'POST' ? await parseJsonBody(request) : {}
+    const action = stringParameter(url.searchParams.get('action')) ?? stringParameter(body.action)
+    const product = getProduct(stringParameter(url.searchParams.get('product')) ?? stringParameter(body.product))
 
-  if (action === 'verify') return verifyPurchase(request, url, product)
-  if (request.method !== 'POST') return jsonError('Method not allowed.', 405)
-  if (action === 'checkout') return createCheckout(request, url, product, body)
-  if (action === 'portal') return createCustomerPortal(request)
-  return jsonError('Unknown payment action.', 400, 'UNKNOWN_ACTION')
+    if (action === 'verify') return verifyPurchase(request, url, product)
+    if (request.method !== 'POST') return jsonError('Method not allowed.', 405)
+    if (action === 'checkout') return createCheckout(request, url, product, body)
+    if (action === 'portal') return createCustomerPortal(request)
+    return jsonError('Unknown payment action.', 400, 'UNKNOWN_ACTION', 'Use checkout, verify, or portal.')
+  } catch (error) {
+    console.error('[Checkout API Error]:', error)
+    return jsonError('Checkout configuration error', 500, 'PAYMENTS_HANDLER_FAILED', 'The payment handler could not be initialized. Check Vercel Function Logs.')
+  }
 }
 
 async function getStripeClient(secretKey: string): Promise<Stripe> {
@@ -64,22 +69,22 @@ function getProduct(value: string | null): Product | null {
 function checkoutConfiguration(product: Product | null): CheckoutConfiguration {
   if (!product) {
     console.error('Stripe checkout rejected: invalid or missing product.', { product })
-    return { error: jsonError('Stripe configuration missing or invalid Price ID.', 400, 'INVALID_PRODUCT') }
+    return { error: jsonError('Checkout configuration error', 400, 'INVALID_PRODUCT', 'product must be executive, team, or enterprise.') }
   }
   const config = products[product]
   const secretKey = process.env.STRIPE_SECRET_KEY?.trim()
   const priceId = process.env[config.priceEnvironment]?.trim()
-  if (!secretKey || !priceId || !priceId.startsWith('price_')) {
+  const missingKeys = [!secretKey ? 'STRIPE_SECRET_KEY' : null, !priceId ? config.priceEnvironment : null].filter((key): key is string => Boolean(key))
+  if (missingKeys.length || !priceId?.startsWith('price_')) {
     console.error('Stripe checkout configuration is incomplete or invalid.', {
       product,
-      secretKeyConfigured: Boolean(secretKey),
-      priceEnvironment: config.priceEnvironment,
-      priceIdConfigured: Boolean(priceId),
+      missingKeys,
       priceIdHasExpectedPrefix: Boolean(priceId?.startsWith('price_')),
     })
-    return { error: jsonError('Stripe configuration missing or invalid Price ID.', 400, 'STRIPE_CONFIGURATION_INVALID') }
+    const details = missingKeys.length ? `Missing required environment variable(s): ${missingKeys.join(', ')}.` : `${config.priceEnvironment} must be a Stripe Price ID beginning with price_.`
+    return { error: jsonError('Checkout configuration error', 500, 'STRIPE_CONFIGURATION_INVALID', details) }
   }
-  return { product, config, secretKey, priceId }
+  return { product, config, secretKey: secretKey!, priceId: priceId! }
 }
 
 async function createCheckout(request: Request, url: URL, product: Product | null, body: PaymentPayload): Promise<Response> {
@@ -99,8 +104,8 @@ async function createCheckout(request: Request, url: URL, product: Product | nul
       mode: config.mode,
       line_items: [{ price: priceId, quantity: 1 }],
       client_reference_id: user.id,
-      success_url: `${url.origin}/checkout/success?product=${product}&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${url.origin}/checkout/cancel?product=${product}`,
+      success_url: `${applicationOrigin(url)}/checkout/success?product=${product}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${applicationOrigin(url)}/checkout/cancel?product=${product}`,
       metadata,
     })
     if (!session.url) {
@@ -119,9 +124,20 @@ async function createCheckout(request: Request, url: URL, product: Product | nul
       statusCode: stripeError?.statusCode,
       requestId: stripeError?.requestId,
     })
+    console.error('[Checkout API Error]:', error)
     const status = stripeError?.statusCode && stripeError.statusCode >= 400 && stripeError.statusCode < 500 ? 400 : 500
     return jsonError('Unable to create Stripe checkout session. Check the server logs for details.', status, 'STRIPE_CHECKOUT_FAILED')
   }
+}
+
+function applicationOrigin(requestUrl: URL): string {
+  const configuredOrigin = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? process.env.VITE_APP_URL
+  if (configuredOrigin) {
+    try { return new URL(configuredOrigin).origin } catch { console.error('Ignoring invalid configured application origin.', { configuredOrigin }) }
+  }
+  const vercelUrl = process.env.VERCEL_URL
+  if (vercelUrl) return new URL(vercelUrl.startsWith('http') ? vercelUrl : `https://${vercelUrl}`).origin
+  return requestUrl.origin
 }
 
 async function verifyPurchase(request: Request, url: URL, product: Product | null): Promise<Response> {
