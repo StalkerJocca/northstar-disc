@@ -4,6 +4,8 @@ import { getEntitlement, startTeamCheckout } from "../lib/payments";
 import { supabase } from "../lib/supabase";
 import TeamDynamicsHub from "./TeamDynamicsHub";
 import OrgWorkspace from "./OrgWorkspace";
+import ReportStudio from "./ReportStudio";
+import type { ReportTemplate } from "../types/reportStudio";
 
 type Status = "invited" | "completed" | "revoked" | "expired";
 type Client = {
@@ -21,8 +23,8 @@ type Client = {
   tags: string[];
   invite_sent_at: string | null;
 };
-type View = "roster" | "teams" | "organization";
-type ModalState = "invite" | "detail" | "confirm" | null;
+type View = "roster" | "teams" | "organization" | "report-studio";
+type ModalState = "invite" | "detail" | "confirm" | "report" | null;
 
 function CoachWorkspaceContent() {
   const { user, loading, configured, signOut } = useAuth();
@@ -42,6 +44,9 @@ function CoachWorkspaceContent() {
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [tags, setTags] = useState("");
+  const [reportTemplates, setReportTemplates] = useState<ReportTemplate[]>([]);
+  const [reportTemplateId, setReportTemplateId] = useState("");
+  const [reportBusy, setReportBusy] = useState(false);
   const load = async () => {
     if (!supabase || !user) return;
     const [clientResult, accountResult] = await Promise.all([
@@ -259,6 +264,46 @@ function CoachWorkspaceContent() {
     link.click();
     URL.revokeObjectURL(link.href);
   };
+  const openReportExport = async (client: Client) => {
+    if (!supabase || !client.assessment_id) return;
+    setSelected(client);
+    setReportTemplateId("");
+    setModal("report");
+    const { data, error } = await supabase
+      .from("report_templates")
+      .select("*")
+      .eq("coach_id", user?.id ?? "")
+      .order("is_default", { ascending: false })
+      .order("updated_at", { ascending: false });
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+    const templates = (data ?? []) as ReportTemplate[];
+    setReportTemplates(templates);
+    setReportTemplateId(templates.find((template) => template.is_default)?.id ?? templates[0]?.id ?? "");
+  };
+  const generateClientReport = async () => {
+    if (!supabase || !selected?.assessment_id || !reportTemplateId) return;
+    try {
+      setReportBusy(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch("/api/reports/studio?action=default", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token ?? ""}` },
+        body: JSON.stringify({ templateId: reportTemplateId, reportId: selected.assessment_id, recordExport: true }),
+      });
+      const result = (await response.json().catch(() => ({}))) as { error?: string; downloadUrl?: string };
+      if (!response.ok) throw new Error(result.error ?? "Unable to generate report.");
+      if (result.downloadUrl) window.open(result.downloadUrl, "_blank", "noopener,noreferrer");
+      setModal(null);
+      setMessage(`Customized report generated for ${selected.client_name}.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to generate report.");
+    } finally {
+      setReportBusy(false);
+    }
+  };
   const openTeams = () => {
     if (teamEntitled) setView("teams");
     else
@@ -321,6 +366,13 @@ function CoachWorkspaceContent() {
         >
           Organization
         </button>
+        <button
+          type="button"
+          onClick={() => setView("report-studio")}
+          className={`rounded-full px-4 py-2 text-sm ${view === "report-studio" ? "bg-stone-900 text-white" : ""}`}
+        >
+          Report Studio
+        </button>
       </nav>
       {view === "teams" ? (
         <div className="mt-5">
@@ -328,6 +380,8 @@ function CoachWorkspaceContent() {
         </div>
       ) : view === "organization" ? (
         <OrgWorkspace onBack={() => setView("roster")} />
+      ) : view === "report-studio" ? (
+        <ReportStudio onBack={() => setView("roster")} />
       ) : (
         <section className="mt-5 rounded-[2rem] border bg-white p-5">
           <div className="flex flex-wrap justify-between gap-3">
@@ -459,6 +513,15 @@ function CoachWorkspaceContent() {
                             </button>
                           </>
                         ) : null}
+                        {client.status === "completed" && client.assessment_id ? (
+                          <button
+                            type="button"
+                            onClick={() => void openReportExport(client)}
+                            className="underline"
+                          >
+                            Generate report
+                          </button>
+                        ) : null}
                         <button
                           type="button"
                           onClick={() => {
@@ -553,6 +616,33 @@ function CoachWorkspaceContent() {
             className="mt-4 w-full rounded-full bg-red-700 p-3 text-white"
           >
             Confirm
+          </button>
+        </Modal>
+      ) : null}
+      {modal === "report" ? (
+        <Modal title={`Generate report for ${selected?.client_name ?? "client"}`} onClose={() => setModal(null)}>
+          <p className="text-sm text-stone-600">
+            Choose the white-label template to use. The PDF is generated and stored server-side.
+          </p>
+          <select
+            value={reportTemplateId}
+            onChange={(event) => setReportTemplateId(event.target.value)}
+            className="mt-4 w-full rounded-xl border p-3"
+          >
+            {!reportTemplates.length ? <option value="">No templates available</option> : null}
+            {reportTemplates.map((template) => (
+              <option key={template.id} value={template.id}>
+                {template.name}{template.is_default ? " (Default)" : ""}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            disabled={reportBusy || !reportTemplateId}
+            onClick={() => void generateClientReport()}
+            className="mt-4 w-full rounded-full bg-stone-900 p-3 text-white disabled:opacity-50"
+          >
+            {reportBusy ? "Generating…" : "Generate and download PDF"}
           </button>
         </Modal>
       ) : null}
