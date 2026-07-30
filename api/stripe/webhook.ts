@@ -1,5 +1,5 @@
 import Stripe from 'stripe'
-import { getSupabaseAdmin } from '../supabase.js'
+import { getSupabaseAdmin } from '../../server/supabase.js'
 
 const planForPrice = (priceId: string | null) => priceId === process.env.STRIPE_ENTERPRISE_WHITE_LABEL_PRICE_ID ? 'enterprise' : priceId === process.env.STRIPE_TEAM_ANALYSIS_PRICE_ID ? 'team' : 'executive'
 const entitlementFor = (plan: string, status: string) => status === 'active' || status === 'paid' || status === 'trialing' ? plan : 'free'

@@ -783,7 +783,7 @@ function AppContent() {
         const inviteToken = new URLSearchParams(window.location.search).get('coach_invite')
         if (!reportId || !inviteToken) return
         const { data: { session } } = await supabase!.auth.getSession()
-        const response = await fetch('/api/complete-coach-invite', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token ?? ''}` }, body: JSON.stringify({ inviteToken, assessmentId: reportId }) })
+        const response = await fetch('/api/coach?action=complete', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token ?? ''}` }, body: JSON.stringify({ inviteToken, assessmentId: reportId }) })
         if (!response.ok) console.warn('Unable to link coach invitation:', await response.text())
       } catch (error) {
         console.warn('Unable to save report:', error)

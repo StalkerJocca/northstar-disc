@@ -17,12 +17,12 @@ async function startCheckout(endpoint: string, body?: object) {
 }
 
 export async function startExecutiveCheckout(primaryTrait?: TraitKey, secondaryTrait?: TraitKey) {
-  const url = await startCheckout('/api/create-executive-checkout', primaryTrait && secondaryTrait ? { profileCode: `${primaryTrait}${secondaryTrait}` } : undefined)
+  const url = await startCheckout('/api/payments?action=checkout&product=executive', primaryTrait && secondaryTrait ? { profileCode: `${primaryTrait}${secondaryTrait}` } : undefined)
   window.location.assign(url)
 }
 
 export async function verifyExecutivePurchase(sessionId: string) {
-  const response = await fetch(`/api/verify-executive-purchase?session_id=${encodeURIComponent(sessionId)}`)
+  const response = await fetch(`/api/payments?action=verify&product=executive&session_id=${encodeURIComponent(sessionId)}`)
   const body = await response.json() as { paid?: boolean }
   if (body.paid) window.localStorage.setItem(PURCHASE_STORAGE_KEY, sessionId)
   return Boolean(body.paid)
@@ -31,11 +31,11 @@ export async function verifyExecutivePurchase(sessionId: string) {
 export const getStoredExecutivePurchase = () => typeof window === 'undefined' ? null : window.localStorage.getItem(PURCHASE_STORAGE_KEY)
 
 export async function startTeamCheckout() {
-  window.location.assign(await startCheckout('/api/create-team-analysis-checkout'))
+  window.location.assign(await startCheckout('/api/payments?action=checkout&product=team'))
 }
 
 export async function verifyTeamPurchase(sessionId: string) {
-  const response = await fetch(`/api/verify-team-analysis-purchase?session_id=${encodeURIComponent(sessionId)}`)
+  const response = await fetch(`/api/payments?action=verify&product=team&session_id=${encodeURIComponent(sessionId)}`)
   const body = await response.json() as { paid?: boolean }
   if (body.paid) window.localStorage.setItem(TEAM_PURCHASE_STORAGE_KEY, sessionId)
   return Boolean(body.paid)
@@ -44,11 +44,11 @@ export async function verifyTeamPurchase(sessionId: string) {
 export const getStoredTeamPurchase = () => typeof window === 'undefined' ? null : window.localStorage.getItem(TEAM_PURCHASE_STORAGE_KEY)
 
 export async function startEnterpriseCheckout() {
-  window.location.assign(await startCheckout('/api/create-enterprise-checkout'))
+  window.location.assign(await startCheckout('/api/payments?action=checkout&product=enterprise'))
 }
 
 export async function verifyEnterpriseLicense(sessionId: string) {
-  const response = await fetch(`/api/verify-enterprise-purchase?session_id=${encodeURIComponent(sessionId)}`)
+  const response = await fetch(`/api/payments?action=verify&product=enterprise&session_id=${encodeURIComponent(sessionId)}`)
   const body = await response.json() as { paid?: boolean }
   if (body.paid) window.localStorage.setItem(ENTERPRISE_LICENSE_STORAGE_KEY, sessionId)
   return Boolean(body.paid)
