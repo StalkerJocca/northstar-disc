@@ -424,13 +424,16 @@ async function renderPreviewPdf(
   await drawLogo(document, page, string(branding.logo_url));
 
   page.drawText("Executive edition · Behavioral strategy and coaching brief", { x: 42, y: 658, size: 9, font, color: muted });
+  const footerTop = 94;
   let y = 634;
   const intro = string(content.intro_notes);
   if (intro) {
-    const introLines = wrapLines(intro, font, 10, 470, 2);
+    const introLines = wrapLines(intro, font, 10, 470, 6);
     const height = 50 + introLines.length * 13;
-    drawReportCard(page, "INTRODUCTION", "Executive introduction", introLines, y, height, font, bold, accent, muted);
-    y -= height + 14;
+    if (y - height >= footerTop) {
+      drawReportCard(page, "INTRODUCTION", "Executive introduction", introLines, y, height, font, bold, accent, muted);
+      y -= height + 14;
+    }
   }
   const reportSections: Array<[string, string, boolean]> = [
     [string(customHeaders.executive_summary) || "Executive summary", "A decisive, people-aware profile with practical leadership range.", sections.executive_summary === true],
@@ -444,7 +447,7 @@ async function renderPreviewPdf(
     if (!text) continue;
     const lines = wrapLines(text, font, 10, 470, 2);
     const height = 50 + lines.length * 13;
-    if (y - height < 105) break;
+    if (y - height < footerTop) break;
     const indicator = title === "Behavioral matrix" || title === "Team communication" ? accent : primary;
     drawReportCard(page, "EXECUTIVE INSIGHT", title, lines, y, height, font, bold, indicator, muted);
     y -= height + 12;
@@ -452,7 +455,7 @@ async function renderPreviewPdf(
   const footer = string(content.footer_text) || "Prepared with Northstar DISC";
   const disclaimer = string(content.disclaimer);
   drawReportFooter(page, footer, disclaimer, font, bold, primary, muted);
-  await drawExpandedInsightsPage(document, font, bold, primary, accent, report, content, string(branding.typography) === "serif", string(branding.logo_url));
+  await drawExpandedInsightsPage(document, font, bold, primary, accent, report, content, sections, customHeaders, string(branding.typography) === "serif", string(branding.logo_url));
   return await document.save();
 }
 async function drawExpandedInsightsPage(
@@ -463,6 +466,8 @@ async function drawExpandedInsightsPage(
   accent: ReturnType<typeof rgb>,
   report: Record<string, unknown> | null,
   content: Record<string, unknown>,
+  sections: Record<string, unknown>,
+  customHeaders: Record<string, unknown>,
   serif: boolean,
   logoUrl: string,
 ) {
@@ -474,17 +479,18 @@ async function drawExpandedInsightsPage(
   await drawLogo(document, page, logoUrl);
   const profile = object(report?.disc_scores);
   const primaryTrait = string(profile.primaryTrait) || "your primary DISC style";
-  const insights: Array<[string, string, ReturnType<typeof rgb>]> = [
-    ["Leadership style", `${primaryTrait} tendencies are strongest when priorities are clear, ownership is visible, and decisions balance pace with input from others.`, primary],
-    ["Ideal work environment", "The most effective environment combines clear outcomes, room for focused execution, and communication norms that make expectations explicit.", accent],
-    ["Motivators & triggers", "Meaningful progress, clarity, and recognition tend to energize performance. Ambiguity, prolonged friction, or unclear standards can create avoidable strain.", primary],
-    ["Actionable growth areas", string(content.executive_commentary) || "Use one deliberate pause before key decisions, ask for a complementary perspective, and turn insight into a specific weekly practice.", accent],
+  const insights: Array<[string, string, ReturnType<typeof rgb>, boolean]> = [
+    [string(customHeaders.executive_summary) || "Leadership style", `${primaryTrait} tendencies are strongest when priorities are clear, ownership is visible, and decisions balance pace with input from others.`, primary, sections.executive_summary === true],
+    [string(customHeaders.behavioral_matrix) || "Ideal work environment", "The most effective environment combines clear outcomes, room for focused execution, and communication norms that make expectations explicit.", accent, sections.behavioral_matrix === true],
+    [string(customHeaders.stress_profile) || "Motivators & triggers", "Meaningful progress, clarity, and recognition tend to energize performance. Ambiguity, prolonged friction, or unclear standards can create avoidable strain.", primary, sections.stress_profile === true],
+    [string(customHeaders.custom_notes) || "Actionable growth areas", string(content.executive_commentary), accent, sections.custom_notes === true],
   ];
   let y = 642;
-  for (const [title, text, color] of insights) {
-    if (!title.trim() || !text.trim()) continue;
+  for (const [title, text, color, enabled] of insights) {
+    if (!enabled || !title.trim() || !text.trim()) continue;
     const lines = wrapLines(text, font, 10, 470, 3);
     const height = 52 + lines.length * 13;
+    if (y - height < 94) break;
     drawReportCard(page, "DEEP INSIGHT", title, lines, y, height, font, bold, color, muted);
     y -= height + 14;
   }
@@ -534,7 +540,7 @@ function drawReportCard(
   bodyColor: ReturnType<typeof rgb>,
 ) {
   // Keep PDF cards visually aligned with the Studio PreviewSection component.
-  drawRoundedRectangle(page, 42, top - height, 528, height, 12, withOpacity(accent, 0.055), withOpacity(accent, 0.42));
+  drawRoundedRectangle(page, 42, top - height, 528, height, 12, withOpacity(accent, 0.075), withOpacity(accent, 0.33));
   drawRoundedRectangle(page, 42, top - height, 5, height, 3, accent);
   page.drawText(eyebrow, { x: 58, y: top - 14, size: 7, font: bold, color: accent });
   page.drawText(title, { x: 58, y: top - 29, size: 12, font: bold, color: rgb(0.22, 0.2, 0.18) });
@@ -568,23 +574,24 @@ function drawRoundedRectangle(
   const r = Math.min(radius, width / 2, height / 2);
   const curve = r * 0.55228475;
   const path = [
-    `M ${r} 0`,
-    `L ${width - r} 0`,
-    `C ${width - r + curve} 0 ${width} ${r - curve} ${width} ${r}`,
-    `L ${width} ${height - r}`,
-    `C ${width} ${height - r + curve} ${width - r + curve} ${height} ${width - r} ${height}`,
-    `L ${r} ${height}`,
-    `C ${r - curve} ${height} 0 ${height - r + curve} 0 ${height - r}`,
-    `L 0 ${r}`,
-    `C 0 ${r - curve} ${r - curve} 0 ${r} 0 Z`,
+    `M ${x + r} ${y}`,
+    `L ${x + width - r} ${y}`,
+    `C ${x + width - r + curve} ${y} ${x + width} ${y + r - curve} ${x + width} ${y + r}`,
+    `L ${x + width} ${y + height - r}`,
+    `C ${x + width} ${y + height - r + curve} ${x + width - r + curve} ${y + height} ${x + width - r} ${y + height}`,
+    `L ${x + r} ${y + height}`,
+    `C ${x + r - curve} ${y + height} ${x} ${y + height - r + curve} ${x} ${y + height - r}`,
+    `L ${x} ${y + r}`,
+    `C ${x} ${y + r - curve} ${x + r - curve} ${y} ${x + r} ${y} Z`,
   ].join(" ");
-  page.drawSvgPath(path, { x, y, color, borderColor, borderWidth: borderColor ? 0.7 : undefined });
+  page.drawSvgPath(path, { color, borderColor, borderWidth: borderColor ? 0.7 : undefined });
 }
 function withOpacity(color: ReturnType<typeof rgb>, opacity: number) {
+  const pageBackground = { red: 1, green: 250 / 255, blue: 245 / 255 };
   return rgb(
-    1 - (1 - color.red) * opacity,
-    1 - (1 - color.green) * opacity,
-    1 - (1 - color.blue) * opacity,
+    pageBackground.red * (1 - opacity) + color.red * opacity,
+    pageBackground.green * (1 - opacity) + color.green * opacity,
+    pageBackground.blue * (1 - opacity) + color.blue * opacity,
   );
 }
 async function drawLogo(document: PDFDocument, page: PDFPage, url: string) {
@@ -596,14 +603,20 @@ async function drawLogo(document: PDFDocument, page: PDFPage, url: string) {
       ? await document.embedPng(source.bytes)
       : await document.embedJpg(source.bytes);
     const dimensions = image.scaleToFit(112, 40);
-    page.drawImage(image, { x: 570 - dimensions.width, y: 682, ...dimensions });
+    page.drawImage(image, { x: 570 - dimensions.width, y: 686, ...dimensions });
   } catch {
     // A logo must never prevent a report from being generated.
   }
 }
 async function fetchRemoteImage(url: string) {
   if (!/^https?:\/\//i.test(url)) return null;
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    headers: {
+      Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+      "User-Agent": "Northstar-DISC-PDF-Renderer/1.0",
+    },
+    redirect: "follow",
+  });
   if (!response.ok) return null;
   const bytes = await response.arrayBuffer();
   const mime = detectImageMime(new Uint8Array(bytes));

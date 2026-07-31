@@ -637,10 +637,10 @@ function ReportPreview({ draft }: { draft: Draft }) {
         <h3 className="mt-2 text-3xl font-semibold leading-tight text-stone-900">Deep leadership insights</h3>
       </header>
       <div className="space-y-3 p-6">
-        <PreviewSection title="Leadership style" text="Your primary DISC tendencies are strongest when priorities are clear, ownership is visible, and decisions balance pace with input from others." color={branding.primary_color} category="Deep insight" />
-        <PreviewSection title="Ideal work environment" text="The most effective environment combines clear outcomes, room for focused execution, and communication norms that make expectations explicit." color={branding.accent_color} category="Deep insight" />
-        <PreviewSection title="Motivators & triggers" text="Meaningful progress, clarity, and recognition tend to energize performance. Ambiguity, prolonged friction, or unclear standards can create avoidable strain." color={branding.primary_color} category="Deep insight" />
-        <PreviewSection title="Actionable growth areas" text={content.executive_commentary || "Use one deliberate pause before key decisions, ask for a complementary perspective, and turn insight into a specific weekly practice."} color={branding.accent_color} category="Deep insight" />
+        {sections.executive_summary ? <PreviewSection title={headerFor("executive_summary", "Leadership style")} text="Your primary DISC tendencies are strongest when priorities are clear, ownership is visible, and decisions balance pace with input from others." color={branding.primary_color} category="Deep insight" /> : null}
+        {sections.behavioral_matrix ? <PreviewSection title={headerFor("behavioral_matrix", "Ideal work environment")} text="The most effective environment combines clear outcomes, room for focused execution, and communication norms that make expectations explicit." color={branding.accent_color} category="Deep insight" /> : null}
+        {sections.stress_profile ? <PreviewSection title={headerFor("stress_profile", "Motivators & triggers")} text="Meaningful progress, clarity, and recognition tend to energize performance. Ambiguity, prolonged friction, or unclear standards can create avoidable strain." color={branding.primary_color} category="Deep insight" /> : null}
+        {sections.custom_notes && content.executive_commentary ? <PreviewSection title={headerFor("custom_notes", "Actionable growth areas")} text={content.executive_commentary} color={branding.accent_color} category="Deep insight" /> : null}
       </div>
     </article>
     </>
