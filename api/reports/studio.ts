@@ -539,9 +539,24 @@ function drawReportCard(
   accent: ReturnType<typeof rgb>,
   bodyColor: ReturnType<typeof rgb>,
 ) {
-  // Keep PDF cards visually aligned with the Studio PreviewSection component.
-  drawRoundedRectangle(page, 42, top - height, 528, height, 12, withOpacity(accent, 0.075), withOpacity(accent, 0.33));
-  drawRoundedRectangle(page, 42, top - height, 5, height, 3, accent);
+  // Native rectangles render consistently in pdf-lib consumers. The tint is a
+  // 6% blend of the section accent against white, matching PreviewSection's
+  // subtle colour wash while retaining a clearly visible full-colour rail.
+  const bgTint = rgb(
+    1 - (1 - accent.red) * 0.06,
+    1 - (1 - accent.green) * 0.06,
+    1 - (1 - accent.blue) * 0.06,
+  );
+  page.drawRectangle({
+    x: 42,
+    y: top - height,
+    width: 528,
+    height,
+    color: bgTint,
+    borderColor: rgb(0.85, 0.83, 0.8),
+    borderWidth: 0.75,
+  });
+  page.drawRectangle({ x: 42, y: top - height, width: 5, height, color: accent });
   page.drawText(eyebrow, { x: 58, y: top - 14, size: 7, font: bold, color: accent });
   page.drawText(title, { x: 58, y: top - 29, size: 12, font: bold, color: rgb(0.22, 0.2, 0.18) });
   drawLines(page, lines, 58, top - 46, font, 10, bodyColor, 13);
@@ -567,24 +582,11 @@ function drawRoundedRectangle(
   y: number,
   width: number,
   height: number,
-  radius: number,
+  _radius: number,
   color: ReturnType<typeof rgb>,
   borderColor?: ReturnType<typeof rgb>,
 ) {
-  const r = Math.min(radius, width / 2, height / 2);
-  const curve = r * 0.55228475;
-  const path = [
-    `M ${x + r} ${y}`,
-    `L ${x + width - r} ${y}`,
-    `C ${x + width - r + curve} ${y} ${x + width} ${y + r - curve} ${x + width} ${y + r}`,
-    `L ${x + width} ${y + height - r}`,
-    `C ${x + width} ${y + height - r + curve} ${x + width - r + curve} ${y + height} ${x + width - r} ${y + height}`,
-    `L ${x + r} ${y + height}`,
-    `C ${x + r - curve} ${y + height} ${x} ${y + height - r + curve} ${x} ${y + height - r}`,
-    `L ${x} ${y + r}`,
-    `C ${x} ${y + r - curve} ${x + r - curve} ${y} ${x + r} ${y} Z`,
-  ].join(" ");
-  page.drawSvgPath(path, { color, borderColor, borderWidth: borderColor ? 0.7 : undefined });
+  page.drawRectangle({ x, y, width, height, color, borderColor, borderWidth: borderColor ? 0.7 : undefined });
 }
 function withOpacity(color: ReturnType<typeof rgb>, opacity: number) {
   const pageBackground = { red: 1, green: 250 / 255, blue: 245 / 255 };
