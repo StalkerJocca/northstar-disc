@@ -48,6 +48,22 @@ function profileCode(member: TeamMember) {
   return `${member.profile.primaryTrait}${member.profile.secondaryTrait}`
 }
 
+function drawExecutiveCard(doc: jsPDF, title: string, body: string | string[], x: number, y: number, width: number, height: number, accent: string) {
+  doc.setFillColor('#fffdfa'); doc.setDrawColor('#ded5cc'); doc.roundedRect(x, y, width, height, 12, 12, 'FD')
+  doc.setFillColor(accent); doc.roundedRect(x, y, 5, height, 3, 3, 'F')
+  doc.setTextColor(accent); doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.text('TEAM INSIGHT', x + 16, y + 16)
+  doc.setTextColor('#2f241d'); doc.setFontSize(12); doc.text(title, x + 16, y + 31)
+  doc.setTextColor('#5f4c3d'); doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5)
+  const lines = Array.isArray(body) ? body.map((item) => `- ${item}`) : doc.splitTextToSize(body, width - 32)
+  doc.text(lines.slice(0, 7), x + 16, y + 48, { lineHeightFactor: 1.45 })
+}
+
+function drawMetricTile(doc: jsPDF, label: string, value: string, x: number, accent: string) {
+  doc.setFillColor('#f7efe6'); doc.setDrawColor('#ded5cc'); doc.roundedRect(x, 144, 162, 64, 11, 11, 'FD')
+  doc.setTextColor(accent); doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.text(label.toUpperCase(), x + 12, 160)
+  doc.setTextColor('#2f241d'); doc.setFontSize(15); doc.text(value, x + 12, 184)
+}
+
 export default function TeamDashboard({ currentProfile }: TeamDashboardProps) {
   const { t } = useTranslation()
   const fileInput = useRef<HTMLInputElement>(null)
@@ -146,6 +162,30 @@ export default function TeamDashboard({ currentProfile }: TeamDashboardProps) {
     doc.save('northstar-disc-team-summary.pdf')
   }
 
+  void exportSummary
+
+  const exportExecutiveSummary = () => {
+    if (!members.length) return
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+    const accent = '#8b5e3c'
+    const primary = strongest[0]
+    const variance = Math.max(...traits.map((trait) => totals[trait])) - Math.min(...traits.map((trait) => totals[trait]))
+    doc.setFillColor(accent); doc.rect(42, 42, 511, 7, 'F'); doc.setTextColor(accent); doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.text('NORTHSTAR DISC - CONFIDENTIAL TEAM BRIEF', 42, 70)
+    doc.setTextColor('#2f241d'); doc.setFontSize(25); doc.text(t('teamDashboard.pdfTitle'), 42, 101); doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor('#5f4c3d'); doc.text(t('teamDashboard.pdfSubtitle', { count: members.length }), 42, 120)
+    drawMetricTile(doc, 'Primary team archetype', `${primary}-led team`, 42, accent)
+    drawMetricTile(doc, 'Dominant distribution', `${members.filter((member) => member.profile.primaryTrait === primary).length} primary ${primary} profiles`, 216, accent)
+    drawMetricTile(doc, 'Style variance score', `${variance}% spread`, 390, accent)
+    drawExecutiveCard(doc, 'Team strengths', [`${t(`traits.${primary}`)} energy is the team's clearest shared advantage.`, `Use the ${t(`traits.${strongest[1]}`)} contribution to broaden decisions and communication.`], 42, 228, 511, 105, accent)
+    drawExecutiveCard(doc, 'Collective blind spots', `The least represented ${t(`traits.${lowest}`)} tendency can be underused. Build explicit checkpoints so its perspective is represented before consequential decisions.`, 42, 348, 511, 105, '#a85f48')
+    drawExecutiveCard(doc, 'Collaboration friction risk', variance > 35 ? 'Higher style variance can create pace and communication friction. Agree decision rights, response-time expectations, and how dissent is surfaced early.' : 'The team has a relatively aligned behavioral pace. Invite constructive dissent and alternative viewpoints to avoid groupthink.', 42, 468, 511, 95, '#c78e69')
+    doc.addPage(); doc.setFillColor(accent); doc.rect(42, 42, 511, 7, 'F'); doc.setTextColor(accent); doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.text('NORTHSTAR DISC - MANAGER PLAYBOOK', 42, 70); doc.setTextColor('#2f241d'); doc.setFontSize(23); doc.text('How to Lead This Team', 42, 101)
+    drawExecutiveCard(doc, 'Leadership approach', `Lead this ${primary}-led team with clear outcomes, visible ownership, and deliberate invitations for less dominant styles to shape decisions.`, 42, 130, 511, 105, accent)
+    drawExecutiveCard(doc, 'Recommended meeting framework', ['Start with the decision and success criteria.', 'Use a short round-robin for each DISC perspective.', 'Close with named owners, deadlines, and communication cadence.'], 42, 250, 511, 125, '#c78e69')
+    drawExecutiveCard(doc, 'Feedback framework', 'Frame feedback around observable outcomes, match the level of detail to the recipient style, and agree on one practical next step with a review date.', 42, 390, 511, 105, accent)
+    drawExecutiveCard(doc, 'Team roster', members.map((member) => `${member.name} - ${profileCode(member)}`).join('\n'), 42, 510, 511, 170, '#5d6f7d')
+    doc.save('northstar-disc-team-executive-analysis.pdf')
+  }
+
   return (
     <section className="executive-card mt-5 p-4 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -154,7 +194,7 @@ export default function TeamDashboard({ currentProfile }: TeamDashboardProps) {
           <h2 className="mt-2 text-2xl font-semibold text-stone-800">{t('teamDashboard.title')}</h2>
           <p className="mt-2 max-w-3xl text-sm leading-7 text-stone-600">{t('teamDashboard.description')}</p>
         </div>
-        <button type="button" onClick={exportSummary} disabled={!members.length} className="rounded-full bg-stone-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">{t('teamDashboard.export')}</button>
+        <button type="button" onClick={exportExecutiveSummary} disabled={!members.length} className="rounded-full bg-stone-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">{t('teamDashboard.export')}</button>
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-2 rounded-[1.25rem] border border-stone-200 bg-stone-50 p-3">

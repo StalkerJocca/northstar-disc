@@ -555,6 +555,7 @@ function ReportPreview({ draft }: { draft: Draft }) {
         ? "Trebuchet MS, sans-serif"
         : "Arial, sans-serif";
   return (
+    <>
     <article
       className="min-h-[620px] overflow-hidden rounded-[1.5rem] border bg-[#fffdfa] shadow-[0_18px_45px_rgba(60,45,31,0.10)]"
       style={{ fontFamily, borderColor: `${branding.primary_color}44`, borderTop: `8px solid ${branding.primary_color}` }}
@@ -580,14 +581,9 @@ function ReportPreview({ draft }: { draft: Draft }) {
       </header>
       <div className="p-6">
       {content.intro_notes ? (
-        <p
-          className="rounded-r-xl border-l-4 p-4 text-sm leading-6 text-stone-700"
-          style={{ backgroundColor: `${branding.accent_color}18`, borderColor: branding.accent_color }}
-        >
-          {content.intro_notes}
-        </p>
+        <PreviewSection title="Executive introduction" text={content.intro_notes} color={branding.accent_color} category="Introduction" />
       ) : null}
-      <div className="mt-5 space-y-3">
+      {sections.executive_summary || sections.behavioral_matrix || sections.stress_profile || sections.team_communication || (sections.custom_notes && content.executive_commentary) ? <div className={content.intro_notes ? "mt-5 space-y-3" : "space-y-3"}>
         {sections.executive_summary ? (
           <PreviewSection
             title={headerFor("executive_summary", "Executive summary")}
@@ -623,7 +619,7 @@ function ReportPreview({ draft }: { draft: Draft }) {
             color={branding.primary_color}
           />
         ) : null}
-      </div>
+      </div> : null}
       <footer className="mt-8 border-t pt-4 text-xs leading-5 text-stone-500" style={{ borderColor: `${branding.primary_color}33` }}>
         {content.footer_text || "Prepared with Northstar DISC"}
         {content.disclaimer ? (
@@ -632,23 +628,41 @@ function ReportPreview({ draft }: { draft: Draft }) {
       </footer>
       </div>
     </article>
+    <article
+      className="min-h-[620px] overflow-hidden rounded-[1.5rem] border bg-[#fffdfa] shadow-[0_18px_45px_rgba(60,45,31,0.10)]"
+      style={{ fontFamily, borderColor: `${branding.primary_color}44`, borderTop: `8px solid ${branding.primary_color}` }}
+    >
+      <header className="border-b px-6 py-5" style={{ borderColor: `${branding.primary_color}22`, background: `linear-gradient(135deg, ${branding.primary_color}10, transparent 62%)` }}>
+        <p className="text-[10px] font-semibold uppercase tracking-[.28em]" style={{ color: branding.primary_color }}>Northstar DISC · Deep leadership insights</p>
+        <h3 className="mt-2 text-3xl font-semibold leading-tight text-stone-900">Deep leadership insights</h3>
+      </header>
+      <div className="space-y-3 p-6">
+        <PreviewSection title="Leadership style" text="Your primary DISC tendencies are strongest when priorities are clear, ownership is visible, and decisions balance pace with input from others." color={branding.primary_color} category="Deep insight" />
+        <PreviewSection title="Ideal work environment" text="The most effective environment combines clear outcomes, room for focused execution, and communication norms that make expectations explicit." color={branding.accent_color} category="Deep insight" />
+        <PreviewSection title="Motivators & triggers" text="Meaningful progress, clarity, and recognition tend to energize performance. Ambiguity, prolonged friction, or unclear standards can create avoidable strain." color={branding.primary_color} category="Deep insight" />
+        <PreviewSection title="Actionable growth areas" text={content.executive_commentary || "Use one deliberate pause before key decisions, ask for a complementary perspective, and turn insight into a specific weekly practice."} color={branding.accent_color} category="Deep insight" />
+      </div>
+    </article>
+    </>
   );
 }
 function PreviewSection({
   title,
   text,
   color,
+  category = "Executive insight",
 }: {
   title: string;
   text: string;
   color: string;
+  category?: string;
 }) {
   return (
     <section
       className="rounded-xl border bg-stone-50 p-4 shadow-sm"
       style={{ borderColor: `${color}55`, borderLeft: `5px solid ${color}`, background: `linear-gradient(90deg, ${color}0d, #fffdfa 38%)` }}
     >
-      <p className="text-[10px] font-semibold uppercase tracking-[.18em]" style={{ color }}>Executive insight</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[.18em]" style={{ color }}>{category}</p>
       <h4 className="mt-1 text-base font-semibold text-stone-900">{title}</h4>
       <p className="mt-2 text-sm leading-6 text-stone-600">{text}</p>
     </section>

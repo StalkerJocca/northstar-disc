@@ -13,6 +13,16 @@ type Analytics = { team: { id: string; name: string }; members: TeamMember[]; su
 type Props = { onBack: () => void }
 const traits: TraitKey[] = ['D', 'I', 'S', 'C']
 
+function drawTeamCard(doc: jsPDF, title: string, body: string | string[], x: number, y: number, width: number, height: number, accent = '#8b5e3c') {
+  doc.setFillColor('#fffdfa'); doc.setDrawColor('#ded5cc'); doc.roundedRect(x, y, width, height, 12, 12, 'FD')
+  doc.setFillColor(accent); doc.roundedRect(x, y, 5, height, 3, 3, 'F')
+  doc.setTextColor(accent); doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.text('TEAM INSIGHT', x + 16, y + 16)
+  doc.setTextColor('#2f241d'); doc.setFontSize(12); doc.text(title, x + 16, y + 31)
+  doc.setTextColor('#5f4c3d'); doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5)
+  const lines = Array.isArray(body) ? body.map((item) => `• ${item}`) : doc.splitTextToSize(body, width - 32)
+  doc.text(lines.slice(0, 7), x + 16, y + 48, { lineHeightFactor: 1.45 })
+}
+
 export default function TeamDynamicsHub({ onBack }: Props) {
   const { t } = useTranslation(); const { user, configured } = useAuth()
   const [teams, setTeams] = useState<Team[]>([]); const [selectedId, setSelectedId] = useState(''); const [analytics, setAnalytics] = useState<Analytics | null>(null); const [roster, setRoster] = useState<RosterClient[]>([])
@@ -72,9 +82,18 @@ export default function TeamDynamicsHub({ onBack }: Props) {
   }
   const exportPdf = () => {
     if (!analytics) return
-    const doc = new jsPDF({ unit: 'pt', format: 'a4' }); doc.setFontSize(24); doc.text(`${analytics.team.name} — Team Analysis`, 48, 58); doc.setFontSize(11); doc.text(`${analytics.summary.count} saved members`, 48, 82)
-    let y = 125; traits.forEach((trait) => { doc.setFontSize(14); doc.text(`${trait}: ${analytics.summary.naturalBlendMap[trait]}% (${analytics.summary.quadrantDistribution[trait]} primary)`, 48, y); y += 30 })
-    doc.setFontSize(14); doc.text('Team members', 48, y + 22); doc.setFontSize(11); analytics.members.forEach((member, index) => doc.text(`${member.name} — ${member.profile.primaryTrait}${member.profile.secondaryTrait}`, 58 + (index % 2) * 230, y + 48 + Math.floor(index / 2) * 22)); doc.save(`${analytics.team.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'team'}-analysis.pdf`)
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' }); const accent = '#8b5e3c'; const primary = traits.reduce((best, trait) => analytics.summary.naturalBlendMap[trait] > analytics.summary.naturalBlendMap[best] ? trait : best, 'D' as TraitKey); const values = traits.map((trait) => analytics.summary.naturalBlendMap[trait]); const variance = Math.max(...values) - Math.min(...values)
+    doc.setFillColor(accent); doc.rect(42, 42, 511, 7, 'F'); doc.setTextColor(accent); doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.text('NORTHSTAR DISC · CONFIDENTIAL TEAM BRIEF', 42, 70); doc.setTextColor('#2f241d'); doc.setFontSize(25); doc.text(`${analytics.team.name} Team Report`, 42, 101); doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor('#5f4c3d'); doc.text(`${analytics.summary.count} saved members · Executive team dynamics analysis`, 42, 120)
+    ;[['Primary team archetype', `${primary}-led team`], ['Dominant distribution', `${analytics.summary.quadrantDistribution[primary]} primary ${primary} profiles`], ['Style variance score', `${variance}% spread`]].forEach(([label, value], index) => { const x = 42 + index * 174; doc.setFillColor('#f7efe6'); doc.setDrawColor('#ded5cc'); doc.roundedRect(x, 144, 162, 64, 11, 11, 'FD'); doc.setTextColor(accent); doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.text(label.toUpperCase(), x + 12, 160); doc.setTextColor('#2f241d'); doc.setFontSize(15); doc.text(value, x + 12, 184) })
+    drawTeamCard(doc, 'Team strengths', analytics.summary.synergyPoints.length ? analytics.summary.synergyPoints : ['Complementary DISC styles create broader problem-solving capacity.'], 42, 228, 511, 105, accent)
+    drawTeamCard(doc, 'Collective blind spots', analytics.summary.conflictPoints.length ? analytics.summary.conflictPoints : ['No dominant conflict pattern detected; keep checking assumptions across styles.'], 42, 348, 511, 105, '#a85f48')
+    drawTeamCard(doc, 'Collaboration friction risk', variance > 35 ? 'Higher style variance can create pace and communication friction. Agree decision rights and response-time expectations early.' : 'The team has a relatively aligned behavioral pace. Invite constructive dissent to avoid groupthink.', 42, 468, 511, 95, '#c78e69')
+    doc.addPage(); doc.setFillColor(accent); doc.rect(42, 42, 511, 7, 'F'); doc.setTextColor(accent); doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.text('NORTHSTAR DISC · MANAGER PLAYBOOK', 42, 70); doc.setTextColor('#2f241d'); doc.setFontSize(23); doc.text('How to Lead This Team', 42, 101)
+    drawTeamCard(doc, 'Leadership approach', `Lead the ${primary}-led team with clear outcomes, visible ownership, and deliberate invitations for less dominant styles to shape decisions.`, 42, 130, 511, 105, accent)
+    drawTeamCard(doc, 'Recommended meeting framework', ['Start with the decision and success criteria.', 'Use a short round-robin for each DISC perspective.', 'Close with named owners, deadlines, and communication cadence.'], 42, 250, 511, 125, '#c78e69')
+    drawTeamCard(doc, 'Feedback framework', 'Frame feedback around observable outcomes, match the level of detail to the recipient’s style, and agree on one practical next step with a review date.', 42, 390, 511, 105, accent)
+    drawTeamCard(doc, 'Team roster', analytics.members.map((member) => `${member.name} — ${member.profile.primaryTrait}${member.profile.secondaryTrait}`).join('\n'), 42, 510, 511, 170, '#5d6f7d')
+    doc.save(`${analytics.team.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'team'}-executive-analysis.pdf`)
   }
   const availableRoster = useMemo(() => roster.filter((client) => !analytics?.members.some((member) => member.assessmentId === client.assessment_id)), [analytics, roster])
   if (!configured || !user) return <section className="rounded-[2rem] border border-stone-200 bg-white p-6 text-sm text-stone-600">Sign in to create and manage persistent teams.</section>
